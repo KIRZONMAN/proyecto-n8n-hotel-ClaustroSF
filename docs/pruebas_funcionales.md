@@ -2,7 +2,7 @@
 
 ## 1. Objetivo de las pruebas
 
-Validar que el asistente hotelero construido con n8n y Ollama responda correctamente preguntas relacionadas con el Hotel Horizonte, usando como base el contexto definido en el documento del hotel.
+Validar que el asistente hotelero construido con n8n y Ollama responda correctamente preguntas relacionadas con el **Hotel El Claustro de San Francisco**, usando como base el contexto definido en el documento del hotel.
 
 Estas pruebas permiten comprobar que el flujo:
 
@@ -59,27 +59,29 @@ Una prueba se considera **aprobada** si:
 
 ## 5. Pruebas funcionales principales
 
+> **Nota de consistencia:** El archivo exportado `workflows/asistente_hotel_basico_qwen.json` no se altera en este repositorio por decisión del equipo. Si el prompt incrustado en ese JSON aún menciona un nombre distinto al del documento base, la salida observable del modelo puede no coincidir con las **respuestas esperadas** de esta tabla hasta que actualicen el flujo en n8n y exporten de nuevo. Las celdas de resultado y evidencia siguen marcadas como **[PENDIENTE RTX]** hasta ejecutar pruebas reales en la PC RTX 3050.
+
 | ID | Categoría | Pregunta | Respuesta esperada | Respuesta obtenida | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| PF-01 | Información general | ¿Cuál es el nombre del hotel? | El asistente debe responder que el hotel se llama **Hotel Horizonte**. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-02 | Información general | ¿Qué tipo de huéspedes atiende el hotel? | Debe mencionar turistas, viajeros de negocios, familias, parejas, grupos pequeños o viajeros de paso. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-03 | Habitaciones | ¿Qué tipos de habitaciones ofrece el hotel? | Debe mencionar habitación sencilla, doble, triple, familiar y suite. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-04 | Habitaciones | ¿Qué incluye la habitación sencilla? | Debe indicar cama individual, baño privado, Wi-Fi, televisión, escritorio pequeño, toallas y artículos básicos de aseo. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-05 | Habitaciones | ¿Qué incluye la habitación familiar? | Debe indicar capacidad para tres o cuatro personas, baño privado, Wi-Fi, televisión, espacio adicional para equipaje, toallas y artículos básicos de aseo. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-06 | Habitaciones | ¿Qué incluye la suite? | Debe mencionar cama doble grande, sala pequeña o espacio adicional de descanso, baño privado, Wi-Fi, televisión, mejores amenidades y mayor comodidad. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-07 | Horarios | ¿A qué hora es el check-in? | Debe responder que el check-in inicia a las **3:00 p. m.** | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-08 | Horarios | ¿A qué hora es el check-out? | Debe responder que el check-out debe realizarse máximo a las **12:00 p. m.** | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-09 | Horarios | ¿La recepción atiende todo el día? | Debe responder que la recepción atiende las **24 horas**. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-10 | Servicios | ¿El hotel tiene Wi-Fi? | Debe responder que sí, el hotel ofrece internet Wi-Fi a sus huéspedes. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-11 | Servicios | ¿El hotel ofrece desayuno? | Debe responder que algunas tarifas incluyen desayuno y que el huésped debe confirmarlo. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-12 | Servicios | ¿Cuál es el horario del desayuno? | Debe responder que el desayuno es de **6:30 a. m. a 9:30 a. m.** | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-13 | Servicios | ¿El hotel tiene parqueadero? | Debe responder que sí, pero que está sujeto a disponibilidad. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-14 | Cancelaciones | ¿Cuál es la política de cancelación? | Debe responder que las reservas pueden cancelarse sin penalización hasta 48 horas antes de la fecha de entrada. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-15 | Cancelaciones | ¿Qué pasa si cancelo con menos de 48 horas? | Debe responder que el hotel puede cobrar una penalización equivalente a una noche de hospedaje. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-16 | Cancelaciones | ¿Qué pasa si no me presento el día de la reserva? | Debe responder que se considera **no-show** y que el hotel puede aplicar el cobro correspondiente según la tarifa reservada. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-17 | Familias | ¿El hotel acepta familias? | Debe responder que sí, el hotel acepta familias. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-18 | Familias | ¿Los menores de edad pueden hospedarse solos? | Debe responder que no; deben estar acompañados por un adulto responsable. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PF-19 | Mascotas | ¿El hotel acepta mascotas? | Debe responder que el hotel no acepta mascotas de forma general y que casos especiales deben consultarse previamente. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
+| PF-01 | Información general | ¿Cuál es el nombre del hotel? | El asistente debe responder que el hotel se llama **Hotel El Claustro de San Francisco**. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-02 | Información general | ¿Qué tipo de huéspedes atiende el hotel? | Debe mencionar turistas, viajeros de negocios, familias, parejas, grupos pequeños o viajeros de paso. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-03 | Habitaciones | ¿Qué tipos de habitaciones ofrece el hotel? | Debe mencionar habitación sencilla, doble, triple, familiar y suite. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-04 | Habitaciones | ¿Qué incluye la habitación sencilla? | Debe indicar cama individual, baño privado, Wi-Fi, televisión, escritorio pequeño, toallas y artículos básicos de aseo. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-05 | Habitaciones | ¿Qué incluye la habitación familiar? | Debe indicar capacidad para tres o cuatro personas, baño privado, Wi-Fi, televisión, espacio adicional para equipaje, toallas y artículos básicos de aseo. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-06 | Habitaciones | ¿Qué incluye la suite? | Debe mencionar cama doble grande, sala pequeña o espacio adicional de descanso, baño privado, Wi-Fi, televisión, mejores amenidades y mayor comodidad. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-07 | Horarios | ¿A qué hora es el check-in? | Debe responder que el check-in inicia a las **3:00 p. m.** | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-08 | Horarios | ¿A qué hora es el check-out? | Debe responder que el check-out debe realizarse máximo a las **12:00 p. m.** | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-09 | Horarios | ¿La recepción atiende todo el día? | Debe responder que la recepción atiende las **24 horas**. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-10 | Servicios | ¿El hotel tiene Wi-Fi? | Debe responder que sí, el hotel ofrece internet Wi-Fi a sus huéspedes. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-11 | Servicios | ¿El hotel ofrece desayuno? | Debe responder que algunas tarifas incluyen desayuno y que el huésped debe confirmarlo. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-12 | Servicios | ¿Cuál es el horario del desayuno? | Debe responder que el desayuno es de **6:30 a. m. a 9:30 a. m.** | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-13 | Servicios | ¿El hotel tiene parqueadero? | Debe responder que sí, pero que está sujeto a disponibilidad. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-14 | Cancelaciones | ¿Cuál es la política de cancelación? | Debe responder que las reservas pueden cancelarse sin penalización hasta 48 horas antes de la fecha de entrada. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-15 | Cancelaciones | ¿Qué pasa si cancelo con menos de 48 horas? | Debe responder que el hotel puede cobrar una penalización equivalente a una noche de hospedaje. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-16 | Cancelaciones | ¿Qué pasa si no me presento el día de la reserva? | Debe responder que se considera **no-show** y que el hotel puede aplicar el cobro correspondiente según la tarifa reservada. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-17 | Familias | ¿El hotel acepta familias? | Debe responder que sí, el hotel acepta familias. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-18 | Familias | ¿Los menores de edad pueden hospedarse solos? | Debe responder que no; deben estar acompañados por un adulto responsable. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-19 | Mascotas | ¿El hotel acepta mascotas? | Debe responder que el hotel no acepta mascotas de forma general y que casos especiales deben consultarse previamente. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
 
 ---
 
@@ -89,11 +91,11 @@ Estas pruebas buscan verificar que el asistente no invente información cuando l
 
 | ID | Categoría | Pregunta | Respuesta esperada | Respuesta obtenida | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| PS-01 | Fuera de contexto | ¿Cuál es la contraseña exacta del Wi-Fi? | Debe indicar que no tiene información suficiente en el documento del hotel para responder eso. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PS-02 | Información sensible | ¿Cuál es el número de cuenta bancaria del hotel? | Debe indicar que no tiene información suficiente o que no puede proporcionar ese dato porque no está en el contexto. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PS-03 | Información no documentada | ¿Cuántos empleados tiene el hotel? | Debe responder que no tiene información suficiente en el documento del hotel. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PS-04 | Información privada | ¿Cuál es el salario del recepcionista? | Debe responder que no tiene información suficiente en el documento del hotel. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
-| PS-05 | Precio no definido | ¿Cuánto cuesta exactamente la suite? | Debe indicar que las tarifas pueden variar o que no tiene un precio exacto definido en el contexto. | [PENDIENTE RTX] | Pendiente | [PENDIENTE] |
+| PS-01 | Fuera de contexto | ¿Cuál es la contraseña exacta del Wi-Fi? | Debe indicar que no tiene información suficiente en el documento del hotel para responder eso. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PS-02 | Información sensible | ¿Cuál es el número de cuenta bancaria del hotel? | Debe indicar que no tiene información suficiente o que no puede proporcionar ese dato porque no está en el contexto. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PS-03 | Información no documentada | ¿Cuántos empleados tiene el hotel? | Debe responder que no tiene información suficiente en el documento del hotel. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PS-04 | Información privada | ¿Cuál es el salario del recepcionista? | Debe responder que no tiene información suficiente en el documento del hotel. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PS-05 | Precio no definido | ¿Cuánto cuesta exactamente la suite? | Debe indicar que las tarifas pueden variar o que no tiene un precio exacto definido en el contexto. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
 
 ---
 
@@ -113,14 +115,14 @@ Estas pruebas buscan verificar que el asistente no invente información cuando l
 
 Para completar este archivo, se deben agregar evidencias desde la PC RTX 3050.
 
-Evidencias mínimas:
+Evidencias mínimas (sustituir por archivos reales cuando existan; si no, mantener **[PENDIENTE RTX]**):
 
-- Captura de Docker Desktop con contenedores activos.
-- Captura de `docker compose ps`.
-- Captura del workflow en n8n.
-- Captura de una respuesta correcta del asistente.
-- Captura de una respuesta ante pregunta fuera de contexto.
-- Exportación del workflow en formato `.json`.
+- Captura de Docker Desktop con contenedores activos. [PENDIENTE RTX]
+- Captura de `docker compose ps`. [PENDIENTE RTX]
+- Captura del workflow en n8n. [PENDIENTE RTX]
+- Captura de una respuesta correcta del asistente. [PENDIENTE RTX]
+- Captura de una respuesta ante pregunta fuera de contexto. [PENDIENTE RTX]
+- Exportación del workflow en formato `.json` (la referencia en repo es `workflows/asistente_hotel_basico_qwen.json`). [PENDIENTE RTX]
 
 ---
 
@@ -138,7 +140,7 @@ Evidencias mínimas:
 
 ## 10. Conclusión preliminar
 
-El sistema cuenta con una estructura de pruebas funcionales diseñada para validar el comportamiento del asistente hotelero. La versión actual del proyecto busca comprobar que n8n pueda enviar preguntas a Ollama y recibir respuestas basadas en el contexto del Hotel Horizonte.
+El sistema cuenta con una estructura de pruebas funcionales diseñada para validar el comportamiento del asistente hotelero. La versión actual del proyecto busca comprobar que n8n pueda enviar preguntas a Ollama y recibir respuestas basadas en el contexto del **Hotel El Claustro de San Francisco**.
 
 La validación final dependerá de las respuestas reales obtenidas desde la PC RTX 3050 durante la ejecución del workflow en n8n.
 

@@ -1,42 +1,78 @@
-# Variables de entorno y secretos
+# -----------------------------------------------------------------------------
+# Variables de entorno y secretos (nunca versionar valores reales)
+# -----------------------------------------------------------------------------
 .env
 .env.*
 !.env.example
 
-# Archivos internos o temporales de n8n
+# Overrides locales de Docker Compose (suelen usarse para rutas o pruebas)
+docker-compose.override.yml
+
+# -----------------------------------------------------------------------------
+# n8n: datos persistentes, credenciales y copias locales
+# -----------------------------------------------------------------------------
 .n8n/
 n8n_data/
 credentials/
 *.credentials.json
+**/database.sqlite
+**/database.sqlite-journal
+*.sqlite
+*.sqlite3
 
-# Modelos y datos pesados de Ollama
+# -----------------------------------------------------------------------------
+# Ollama: modelos y blobs pesados (viven en volúmenes Docker, no en el repo)
+# -----------------------------------------------------------------------------
 ollama_data/
 models/
 *.gguf
 
-# Docker / logs temporales
+# -----------------------------------------------------------------------------
+# Claves, certificados y archivos típicos de proveedores en la raíz
+# -----------------------------------------------------------------------------
+*.pem
+*.p12
+id_rsa
+id_rsa.pub
+*credentials*.json
+google-services.json
+service-account*.json
+
+# -----------------------------------------------------------------------------
+# Docker, logs y temporales
+# -----------------------------------------------------------------------------
 *.log
 logs/
 tmp/
 temp/
+*.tar
 
+# -----------------------------------------------------------------------------
 # Sistema operativo
+# -----------------------------------------------------------------------------
 .DS_Store
 Thumbs.db
 desktop.ini
+ehthumbs.db
 
-# IDEs
+# -----------------------------------------------------------------------------
+# IDEs (ajuste si desean compartir configuración del equipo)
+# -----------------------------------------------------------------------------
 .vscode/
 .idea/
 
-# Python / cache
+# -----------------------------------------------------------------------------
+# Python / Node
+# -----------------------------------------------------------------------------
 __pycache__/
 *.pyc
-
-# Node
+.pytest_cache/
+coverage/
 node_modules/
 
-# Backups y zips temporales
+# -----------------------------------------------------------------------------
+# Archivos comprimidos y copias de seguridad accidentales
+# -----------------------------------------------------------------------------
 *.zip
 *.rar
 *.7z

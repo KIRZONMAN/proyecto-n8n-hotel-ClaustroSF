@@ -1,0 +1,6 @@
+Lista de evidencias (marcar cuando exista archivo real en esta carpeta o en la entrega; si no, dejar **[PENDIENTE RTX]**):
+
+- [PENDIENTE RTX] Captura: contenedores activos (`docker compose ps`).
+- [PENDIENTE RTX] Captura: workflow abierto en n8n.
+- [PENDIENTE RTX] Captura: salida del nodo HTTP Request (respuesta de Ollama).
+- [PENDIENTE RTX] Captura o nota: `curl` / API de etiquetas mostrando `qwen2.5:7b`.

@@ -1,12 +1,14 @@
-# Documento Base del Hotel Horizonte
+# Documento Base del Hotel El Claustro de San Francisco
+
+> **Abreviatura del repositorio (solo nombre corto):** ClaustroSF — proyecto académico `proyecto-n8n-hotel-ClaustroSF`. El nombre oficial del establecimiento en toda la documentación es **Hotel El Claustro de San Francisco**.
 
 ## 1. Información general del hotel
 
 ### Nombre del hotel
-Hotel Horizonte
+Hotel El Claustro de San Francisco
 
 ### Descripción general
-Hotel Horizonte es un hotel orientado a huéspedes de turismo, negocios, familias y viajeros de paso. Su objetivo principal es ofrecer alojamiento cómodo, atención clara y servicios básicos de hospedaje en un ambiente seguro y organizado.
+Hotel El Claustro de San Francisco es un hotel orientado a huéspedes de turismo, negocios, familias y viajeros de paso. Su objetivo principal es ofrecer alojamiento cómodo, atención clara y servicios básicos de hospedaje en un ambiente seguro y organizado.
 
 El hotel cuenta con diferentes tipos de habitaciones, políticas de reserva, normas de convivencia, horarios definidos y servicios pensados para mejorar la experiencia del huésped.
 
@@ -16,7 +18,7 @@ Este documento contiene la información principal que debe conocer el asistente 
 
 ## 2. Público objetivo
 
-Hotel Horizonte atiende principalmente a:
+Hotel El Claustro de San Francisco atiende principalmente a:
 
 - Turistas nacionales e internacionales.
 - Personas que viajan por trabajo o negocios.
@@ -154,7 +156,7 @@ Los huéspedes pueden comunicarse con recepción para:
 
 ## 5. Servicios del hotel
 
-Hotel Horizonte ofrece los siguientes servicios:
+Hotel El Claustro de San Francisco ofrece los siguientes servicios:
 
 - Internet Wi-Fi para huéspedes.
 - Recepción 24 horas.
@@ -465,7 +467,7 @@ Esta información puede ayudar a mejorar la toma de decisiones del hotel.
 ## 20. Preguntas frecuentes
 
 ### ¿Cuál es el nombre del hotel?
-El nombre del hotel es Hotel Horizonte.
+El nombre del hotel es Hotel El Claustro de San Francisco.
 
 ### ¿Qué tipo de huéspedes atiende el hotel?
 El hotel atiende turistas, viajeros de negocios, familias, parejas, grupos pequeños y viajeros de paso.
