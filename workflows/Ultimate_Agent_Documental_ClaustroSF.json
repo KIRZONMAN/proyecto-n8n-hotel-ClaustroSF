@@ -1,0 +1,596 @@
+{
+  "name": "Ultimate_Agent_Documental_ClaustroSF",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "8e1aae00-98b3-486d-ab41-43bce8c92f95",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d5208ae5-707d-4b7d-b379-8dbd4d4f03bb",
+              "name": "pregunta_usuario",
+              "value": "Quiero reservar una habitación doble para 2 personas por 2 noches mañana",
+              "type": "string"
+            },
+            {
+              "id": "ad2a987e-e3dc-4c49-b3ce-b46e839fd5d1",
+              "name": "sessionId",
+              "value": "demo-claustrosf",
+              "type": "string"
+            },
+            {
+              "id": "c29afedd-f2e9-4045-a2f4-95da3eb10bb1",
+              "name": "documento_url",
+              "value": "https://raw.githubusercontent.com/KIRZONMAN/proyecto-n8n-hotel-ClaustroSF/rtx/workflow/documentos/Documento_Base_Hotel.md",
+              "type": "string"
+            },
+            {
+              "id": "e9b57706-519c-4d18-bf34-5bcec9a3ea91",
+              "name": "nombre_hotel",
+              "value": "Hotel El Claustro de San Francisco",
+              "type": "string"
+            },
+            {
+              "id": "1d8b7592-e634-4393-b7b0-2656d6442b34",
+              "name": "tipo_documento",
+              "value": "politicas_hotel",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "52bcf9a5-0749-4ae7-a083-34db0a3445e3",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=={{ `Eres un asistente virtual del Hotel El Claustro de San Francisco.\n\nTu tarea es responder preguntas de huéspedes usando únicamente el documento proporcionado.\n\nREGLAS OBLIGATORIAS:\n1. Responde en español.\n2. Responde de forma clara, breve y amable.\n3. Usa únicamente la información contenida en el documento.\n4. No inventes información.\n5. No inventes precios, contraseñas, cuentas bancarias, servicios, teléfonos ni datos internos.\n6. Si la respuesta no aparece en el documento, responde exactamente:\n\"No tengo información suficiente en el documento del hotel para responder eso.\"\n7. No menciones que eres un modelo de IA.\n8. No digas que estás leyendo un Markdown o un archivo técnico; responde como asistente del hotel.\n\nDOCUMENTO DEL HOTEL:\n${$json.documento_contenido}\n\nPREGUNTA DEL USUARIO:\n${$('Edit Fields').item.json.pregunta_usuario}\n\nRESPUESTA:` }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1120,
+        -384
+      ],
+      "id": "33c3033b-d560-4662-a234-3d20ddb9a34f",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama3:latest",
+        "options": {
+          "temperature": 0.1,
+          "numPredict": 250
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        976,
+        -144
+      ],
+      "id": "70ea978c-4d05-4307-a28b-dc45c1c9b66a",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "0MRfWicfQgR9r00W",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://raw.githubusercontent.com/KIRZONMAN/proyecto-n8n-hotel-ClaustroSF/rtx/workflow/documentos/Documento_Base_Hotel.md",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "documento_contenido"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        912,
+        -384
+      ],
+      "id": "a5d9f067-eb5a-4a63-8609-b395f46d4542",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "=={{ $('Edit Fields').item.json.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        1216,
+        -144
+      ],
+      "id": "56e7708e-432b-4f85-a987-d142f23c743b",
+      "name": "Postgres Chat Memory1",
+      "credentials": {
+        "postgres": {
+          "id": "6xTnLqFrdacW0fxr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map((item) => {\n  const preguntaOriginal = (item.json.pregunta_usuario || \"\").toString().trim();\n\n  const preguntaSinTildes = preguntaOriginal\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\");\n\n  const preguntaNormalizada = preguntaSinTildes\n    .toLowerCase()\n    .replace(/[¿?¡!.,;:()[\\]{}\"'`´]/g, \" \")\n    .replace(/\\s+/g, \" \")\n    .trim();\n\n  return {\n    json: {\n      ...item.json,\n      pregunta_original: preguntaOriginal,\n      pregunta_normalizada: preguntaNormalizada,\n      pregunta_valida: preguntaNormalizada.length > 0,\n      longitud_pregunta: preguntaOriginal.length\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        0
+      ],
+      "id": "644018fb-a5a1-48f0-95af-c7ae85a22929",
+      "name": "Code - Normalizar Pregunta"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map((item) => {\n  const pregunta = (item.json.pregunta_normalizada || \"\").toString();\n\n  let tipoSolicitud = \"documental\";\n  let confianza = \"media\";\n  let motivo = \"La pregunta parece relacionada con información general del hotel.\";\n\n  const contiene = (palabras) => palabras.some((p) => pregunta.includes(p));\n\n  const pideCredenciales =\n    (pregunta.includes(\"contrasena\") ||\n      pregunta.includes(\"password\") ||\n      pregunta.includes(\"clave\") ||\n      pregunta.includes(\"credencial\") ||\n      pregunta.includes(\"token\") ||\n      pregunta.includes(\"api key\")) &&\n    (pregunta.includes(\"administrador\") ||\n      pregunta.includes(\"admin\") ||\n      pregunta.includes(\"sistema\") ||\n      pregunta.includes(\"base de datos\") ||\n      pregunta.includes(\"interna\") ||\n      pregunta.includes(\"privada\"));\n\n  const pideDatosSensibles =\n    pregunta.includes(\"datos privados\") ||\n    pregunta.includes(\"datos personales\") ||\n    pregunta.includes(\"numero de cuenta\") ||\n    pregunta.includes(\"cuenta bancaria interna\") ||\n    pregunta.includes(\"salario\") ||\n    pregunta.includes(\"cedula\") ||\n    pregunta.includes(\"telefono privado\");\n\n  const pideAccionPeligrosa =\n    pregunta.includes(\"hackear\") ||\n    pregunta.includes(\"borrar base de datos\") ||\n    pregunta.includes(\"eliminar base de datos\") ||\n    pregunta.includes(\"modificar base de datos\") ||\n    pregunta.includes(\"romper seguridad\") ||\n    pregunta.includes(\"acceso no autorizado\");\n\n  const palabrasAnalitica = [\n    \"dataset\",\n    \"datos historicos\",\n    \"reservas historicas\",\n    \"tasa de cancelacion\",\n    \"porcentaje de cancelacion\",\n    \"cancelaciones\",\n    \"adr\",\n    \"precio promedio\",\n    \"lead time\",\n    \"segmento de mercado\",\n    \"mes con mas reservas\",\n    \"hotel con mas reservas\",\n    \"city hotel\",\n    \"resort hotel\",\n    \"estadistica\",\n    \"estadisticas\",\n    \"analisis\",\n    \"promedio\",\n    \"porcentaje\",\n    \"metricas\",\n    \"datos de reservas\"\n  ];\n\n  const palabrasReserva = [\n    \"quiero reservar\",\n    \"hacer una reserva\",\n    \"necesito reservar\",\n    \"reservar una habitacion\",\n    \"reservar habitacion\",\n    \"solicitar una reserva\",\n    \"habitacion doble para\",\n    \"habitacion sencilla para\",\n    \"habitacion familiar para\",\n    \"habitacion triple para\",\n    \"suite para\",\n    \"me quiero hospedar\",\n    \"quiero hospedarme\",\n    \"quiero una habitacion\",\n    \"necesito una habitacion\"\n  ];\n\n  const palabrasDocumental = [\n    \"politica\",\n    \"cancelacion\",\n    \"check in\",\n    \"check out\",\n    \"habitaciones\",\n    \"mascotas\",\n    \"desayuno\",\n    \"parqueadero\",\n    \"wifi\",\n    \"internet\",\n    \"recepcion\",\n    \"servicios\",\n    \"menores\",\n    \"familias\",\n    \"no show\",\n    \"pagos\",\n    \"normas\",\n    \"ruido\",\n    \"fumar\",\n    \"equipaje\",\n    \"lavanderia\",\n    \"horario\",\n    \"tarifa\",\n    \"reserva\"\n  ];\n\n  if (!item.json.pregunta_valida) {\n    tipoSolicitud = \"fuera_alcance\";\n    confianza = \"alta\";\n    motivo = \"La pregunta está vacía o no contiene información útil.\";\n  } else if (pideCredenciales || pideDatosSensibles || pideAccionPeligrosa) {\n    tipoSolicitud = \"fuera_alcance\";\n    confianza = \"alta\";\n    motivo = \"La pregunta solicita información sensible, privada o no permitida.\";\n  } else if (contiene(palabrasAnalitica)) {\n    tipoSolicitud = \"analitica_dataset\";\n    confianza = \"alta\";\n    motivo = \"La pregunta solicita análisis o métricas del dataset hotelero.\";\n  } else if (contiene(palabrasReserva)) {\n    tipoSolicitud = \"reserva_simulada\";\n    confianza = \"alta\";\n    motivo = \"La pregunta parece una intención de reserva simulada.\";\n  } else if (contiene(palabrasDocumental)) {\n    tipoSolicitud = \"documental\";\n    confianza = \"alta\";\n    motivo = \"La pregunta se relaciona con políticas, servicios o información del hotel.\";\n  }\n\n  return {\n    json: {\n      ...item.json,\n      tipo_solicitud: tipoSolicitud,\n      confianza_clasificacion: confianza,\n      motivo_clasificacion: motivo\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        0
+      ],
+      "id": "5d3e15cb-67bf-4ed7-8bee-1f12bbf9458b",
+      "name": "Code - Clasificar Intención"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.tipo_solicitud }}",
+                    "rightValue": "documental",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "6686db6b-23d4-4bdd-b01f-6779a71ce6eb"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "da493419-770b-4c71-853d-2459936df070",
+                    "leftValue": "={{ $json.tipo_solicitud }}",
+                    "rightValue": "analitica_dataset",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "41a6cb8f-4e58-44d1-8199-42d8db122c8d",
+                    "leftValue": "={{ $json.tipo_solicitud }}",
+                    "rightValue": "reserva_simulada",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "7ddabdf3-d4be-449c-9bee-ef97d72158a1",
+                    "leftValue": "={{ $json.tipo_solicitud }}",
+                    "rightValue": "fuera_alcance",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        800,
+        112
+      ],
+      "id": "9dc13553-0b4e-4cf9-a096-76356d641469",
+      "name": "Switch - Tipo de solicitud"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map((item) => {\n  const respuesta =\n    item.json.output ||\n    item.json.text ||\n    item.json.response ||\n    \"No se generó una respuesta del agente.\";\n\n  return {\n    json: {\n      tipo_solicitud: $(\"Code - Clasificar Intención\").item.json.tipo_solicitud,\n      pregunta_usuario: $(\"Edit Fields\").item.json.pregunta_usuario,\n      pregunta_normalizada: $(\"Code - Normalizar Pregunta\").item.json.pregunta_normalizada,\n      nombre_hotel: $(\"Edit Fields\").item.json.nombre_hotel,\n      modelo_usado: \"llama3:latest\",\n      fuente: \"Documento_Base_Hotel.md desde GitHub RAW\",\n      respuesta_final: respuesta,\n      estado: \"completado\",\n      timestamp: new Date().toISOString()\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1472,
+        -384
+      ],
+      "id": "b4992f68-0f02-4e60-8d7b-94cfa8238ea0",
+      "name": "Code - Formatear Salida Documental"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map((item) => {\n  const preguntaUsuario =\n    item.json.pregunta_usuario ||\n    item.json.pregunta_original ||\n    \"\";\n\n  const preguntaNormalizada =\n    item.json.pregunta_normalizada ||\n    \"\";\n\n  const motivo =\n    item.json.motivo_clasificacion ||\n    \"La pregunta está fuera del alcance permitido.\";\n\n  return {\n    json: {\n      tipo_solicitud: item.json.tipo_solicitud || \"fuera_alcance\",\n      pregunta_usuario: preguntaUsuario,\n      pregunta_normalizada: preguntaNormalizada,\n      nombre_hotel: item.json.nombre_hotel || \"Hotel El Claustro de San Francisco\",\n      motivo_clasificacion: motivo,\n      respuesta_final:\n        \"No puedo proporcionar contraseñas, credenciales, datos privados, información interna sensible ni instrucciones que comprometan la seguridad del sistema o del hotel.\",\n      estado: \"rechazado_fuera_de_alcance\",\n      fuente: \"Reglas internas de seguridad del workflow\",\n      timestamp: new Date().toISOString()\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        912,
+        624
+      ],
+      "id": "eae29017-2422-4747-9b8d-4a96f715afc8",
+      "name": "Code - Respuesta Segura"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst numerosTexto = {\n  \"una\": 1,\n  \"un\": 1,\n  \"uno\": 1,\n  \"dos\": 2,\n  \"tres\": 3,\n  \"cuatro\": 4,\n  \"cinco\": 5,\n  \"seis\": 6,\n  \"siete\": 7,\n  \"ocho\": 8,\n  \"nueve\": 9,\n  \"diez\": 10\n};\n\nfunction convertirNumero(valor) {\n  if (!valor) return null;\n  const limpio = valor.toString().toLowerCase().trim();\n  if (!isNaN(Number(limpio))) return Number(limpio);\n  return numerosTexto[limpio] || null;\n}\n\nreturn items.map((item) => {\n  const preguntaOriginal = item.json.pregunta_usuario || item.json.pregunta_original || \"\";\n  const pregunta = item.json.pregunta_normalizada || preguntaOriginal.toLowerCase();\n\n  let tipoHabitacion = null;\n\n  if (pregunta.includes(\"sencilla\")) tipoHabitacion = \"habitación sencilla\";\n  else if (pregunta.includes(\"doble\")) tipoHabitacion = \"habitación doble\";\n  else if (pregunta.includes(\"triple\")) tipoHabitacion = \"habitación triple\";\n  else if (pregunta.includes(\"familiar\")) tipoHabitacion = \"habitación familiar\";\n  else if (pregunta.includes(\"suite\")) tipoHabitacion = \"suite\";\n\n  const matchNoches = pregunta.match(/(\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\s+(noche|noches|dia|dias)/);\n  const numeroNoches = matchNoches ? convertirNumero(matchNoches[1]) : null;\n\n  const matchPersonas = pregunta.match(/para\\s+(\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\s+(persona|personas|huesped|huespedes|adulto|adultos)/);\n  const numeroPersonas = matchPersonas ? convertirNumero(matchPersonas[1]) : null;\n\n  const matchFechaISO = pregunta.match(/\\b(20\\d{2}-\\d{2}-\\d{2})\\b/);\n  const matchFechaLatam = pregunta.match(/\\b(\\d{1,2}\\/\\d{1,2}\\/20\\d{2})\\b/);\n\n  let fechaEntrada = null;\n  if (matchFechaISO) fechaEntrada = matchFechaISO[1];\n  else if (matchFechaLatam) fechaEntrada = matchFechaLatam[1];\n  else if (pregunta.includes(\"manana\")) fechaEntrada = \"mañana\";\n  else if (pregunta.includes(\"hoy\")) fechaEntrada = \"hoy\";\n\n  const datosFaltantes = [];\n\n  if (!tipoHabitacion) datosFaltantes.push(\"tipo de habitación\");\n  if (!numeroNoches) datosFaltantes.push(\"número de noches\");\n  if (!numeroPersonas) datosFaltantes.push(\"número de personas\");\n  if (!fechaEntrada) datosFaltantes.push(\"fecha de entrada\");\n\n  return {\n    json: {\n      ...item.json,\n      tipo_habitacion: tipoHabitacion,\n      numero_noches: numeroNoches,\n      numero_personas: numeroPersonas,\n      fecha_entrada: fechaEntrada,\n      datos_faltantes: datosFaltantes,\n      reserva_completa: datosFaltantes.length === 0,\n      estado_extraccion_reserva: datosFaltantes.length === 0 ? \"datos_completos\" : \"faltan_datos\"\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        352
+      ],
+      "id": "16957af7-6b15-40ba-92bc-3ec1e421bba6",
+      "name": "Code - Extraer Datos Reserva"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "050745be-a5aa-4a38-9f56-0a90cc83c949",
+              "leftValue": "={{ $json.reserva_completa }}",
+              "rightValue": "={{ true }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1248,
+        352
+      ],
+      "id": "675ca6a8-9e16-47e6-a8f7-0fb7b11cab67",
+      "name": "If - ¿Faltan Datos?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map((item) => {\n  return {\n    json: {\n      tipo_solicitud: \"reserva_simulada\",\n      pregunta_usuario: item.json.pregunta_usuario || item.json.pregunta_original || \"\",\n      nombre_hotel: item.json.nombre_hotel || \"Hotel El Claustro de San Francisco\",\n      tipo_habitacion: item.json.tipo_habitacion,\n      numero_noches: item.json.numero_noches,\n      numero_personas: item.json.numero_personas,\n      fecha_entrada: item.json.fecha_entrada,\n      respuesta_final:\n        `Solicitud de reserva simulada registrada: ${item.json.tipo_habitacion}, ` +\n        `para ${item.json.numero_personas} persona(s), durante ${item.json.numero_noches} noche(s), ` +\n        `con fecha de entrada: ${item.json.fecha_entrada}. ` +\n        `Esta confirmación es solo una simulación académica y no representa una reserva real.`,\n      estado: \"reserva_simulada_confirmada\",\n      fuente: \"Reglas internas de simulación de reserva\",\n      timestamp: new Date().toISOString()\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1472,
+        256
+      ],
+      "id": "7ac8d542-0717-4ef3-a0be-08e78a4d413a",
+      "name": "Confirmar - Reserva Simulada"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map((item) => {\n  const faltantes = item.json.datos_faltantes || [];\n\n  return {\n    json: {\n      tipo_solicitud: \"reserva_simulada\",\n      pregunta_usuario: item.json.pregunta_usuario || item.json.pregunta_original || \"\",\n      nombre_hotel: item.json.nombre_hotel || \"Hotel El Claustro de San Francisco\",\n      tipo_habitacion: item.json.tipo_habitacion,\n      numero_noches: item.json.numero_noches,\n      numero_personas: item.json.numero_personas,\n      fecha_entrada: item.json.fecha_entrada,\n      datos_faltantes: faltantes,\n      respuesta_final: `Para simular la reserva necesito que me indiques: ${faltantes.join(\", \")}.`,\n      estado: \"reserva_pendiente_datos\",\n      fuente: \"Reglas internas de simulación de reserva\",\n      timestamp: new Date().toISOString()\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1488,
+        480
+      ],
+      "id": "86008648-6ca2-4cda-ab79-8617f251c944",
+      "name": "Code - Pedir Datos Faltantes"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH clean AS (\n    SELECT\n        hotel,\n        NULLIF(is_canceled, '')::numeric AS is_canceled,\n        NULLIF(lead_time, '')::numeric AS lead_time,\n        arrival_date_month,\n        market_segment,\n        NULLIF(adr, '')::numeric AS adr\n    FROM hotel_bookings_raw\n)\nSELECT\n    COUNT(*) AS total_reservas,\n    ROUND(AVG(is_canceled) * 100, 2) AS tasa_cancelacion_porcentaje,\n    ROUND(AVG(adr), 2) AS adr_promedio,\n    ROUND(AVG(lead_time), 2) AS lead_time_promedio,\n    SUM(CASE WHEN hotel = 'City Hotel' THEN 1 ELSE 0 END) AS reservas_city_hotel,\n    SUM(CASE WHEN hotel = 'Resort Hotel' THEN 1 ELSE 0 END) AS reservas_resort_hotel,\n    ROUND(AVG(CASE WHEN hotel = 'City Hotel' THEN is_canceled END) * 100, 2) AS cancelacion_city_hotel,\n    ROUND(AVG(CASE WHEN hotel = 'Resort Hotel' THEN is_canceled END) * 100, 2) AS cancelacion_resort_hotel,\n    (\n        SELECT arrival_date_month\n        FROM clean\n        GROUP BY arrival_date_month\n        ORDER BY COUNT(*) DESC\n        LIMIT 1\n    ) AS mes_mas_reservas,\n    (\n        SELECT market_segment\n        FROM clean\n        GROUP BY market_segment\n        ORDER BY COUNT(*) DESC\n        LIMIT 1\n    ) AS segmento_mas_frecuente\nFROM clean;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1040,
+        112
+      ],
+      "id": "87de2db4-e70e-4f6f-b293-7de8e65fd560",
+      "name": "Postgres - Métricas Dataset",
+      "credentials": {
+        "postgres": {
+          "id": "6xTnLqFrdacW0fxr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction formatoNumero(valor) {\n  if (valor === null || valor === undefined || valor === \"\") return \"no disponible\";\n  const numero = Number(valor);\n  if (Number.isNaN(numero)) return valor.toString();\n  return numero.toLocaleString(\"es-CO\");\n}\n\nfunction formatoDecimal(valor) {\n  if (valor === null || valor === undefined || valor === \"\") return \"no disponible\";\n  const numero = Number(valor);\n  if (Number.isNaN(numero)) return valor.toString();\n  return numero.toLocaleString(\"es-CO\", {\n    minimumFractionDigits: 2,\n    maximumFractionDigits: 2\n  });\n}\n\nreturn items.map((item) => {\n  const pregunta = $(\"Code - Clasificar Intención\").item.json.pregunta_normalizada || \"\";\n  const preguntaUsuario = $(\"Edit Fields\").item.json.pregunta_usuario || \"\";\n  const nombreHotel = $(\"Edit Fields\").item.json.nombre_hotel || \"Hotel El Claustro de San Francisco\";\n  const m = item.json;\n\n  let respuesta = \"\";\n\n  if (pregunta.includes(\"tasa de cancelacion\") || pregunta.includes(\"porcentaje de cancelacion\") || pregunta.includes(\"cancelaciones\")) {\n    respuesta =\n      `Según el dataset histórico, la tasa global de cancelación es de ${formatoDecimal(m.tasa_cancelacion_porcentaje)}%. ` +\n      `Para City Hotel es de ${formatoDecimal(m.cancelacion_city_hotel)}% y para Resort Hotel es de ${formatoDecimal(m.cancelacion_resort_hotel)}%.`;\n  } else if (pregunta.includes(\"adr\") || pregunta.includes(\"precio promedio\")) {\n    respuesta =\n      `Según el dataset histórico, el ADR promedio registrado es de ${formatoDecimal(m.adr_promedio)}.`;\n  } else if (pregunta.includes(\"lead time\") || pregunta.includes(\"anticipacion\")) {\n    respuesta =\n      `Según el dataset histórico, el lead time promedio es de ${formatoDecimal(m.lead_time_promedio)} días.`;\n  } else if (pregunta.includes(\"mes\") && pregunta.includes(\"reservas\")) {\n    respuesta =\n      `Según el dataset histórico, el mes con más reservas es ${m.mes_mas_reservas}.`;\n  } else if (pregunta.includes(\"segmento\")) {\n    respuesta =\n      `Según el dataset histórico, el segmento de mercado más frecuente es ${m.segmento_mas_frecuente}.`;\n  } else if (pregunta.includes(\"city hotel\") || pregunta.includes(\"resort hotel\") || pregunta.includes(\"hotel con mas reservas\")) {\n    respuesta =\n      `Según el dataset histórico, City Hotel registra ${formatoNumero(m.reservas_city_hotel)} reservas y Resort Hotel registra ${formatoNumero(m.reservas_resort_hotel)} reservas.`;\n  } else {\n    respuesta =\n      `Resumen analítico del dataset: total de reservas ${formatoNumero(m.total_reservas)}, ` +\n      `tasa de cancelación ${formatoDecimal(m.tasa_cancelacion_porcentaje)}%, ` +\n      `ADR promedio ${formatoDecimal(m.adr_promedio)}, ` +\n      `lead time promedio ${formatoDecimal(m.lead_time_promedio)} días, ` +\n      `mes con más reservas ${m.mes_mas_reservas} y segmento más frecuente ${m.segmento_mas_frecuente}.`;\n  }\n\n  return {\n    json: {\n      tipo_solicitud: \"analitica_dataset\",\n      pregunta_usuario: preguntaUsuario,\n      pregunta_normalizada: pregunta,\n      nombre_hotel: nombreHotel,\n      fuente: \"Dataset hotel_bookings cargado en PostgreSQL\",\n      total_reservas: Number(m.total_reservas),\n      tasa_cancelacion_porcentaje: Number(m.tasa_cancelacion_porcentaje),\n      adr_promedio: Number(m.adr_promedio),\n      lead_time_promedio: Number(m.lead_time_promedio),\n      reservas_city_hotel: Number(m.reservas_city_hotel),\n      reservas_resort_hotel: Number(m.reservas_resort_hotel),\n      cancelacion_city_hotel: Number(m.cancelacion_city_hotel),\n      cancelacion_resort_hotel: Number(m.cancelacion_resort_hotel),\n      mes_mas_reservas: m.mes_mas_reservas,\n      segmento_mas_frecuente: m.segmento_mas_frecuente,\n      respuesta_final: respuesta,\n      estado: \"analitica_dataset_completada\",\n      timestamp: new Date().toISOString()\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        112
+      ],
+      "id": "cbe4dbc5-0435-4981-bfdc-f944dc50b340",
+      "name": "Code - Formatear Salida Analitica"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code - Normalizar Pregunta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Normalizar Pregunta": {
+      "main": [
+        [
+          {
+            "node": "Code - Clasificar Intención",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Clasificar Intención": {
+      "main": [
+        [
+          {
+            "node": "Switch - Tipo de solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch - Tipo de solicitud": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Postgres - Métricas Dataset",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Extraer Datos Reserva",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Respuesta Segura",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code - Formatear Salida Documental",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Extraer Datos Reserva": {
+      "main": [
+        [
+          {
+            "node": "If - ¿Faltan Datos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If - ¿Faltan Datos?": {
+      "main": [
+        [
+          {
+            "node": "Confirmar - Reserva Simulada",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Pedir Datos Faltantes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Pedir Datos Faltantes": {
+      "main": [
+        []
+      ]
+    },
+    "Postgres - Métricas Dataset": {
+      "main": [
+        [
+          {
+            "node": "Code - Formatear Salida Analitica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "846cd552-9fa7-4d2c-a1d1-aca993d6b877",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4c3ad71e0fa26083d20cc4a7c2184c4b827da0540a8ab0905fefbc39e27588b8"
+  },
+  "id": "v4Fr6PUhUOgF5OvK",
+  "tags": [
+    {
+      "updatedAt": "2026-05-13T05:40:42.228Z",
+      "createdAt": "2026-05-13T05:40:42.228Z",
+      "id": "EcXfRmq2xKIFU860",
+      "name": "version_desarrollo"
+    }
+  ]
+}
