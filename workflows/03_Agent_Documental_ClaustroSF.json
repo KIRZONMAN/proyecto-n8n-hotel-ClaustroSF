@@ -1,0 +1,213 @@
+{
+  "name": "03_Agent_Documental_ClaustroSF",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "89ea9239-6289-4987-a105-466ee6f459a4",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d5208ae5-707d-4b7d-b379-8dbd4d4f03bb",
+              "name": "pregunta_usuario",
+              "value": "¿Cuál es la política de cancelación?",
+              "type": "string"
+            },
+            {
+              "id": "ad2a987e-e3dc-4c49-b3ce-b46e839fd5d1",
+              "name": "sessionId",
+              "value": "demo-claustrosf",
+              "type": "string"
+            },
+            {
+              "id": "c29afedd-f2e9-4045-a2f4-95da3eb10bb1",
+              "name": "documento_url",
+              "value": "https://raw.githubusercontent.com/KIRZONMAN/proyecto-n8n-hotel-ClaustroSF/rtx/workflow/documentos/Documento_Base_Hotel.md",
+              "type": "string"
+            },
+            {
+              "id": "e9b57706-519c-4d18-bf34-5bcec9a3ea91",
+              "name": "nombre_hotel",
+              "value": "Hotel El Claustro de San Francisco",
+              "type": "string"
+            },
+            {
+              "id": "1d8b7592-e634-4393-b7b0-2656d6442b34",
+              "name": "tipo_documento",
+              "value": "politicas_hotel",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "89791ef7-bdc5-43ae-ab13-20605a6909fc",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=={{ `Eres un asistente virtual del Hotel El Claustro de San Francisco.\n\nTu tarea es responder preguntas de huéspedes usando únicamente el documento proporcionado.\n\nREGLAS OBLIGATORIAS:\n1. Responde en español.\n2. Responde de forma clara, breve y amable.\n3. Usa únicamente la información contenida en el documento.\n4. No inventes información.\n5. No inventes precios, contraseñas, cuentas bancarias, servicios, teléfonos ni datos internos.\n6. Si la respuesta no aparece en el documento, responde exactamente:\n\"No tengo información suficiente en el documento del hotel para responder eso.\"\n7. No menciones que eres un modelo de IA.\n8. No digas que estás leyendo un Markdown o un archivo técnico; responde como asistente del hotel.\n\nDOCUMENTO DEL HOTEL:\n${$json.documento_contenido}\n\nPREGUNTA DEL USUARIO:\n${$('Edit Fields').item.json.pregunta_usuario}\n\nRESPUESTA:` }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        640,
+        0
+      ],
+      "id": "7ead8c4e-6991-40fe-9a87-cde5928e9c95",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama3:latest",
+        "options": {
+          "temperature": 0.1,
+          "numPredict": 250
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        304,
+        208
+      ],
+      "id": "2dd77904-b5c1-40ad-9361-161f678ba214",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "0MRfWicfQgR9r00W",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://raw.githubusercontent.com/KIRZONMAN/proyecto-n8n-hotel-ClaustroSF/rtx/workflow/documentos/Documento_Base_Hotel.md",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "documento_contenido"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        432,
+        0
+      ],
+      "id": "d490628b-91ab-41c7-87e0-e0f448dc92e9",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "=={{ $('Edit Fields').item.json.sessionId }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        528,
+        224
+      ],
+      "id": "cffe8310-d9df-4a5f-9ed7-183556c00618",
+      "name": "Postgres Chat Memory1",
+      "credentials": {
+        "postgres": {
+          "id": "6xTnLqFrdacW0fxr",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "ca06750f-b3bb-4e96-9a36-9534de039958",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4c3ad71e0fa26083d20cc4a7c2184c4b827da0540a8ab0905fefbc39e27588b8"
+  },
+  "id": "x9NIC0gu5inoGGvg",
+  "tags": []
+}

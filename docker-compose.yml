@@ -11,6 +11,7 @@ services:
       - n8n_data:/home/node/.n8n
     depends_on:
       - ollama
+      - postgres
 
   ollama:
     image: ollama/ollama:latest
@@ -19,6 +20,20 @@ services:
     volumes:
       - ollama_data:/root/.ollama
 
+  postgres:
+    image: postgres:16
+    container_name: claustrosf-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: claustrosf_user
+      POSTGRES_PASSWORD: claustrosf_password
+      POSTGRES_DB: claustrosf_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
 volumes:
   n8n_data:
   ollama_data:
+  postgres_data:
