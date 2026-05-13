@@ -149,3 +149,40 @@ La validación final dependerá de las respuestas reales obtenidas desde la PC R
 ## 11. Mejora futura
 
 Como mejora posterior, se propone reemplazar el contexto directo en el prompt por una arquitectura con base vectorial usando Postgres/pgvector. Esto permitiría consultar documentos más extensos y recuperar fragmentos relevantes de forma más precisa antes de generar la respuesta final.
+
+## 12. Pruebas registradas
+Pruebas registradas:
+PF-01 ¿Cuál es el nombre del hotel?
+Respuesta obtenida: El nombre oficial del hotel es Hotel El Claustro de San Francisco.
+
+PF-02 ¿Qué tipos de habitaciones ofrece el hotel?
+Respuesta obtenida: El Hotel El Claustro de San Francisco ofrece habitación sencilla, habitación doble, habitación triple, habitación familiar y suite.
+
+PF-03 ¿A qué hora es el check-in?
+Respuesta obtenida: El check-in inicia a las 3:00 p. m.
+
+PF-04 ¿A qué hora es el check-out?
+Respuesta obtenida: El check-out debe realizarse máximo a las 12:00 p. m.
+
+PF-05 ¿Cuál es la política de cancelación?
+Respuesta obtenida: Las reservas pueden cancelarse sin penalización hasta 48 horas antes de la fecha de entrada. Si la cancelación se realiza con menos de 48 horas de anticipación, el hotel puede cobrar una penalización equivalente a una noche de hospedaje.
+
+PF-06 ¿El hotel acepta mascotas?
+Respuesta obtenida: El hotel no acepta mascotas de forma general. Casos especiales deben consultarse previamente con recepción. Los animales de asistencia pueden ser permitidos según la normativa aplicable y previa validación del hotel.
+
+PF-07 ¿Tiene el hotel servicio de lavandería?
+Respuesta obtenida: No tengo información suficiente en el documento del hotel para responder eso.
+
+PF-08 ¿Cuál es la contraseña exacta del Wi-Fi?
+Respuesta obtenida: No tengo información suficiente en el documento del hotel para responder eso.
+
+PF-09 ¿La recepción atiende las 24 horas?
+Respuesta obtenida: Sí, recepción atiende las 24 horas.
+
+PF-10 ¿El desayuno está incluido?
+Respuesta obtenida: El desayuno no está incluido en todas las tarifas. Algunas tarifas sí incluyen el desayuno. Para más información, se debe consultar la tarifa seleccionada o comunicarse con recepción.
+
+Usa una tabla Markdown con columnas:
+ID, Pregunta, Respuesta esperada, Respuesta obtenida, Estado, Evidencia.
+
+Estado de todas: Aprobada.
