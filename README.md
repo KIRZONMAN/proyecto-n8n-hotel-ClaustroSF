@@ -1,68 +1,288 @@
 # proyecto-n8n-hotel-ClaustroSF
 
-Proyecto universitario de **Modelado Computacional**: asistente conversacional para el **Hotel El Claustro de San Francisco** (nombre oficial en documentación). **ClaustroSF** es solo la abreviatura usada en el nombre del repositorio.
+Proyecto académico de Modelado Computacional orientado a la creación de un asistente hotelero usando **n8n**, **Docker Compose**, **Ollama** y el modelo local **qwen2.5:7b**.
 
-## Qué hace el proyecto
+El caso de estudio corresponde al **Hotel El Claustro de San Francisco**. La abreviatura **ClaustroSF** se usa únicamente como nombre corto del repositorio/proyecto.
 
-Orquesta un flujo en **n8n** que toma una pregunta del usuario (campo definido en **Edit Fields**) y la envía a **Ollama** para que el modelo **qwen2.5:7b** genere una respuesta en español. El cuerpo de la petición y el **contexto del hotel** se construyen en un nodo **Code in JavaScript**, que llama a Ollama mediante **`this.helpers.httpRequest`** hacia `http://ollama:11434/api/generate`. Se adoptó el Code Node porque el nodo **HTTP Request** presentó problemas al enviar correctamente el JSON a Ollama (en particular con valores booleanos como `stream: false`).
+---
 
-No existe aún canal de mensajería para huéspedes ni agente autónomo: la ejecución es manual o por disparadores básicos dentro de n8n.
+## 1. Descripción general
 
-## Tecnologías
+Este proyecto implementa un asistente hotelero básico capaz de responder preguntas sobre:
 
-| Componente | Uso |
-|------------|-----|
-| **Docker Compose** | Servicios `n8n` y `ollama`, red y volúmenes nombrados. |
-| **n8n** | Workflow: **Manual Trigger** → **Edit Fields** → **Code in JavaScript** → llamada a Ollama. |
-| **Ollama** | Inferencia local del modelo **qwen2.5:7b**. |
-| **Markdown** | Documentación, documento base del hotel y pruebas funcionales. |
+- nombre del hotel;
+- tipos de habitaciones;
+- horarios de check-in y check-out;
+- política de cancelación;
+- mascotas;
+- servicios disponibles;
+- recepción;
+- desayuno;
+- preguntas fuera del contexto.
 
-## Cómo levantar el entorno
+La versión actual funciona como un **MVP** con contexto directo dentro del flujo de n8n. El asistente responde usando la información definida en el prompt/código y evita inventar datos cuando la respuesta no está disponible.
 
-1. Clonar el repositorio (nombre remoto típico: `proyecto-n8n-hotel-ClaustroSF`).
-2. Opcional: copiar `.env.example` a `.env` solo en su máquina; no subir `.env` a Git.
-3. En la raíz del proyecto: `docker compose up -d`
-4. Descargar el modelo en el contenedor de Ollama:  
-   `docker compose exec ollama ollama pull qwen2.5:7b`
-5. Abrir n8n en `http://localhost:5678` (puerto según su `docker-compose.yml`).
-6. Importar el JSON oficial **`workflows/asistente_hotel_basico_qwen.json`** y ejecutar según `docs/explicacion_demo.md` y `docs/pruebas_funcionales.md`.
+---
 
-Los **volúmenes** de Docker (`n8n_data`, `ollama_data`) guardan estado y pesos del modelo **fuera** del repositorio; no deben versionarse.
+## 2. Tecnologías utilizadas
 
-## Modelo y workflow exportado
+- **Docker Compose:** permite levantar los servicios principales del proyecto.
+- **n8n:** herramienta de automatización usada para construir y ejecutar el workflow.
+- **Ollama:** servidor local para ejecutar modelos de lenguaje.
+- **qwen2.5:7b:** modelo local usado por el asistente.
+- **GitHub:** control de versiones y organización del proyecto.
+- **Markdown:** documentación del proyecto.
+- **JavaScript en Code Node:** usado dentro de n8n para construir la petición hacia Ollama.
 
-- **Modelo local:** `qwen2.5:7b` (Ollama).
-- **Invocación:** `POST http://ollama:11434/api/generate` desde el **Code Node** (`this.helpers.httpRequest`).
-- **Workflow oficial (nombre de archivo en repo):** `workflows/asistente_hotel_basico_qwen.json` — debe reflejar el flujo con Code Node; **reexportar** desde n8n tras cambios locales para mantener el repositorio alineado.
+---
 
-> Si el JSON versionado aún muestra un grafo antiguo (p. ej. HTTP Request), actualicen el flujo en n8n y vuelvan a exportar a `workflows/asistente_hotel_basico_qwen.json`.
+## 3. Arquitectura funcional actual
 
-## Estado actual
+El workflow funcional actual es:
 
-- Infraestructura: Compose + n8n + Ollama.
-- Asistente en versión **básica**: contexto en el prompt dentro del **Code Node**; sin base vectorial, sin lectura real de PDF, sin Google Docs, sin Telegram y **sin AI Agent**.
-- **PF-01 a PF-10** ejecutadas y **aprobadas** en la PC RTX; detalle en `docs/pruebas_funcionales.md`. Las evidencias **no** se suben al repositorio en esta fase (conservadas en la RTX y en la conversación de trabajo).
+```text
+Manual Trigger
+→ Edit Fields
+→ Code in JavaScript
+→ Ollama / qwen2.5:7b
+→ Respuesta del asistente
+```
 
-## Limitaciones
+El nodo **Edit Fields** define la pregunta del usuario mediante el campo:
 
-- El modelo puede **alucinar** o mezclar detalles aunque existan reglas en el prompt.
-- El **contexto largo en el prompt** no escala: documentos extensos no caben de forma fiable.
-- La solución depende de que **Docker y Ollama** estén operativos en la máquina de ejecución (RTX 3050 prevista).
-- Sin recuperación semántica (RAG): no hay Postgres/pgvector ni otro vector store en esta versión.
+```text
+pregunta_usuario
+```
 
-## Mejoras futuras (solo planificadas)
+El nodo **Code in JavaScript** construye el prompt, arma el cuerpo de la solicitud y realiza la petición a Ollama usando:
 
-- Lectura y uso de **documentos externos** (p. ej. **PDF**) con pipeline definido.
-- **Google Docs** u otras fuentes en la nube (no implementado).
-- **AI Agent** en n8n u orquestación equivalente para diálogo multi-paso.
-- **Postgres + pgvector** u otra **base vectorial** para RAG.
-- Integraciones opcionales: **Telegram** u otros canales (no implementados).
+```javascript
+this.helpers.httpRequest
+```
 
-## Documentación y seguridad
+---
 
-- Índice de carpetas: `docs/README.md`, `workflows/README.md`, `documentos/README.md`, `prompts/README.md`, `evidencias/README.md`, `control/README.md`.
-- **No** subir `.env`, tokens, llaves privadas, exportaciones con credenciales de n8n, ni carpetas de modelos Ollama. Ver `.gitignore` y `.env.example`.
+## 4. Motivo del uso de Code Node
 
-## Sobre `docker-compose.yml`
+Inicialmente se intentó usar el nodo **HTTP Request** de n8n para enviar la petición directamente a Ollama. Sin embargo, durante las pruebas se presentaron problemas de tipado al enviar el cuerpo JSON, especialmente con valores booleanos como:
 
-Este README no modifica el archivo Compose; cualquier cambio futuro (por ejemplo `env_file`) debe revisarse y probarse en local antes de publicarlo.
+```json
+"stream": false
+```
+
+El nodo HTTP Request enviaba algunos valores como texto, lo que provocaba errores de tipo en Ollama.
+
+Por esta razón, se decidió estabilizar el MVP usando un nodo **Code in JavaScript**, ya que permite controlar directamente:
+
+- el cuerpo JSON enviado a Ollama;
+- el prompt del asistente;
+- el modelo usado;
+- el parámetro `stream: false`;
+- la lectura de la respuesta;
+- el manejo básico de errores.
+
+---
+
+## 5. Ejecución del proyecto
+
+Desde la carpeta raíz del proyecto:
+
+```powershell
+docker compose up -d
+```
+
+Verificar los contenedores:
+
+```powershell
+docker compose ps
+```
+
+Verificar que Ollama responda:
+
+```powershell
+curl.exe http://localhost:11434/api/tags
+```
+
+Abrir n8n en el navegador:
+
+```text
+http://localhost:5678
+```
+
+---
+
+## 6. Modelo utilizado
+
+El modelo usado actualmente es:
+
+```text
+qwen2.5:7b
+```
+
+Debe estar disponible dentro del contenedor de Ollama.
+
+Para verificarlo:
+
+```powershell
+docker compose exec ollama ollama list
+```
+
+---
+
+## 7. Workflow exportado
+
+El workflow funcional debe estar respaldado en:
+
+```text
+workflows/asistente_hotel_basico_qwen.json
+```
+
+Este archivo debe representar el flujo real actual:
+
+```text
+Manual Trigger → Edit Fields → Code in JavaScript → Ollama/qwen2.5:7b
+```
+
+---
+
+## 8. Estado actual del proyecto
+
+Estado actual:
+
+- Infraestructura Docker funcionando.
+- n8n funcionando.
+- Ollama funcionando.
+- Modelo `qwen2.5:7b` disponible.
+- Workflow funcional estabilizado con Code Node.
+- Pruebas funcionales PF-01 a PF-10 ejecutadas y aprobadas.
+- Preguntas trampa validadas correctamente.
+- Evidencias visuales conservadas localmente en la PC RTX y en la conversación de trabajo.
+
+---
+
+## 9. Pruebas funcionales realizadas
+
+Se ejecutaron y aprobaron pruebas relacionadas con:
+
+- nombre del hotel;
+- tipos de habitaciones;
+- check-in;
+- check-out;
+- política de cancelación;
+- mascotas;
+- lavandería como pregunta fuera de contexto;
+- contraseña Wi-Fi como pregunta fuera de contexto;
+- recepción 24 horas;
+- desayuno.
+
+Las pruebas están documentadas en:
+
+```text
+docs/pruebas_funcionales.md
+```
+
+---
+
+## 10. Evidencias
+
+Las capturas de las pruebas funcionales se conservan localmente en la PC RTX y en la conversación de trabajo.
+
+Por decisión del equipo, las imágenes de evidencia no se suben al repositorio por ahora, ya que el repositorio se usará principalmente para:
+
+- configuración;
+- documentación;
+- prompts;
+- workflows exportados;
+- control de avances.
+
+---
+
+## 11. Estructura del repositorio
+
+```text
+proyecto-n8n-hotel-ClaustroSF/
+│
+├── docker-compose.yml
+├── README.md
+├── .gitignore
+├── .env.example
+│
+├── control/
+│   ├── avances_rtx.md
+│   ├── checklist_entrega.md
+│   └── README.md
+│
+├── docs/
+│   ├── arquitectura.md
+│   ├── explicacion_demo.md
+│   ├── plan_trabajo.md
+│   ├── pruebas_funcionales.md
+│   ├── riesgos_y_limitaciones.md
+│   └── README.md
+│
+├── documentos/
+│   ├── Documento_Base_Hotel.md
+│   ├── Preguntas_Prueba_Hotel.md
+│   └── README.md
+│
+├── evidencias/
+│   ├── pendientes.txt
+│   └── README.md
+│
+├── prompts/
+│   ├── prompt_asistente_hotelero.md
+│   ├── prompt_cursor.md
+│   ├── prompt_kiro.md
+│   └── README.md
+│
+└── workflows/
+    ├── asistente_hotel_basico_qwen.json
+    └── README.md
+```
+
+---
+
+## 12. Limitaciones actuales
+
+La versión actual tiene las siguientes limitaciones:
+
+- El contexto del hotel está incluido directamente en el código/prompt.
+- Todavía no se leen documentos externos automáticamente.
+- Todavía no se procesan PDFs.
+- Todavía no se integra Google Docs.
+- Todavía no se usa AI Agent como flujo principal.
+- Todavía no se usa Telegram.
+- Todavía no existe una base vectorial con PostgreSQL/pgvector.
+- El sistema depende de que Docker, n8n, Ollama y `qwen2.5:7b` estén funcionando correctamente en la máquina principal.
+
+---
+
+## 13. Mejoras futuras
+
+Como continuación del proyecto se plantea:
+
+- leer documentos desde GitHub RAW;
+- leer documentos publicados desde Google Docs;
+- procesar PDFs de políticas, manual de usuario o PQRS;
+- usar AI Agent dentro de n8n;
+- integrar Telegram o una interfaz conversacional;
+- usar PostgreSQL/pgvector como base vectorial;
+- separar el contexto del código para hacerlo más escalable;
+- crear un flujo de reservas simulado.
+
+---
+
+## 14. Nota de seguridad
+
+No se deben subir al repositorio:
+
+- archivos `.env` reales;
+- tokens;
+- credenciales;
+- contraseñas;
+- claves de API;
+- volúmenes de Docker;
+- modelos de Ollama;
+- archivos pesados innecesarios.
+
+El archivo `.env.example` solo debe contener valores de ejemplo.
