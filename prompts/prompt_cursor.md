@@ -17,7 +17,7 @@
 ## Flujo de trabajo recomendado
 
 1. Abrir la carpeta raíz del clon en Cursor (donde está `docker-compose.yml`).
-2. Cambios de lógica del flujo: hacerlos **en la UI de n8n**, probar, luego **exportar** JSON a `workflows/` si corresponde.
+2. Cambios de lógica del flujo: hacerlos **en la UI de n8n** (Manual Trigger → Edit Fields → **Code in JavaScript**), probar, luego **exportar** a `workflows/asistente_hotel_basico_qwen.json` si corresponde.
 3. Cambios de texto del hotel: actualizar `documentos/Documento_Base_Hotel.md` y, si aplica, `prompts/prompt_asistente_hotelero.md` y el prompt en n8n.
 4. Antes de commit: `git status`, revisar que no aparezcan `.env`, credenciales ni carpetas de datos de Docker.
 

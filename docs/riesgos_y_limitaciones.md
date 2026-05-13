@@ -15,7 +15,7 @@
 - **Sin lectura real de PDF:** el flujo no ingiere archivos PDF dinámicamente; cualquier contenido útil debe estar en el prompt o en texto accesible al diseñador del flujo.
 - **Sin Google Docs integrado:** no hay sincronización ni lectura automática de documentos en la nube.
 - **Sin Telegram (ni otros canales similares):** no hay bot ni webhook de mensajería en el alcance actual.
-- **Sin AI Agent:** no se usa el nodo o patrón AI Agent de n8n; el workflow es un encadenamiento simple hasta la llamada HTTP a Ollama.
+- **Sin AI Agent:** no se usa el nodo o patrón AI Agent de n8n; el workflow es **Manual Trigger → Edit Fields → Code in JavaScript → llamada a Ollama** (`this.helpers.httpRequest`).
 
 ## 3. Dependencia operativa
 

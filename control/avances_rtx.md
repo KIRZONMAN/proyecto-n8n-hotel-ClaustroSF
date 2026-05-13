@@ -13,12 +13,12 @@ Máquina principal de ejecución del repositorio **proyecto-n8n-hotel-ClaustroSF
 - [ ] Ollama responde en el puerto `11434`.
 - [ ] El modelo `qwen2.5:7b` está descargado y visible en `GET /api/tags`.
 - [ ] El workflow de prueba o asistente básico está importado y ejecutable en n8n.
-- [ ] n8n puede comunicarse con Ollama por la red interna de Compose (`http://ollama:11434`).
+- [ ] n8n puede comunicarse con Ollama por la red interna de Compose (`http://ollama:11434`), vía **Code Node** (`this.helpers.httpRequest`).
 
 ### Evidencias pendientes
 
 - [ ] Captura de Docker o salida de `docker compose ps`.
 - [ ] Captura del workflow en n8n.
-- [ ] Captura de respuesta de Ollama desde el nodo HTTP Request.
+- [ ] Captura de respuesta de Ollama desde el flujo (salida del **Code Node**).
 
 Marque con `[x]` cada ítem cuando quede verificado en la RTX y exista evidencia en el repositorio o en la entrega.

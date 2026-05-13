@@ -11,10 +11,10 @@ El sistema es un prototipo académico de **asistente hotelero** compuesto por tr
 3. **Docker Compose** — definición declarativa de servicios, puertos y volúmenes persistentes.
 
 ```
-┌─────────────┐     HTTP (red Docker)      ┌─────────────┐
-│    n8n      │  POST /api/generate        │   Ollama    │
-│  (workflow) │ ─────────────────────────► │ qwen2.5:7b  │
-└─────────────┘                            └─────────────┘
+┌─────────────┐   helpers.httpRequest     ┌─────────────┐
+│    n8n      │   POST /api/generate      │   Ollama    │
+│ Code (JS)   │ ────────────────────────► │ qwen2.5:7b  │
+└─────────────┘                           └─────────────┘
        │                                           │
        │ volúmenes locales                         │ volumen de modelos
        ▼                                           ▼
@@ -27,13 +27,12 @@ Los datos persistentes de n8n y los pesos del modelo **no** forman parte del rep
 
 1. El usuario (o el docente en demo) ejecuta el workflow desde **Manual Trigger**.
 2. El nodo **Set** (Edit Fields) define la variable de pregunta (ej. `pregunta_usuario`).
-3. El nodo **HTTP Request** envía a Ollama un JSON con:
-   - `model`: `qwen2.5:7b`
-   - `prompt`: texto del sistema + **contexto resumido del hotel** + pregunta.
-   - `stream`: `false`
+3. El nodo **Code in JavaScript** construye el cuerpo de la petición (modelo `qwen2.5:7b`, `prompt` con contexto del hotel, opciones como `stream: false`) y llama a Ollama usando **`this.helpers.httpRequest`** hacia `http://ollama:11434/api/generate` en la red de Compose.
 4. Ollama devuelve JSON; la respuesta generada suele aparecer en el campo `response`.
 
-Esta versión **no** incluye recuperación desde base vectorial ni lectura dinámica de archivos PDF o Google Docs: el contexto útil va **directo en el prompt**.
+El **Code Node** sustituyó al nodo **HTTP Request** como pieza principal de integración, por problemas al serializar o enviar el JSON esperado por Ollama (p. ej. booleanos).
+
+Esta versión **no** incluye recuperación desde base vectorial ni lectura dinámica de archivos PDF o Google Docs: el contexto útil va **directo en el prompt** generado por el código.
 
 ## 3. Documentación de dominio
 
@@ -43,7 +42,7 @@ La fuente de verdad para políticas, habitaciones y servicios es `documentos/Doc
 
 - Un solo modelo local; sin balanceo ni caché de respuestas.
 - Sin colas de mensajes externos (no hay Telegram ni webhooks públicos en el alcance actual).
-- Sin **AI Agent** de n8n: el grafo es lineal (disparador → campos → HTTP).
+- Sin **AI Agent** de n8n: el grafo actual es **Manual Trigger → Edit Fields → Code → Ollama**.
 
 ## 5. Evolución prevista (no implementada)
 

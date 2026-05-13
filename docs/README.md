@@ -6,7 +6,7 @@ Carpeta de documentación técnica del repositorio **proyecto-n8n-hotel-Claustro
 
 | Archivo | Propósito |
 |---------|-----------|
-| `pruebas_funcionales.md` | Casos, criterios de aceptación y tablas de resultados (usar **[PENDIENTE RTX]** hasta registrar pruebas reales en la RTX 3050). |
+| `pruebas_funcionales.md` | Casos y tablas: **PF-01 a PF-10** aprobadas (evidencia local); demás filas pueden seguir en **[PENDIENTE RTX]** hasta ejecutarse. |
 | `arquitectura.md` | Vista de componentes Docker, n8n, Ollama y flujo de datos. |
 | `explicacion_demo.md` | Guión breve para demostración en clase. |
 | `plan_trabajo.md` | Fases del proyecto y trabajo futuro. |

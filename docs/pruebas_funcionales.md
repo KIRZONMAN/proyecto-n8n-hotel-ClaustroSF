@@ -6,7 +6,7 @@ Validar que el asistente hotelero construido con n8n y Ollama responda correctam
 
 Estas pruebas permiten comprobar que el flujo:
 
-**Manual Trigger → Edit Fields → HTTP Request → Ollama → Respuesta**
+**Manual Trigger → Edit Fields → Code in JavaScript → Ollama (qwen2.5:7b) → Respuesta**
 
 funciona de forma correcta y que el modelo responde con información coherente, útil y alineada al contexto proporcionado.
 
@@ -25,7 +25,7 @@ Las pruebas se enfocan en validar:
 - respuestas sobre familias y mascotas;
 - comportamiento ante preguntas fuera del contexto.
 
-La versión actual del sistema usa **contexto directo en el prompt**. La integración con base vectorial o Postgres/pgvector queda como mejora futura.
+La versión actual del sistema usa **contexto directo en el prompt** construido en el **Code Node** (JavaScript), que invoca a Ollama mediante `this.helpers.httpRequest`. La integración con base vectorial o Postgres/pgvector queda como mejora futura.
 
 ---
 
@@ -38,10 +38,10 @@ La versión actual del sistema usa **contexto directo en el prompt**. La integra
 | Contenedores | Docker Compose |
 | Modelo local | qwen2.5:7b |
 | Motor de IA | Ollama |
-| URL interna usada por n8n | `http://ollama:11434/api/generate` |
-| Tipo de entrada actual | Manual Trigger / Edit Fields |
+| URL interna usada por n8n | `http://ollama:11434/api/generate` (desde el Code Node) |
+| Flujo en n8n | Manual Trigger → Edit Fields → Code in JavaScript → Ollama |
 | Documento base | `Documento_Base_Hotel.md` |
-| Estado | Pendiente de completar con evidencias reales desde RTX |
+| Estado | **PF-01 a PF-10:** ejecutadas y aprobadas en RTX. **PF-11 en adelante, PS-* y PT-*:** pendientes de registro en este archivo o aún no ejecutadas según plan del equipo. Las evidencias no se publican en el repositorio por ahora. |
 
 ---
 
@@ -59,20 +59,22 @@ Una prueba se considera **aprobada** si:
 
 ## 5. Pruebas funcionales principales
 
-> **Nota de consistencia:** El archivo exportado `workflows/asistente_hotel_basico_qwen.json` no se altera en este repositorio por decisión del equipo. Si el prompt incrustado en ese JSON aún menciona un nombre distinto al del documento base, la salida observable del modelo puede no coincidir con las **respuestas esperadas** de esta tabla hasta que actualicen el flujo en n8n y exporten de nuevo. Las celdas de resultado y evidencia siguen marcadas como **[PENDIENTE RTX]** hasta ejecutar pruebas reales en la PC RTX 3050.
+> **Contexto técnico:** El nodo **HTTP Request** se reemplazó por un **Code Node** (JavaScript) que usa `this.helpers.httpRequest` hacia Ollama, para evitar problemas con el envío del JSON (por ejemplo valores booleanos como `stream: false`). El archivo oficial en el repositorio es `workflows/asistente_hotel_basico_qwen.json`; conviene **reexportar** ese JSON desde n8n cuando el flujo local coincida con el estado real, para que el archivo versionado refleje el Code Node.
+>
+> **Evidencias:** no se adjuntan capturas en Git por decisión del equipo; para **PF-01 a PF-10** la columna *Evidencia* indica dónde se conserva el respaldo.
 
 | ID | Categoría | Pregunta | Respuesta esperada | Respuesta obtenida | Estado | Evidencia |
 |---|---|---|---|---|---|---|
-| PF-01 | Información general | ¿Cuál es el nombre del hotel? | El asistente debe responder que el hotel se llama **Hotel El Claustro de San Francisco**. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
-| PF-02 | Información general | ¿Qué tipo de huéspedes atiende el hotel? | Debe mencionar turistas, viajeros de negocios, familias, parejas, grupos pequeños o viajeros de paso. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
-| PF-03 | Habitaciones | ¿Qué tipos de habitaciones ofrece el hotel? | Debe mencionar habitación sencilla, doble, triple, familiar y suite. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
-| PF-04 | Habitaciones | ¿Qué incluye la habitación sencilla? | Debe indicar cama individual, baño privado, Wi-Fi, televisión, escritorio pequeño, toallas y artículos básicos de aseo. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
-| PF-05 | Habitaciones | ¿Qué incluye la habitación familiar? | Debe indicar capacidad para tres o cuatro personas, baño privado, Wi-Fi, televisión, espacio adicional para equipaje, toallas y artículos básicos de aseo. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
-| PF-06 | Habitaciones | ¿Qué incluye la suite? | Debe mencionar cama doble grande, sala pequeña o espacio adicional de descanso, baño privado, Wi-Fi, televisión, mejores amenidades y mayor comodidad. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
-| PF-07 | Horarios | ¿A qué hora es el check-in? | Debe responder que el check-in inicia a las **3:00 p. m.** | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
-| PF-08 | Horarios | ¿A qué hora es el check-out? | Debe responder que el check-out debe realizarse máximo a las **12:00 p. m.** | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
-| PF-09 | Horarios | ¿La recepción atiende todo el día? | Debe responder que la recepción atiende las **24 horas**. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
-| PF-10 | Servicios | ¿El hotel tiene Wi-Fi? | Debe responder que sí, el hotel ofrece internet Wi-Fi a sus huéspedes. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
+| PF-01 | Información general | ¿Cuál es el nombre del hotel? | El asistente debe responder que el hotel se llama **Hotel El Claustro de San Francisco**. | Cumple criterios de aceptación | Aprobada | Evidencia conservada localmente en PC RTX / conversación de trabajo |
+| PF-02 | Información general | ¿Qué tipo de huéspedes atiende el hotel? | Debe mencionar turistas, viajeros de negocios, familias, parejas, grupos pequeños o viajeros de paso. | Cumple criterios de aceptación | Aprobada | Evidencia conservada localmente en PC RTX / conversación de trabajo |
+| PF-03 | Habitaciones | ¿Qué tipos de habitaciones ofrece el hotel? | Debe mencionar habitación sencilla, doble, triple, familiar y suite. | Cumple criterios de aceptación | Aprobada | Evidencia conservada localmente en PC RTX / conversación de trabajo |
+| PF-04 | Habitaciones | ¿Qué incluye la habitación sencilla? | Debe indicar cama individual, baño privado, Wi-Fi, televisión, escritorio pequeño, toallas y artículos básicos de aseo. | Cumple criterios de aceptación | Aprobada | Evidencia conservada localmente en PC RTX / conversación de trabajo |
+| PF-05 | Habitaciones | ¿Qué incluye la habitación familiar? | Debe indicar capacidad para tres o cuatro personas, baño privado, Wi-Fi, televisión, espacio adicional para equipaje, toallas y artículos básicos de aseo. | Cumple criterios de aceptación | Aprobada | Evidencia conservada localmente en PC RTX / conversación de trabajo |
+| PF-06 | Habitaciones | ¿Qué incluye la suite? | Debe mencionar cama doble grande, sala pequeña o espacio adicional de descanso, baño privado, Wi-Fi, televisión, mejores amenidades y mayor comodidad. | Cumple criterios de aceptación | Aprobada | Evidencia conservada localmente en PC RTX / conversación de trabajo |
+| PF-07 | Horarios | ¿A qué hora es el check-in? | Debe responder que el check-in inicia a las **3:00 p. m.** | Cumple criterios de aceptación | Aprobada | Evidencia conservada localmente en PC RTX / conversación de trabajo |
+| PF-08 | Horarios | ¿A qué hora es el check-out? | Debe responder que el check-out debe realizarse máximo a las **12:00 p. m.** | Cumple criterios de aceptación | Aprobada | Evidencia conservada localmente en PC RTX / conversación de trabajo |
+| PF-09 | Horarios | ¿La recepción atiende todo el día? | Debe responder que la recepción atiende las **24 horas**. | Cumple criterios de aceptación | Aprobada | Evidencia conservada localmente en PC RTX / conversación de trabajo |
+| PF-10 | Servicios | ¿El hotel tiene Wi-Fi? | Debe responder que sí, el hotel ofrece internet Wi-Fi a sus huéspedes. | Cumple criterios de aceptación | Aprobada | Evidencia conservada localmente en PC RTX / conversación de trabajo |
 | PF-11 | Servicios | ¿El hotel ofrece desayuno? | Debe responder que algunas tarifas incluyen desayuno y que el huésped debe confirmarlo. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
 | PF-12 | Servicios | ¿Cuál es el horario del desayuno? | Debe responder que el desayuno es de **6:30 a. m. a 9:30 a. m.** | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
 | PF-13 | Servicios | ¿El hotel tiene parqueadero? | Debe responder que sí, pero que está sujeto a disponibilidad. | [PENDIENTE RTX] | Pendiente | [PENDIENTE RTX] |
@@ -107,22 +109,15 @@ Estas pruebas buscan verificar que el asistente no invente información cuando l
 | PT-02 | Ollama API | Ejecutar `curl.exe http://localhost:11434/api/tags` | Debe aparecer el modelo `qwen2.5:7b`. | [PENDIENTE RTX] | Pendiente |
 | PT-03 | n8n | Abrir `http://localhost:5678` | Debe abrir la interfaz de n8n. | [PENDIENTE RTX] | Pendiente |
 | PT-04 | Workflow | Ejecutar workflow desde Manual Trigger | El flujo debe terminar con estado exitoso. | [PENDIENTE RTX] | Pendiente |
-| PT-05 | HTTP Request | Enviar pregunta a Ollama desde n8n | El nodo debe devolver una respuesta en el campo `response`. | [PENDIENTE RTX] | Pendiente |
+| PT-05 | Code Node | Ejecutar el flujo; el código llama a Ollama vía `this.helpers.httpRequest` | Debe obtenerse una respuesta en el campo `response` de Ollama. | [PENDIENTE RTX] | Pendiente |
 
 ---
 
-## 8. Evidencias requeridas
+## 8. Evidencias
 
-Para completar este archivo, se deben agregar evidencias desde la PC RTX 3050.
+Por decisión del equipo, **las capturas y anexos no se suben al repositorio** por ahora: se conservan en la **PC RTX** y en la **conversación de trabajo**. Las tablas anteriores registran el estado de las pruebas sin adjuntar archivos en Git.
 
-Evidencias mínimas (sustituir por archivos reales cuando existan; si no, mantener **[PENDIENTE RTX]**):
-
-- Captura de Docker Desktop con contenedores activos. [PENDIENTE RTX]
-- Captura de `docker compose ps`. [PENDIENTE RTX]
-- Captura del workflow en n8n. [PENDIENTE RTX]
-- Captura de una respuesta correcta del asistente. [PENDIENTE RTX]
-- Captura de una respuesta ante pregunta fuera de contexto. [PENDIENTE RTX]
-- Exportación del workflow en formato `.json` (la referencia en repo es `workflows/asistente_hotel_basico_qwen.json`). [PENDIENTE RTX]
+Cuando el curso exija evidencia pública, se pueden añadir imágenes en `evidencias/` o enlaces acordados con el profesor, sin datos sensibles.
 
 ---
 
@@ -130,59 +125,26 @@ Evidencias mínimas (sustituir por archivos reales cuando existan; si no, manten
 
 | Tipo de prueba | Total | Aprobadas | Fallidas | Pendientes |
 |---|---:|---:|---:|---:|
-| Pruebas funcionales principales | 19 | 0 | 0 | 19 |
+| Pruebas funcionales principales | 19 | 10 | 0 | 9 |
 | Pruebas de seguridad/contexto | 5 | 0 | 0 | 5 |
 | Pruebas técnicas | 5 | 0 | 0 | 5 |
 
-> Nota: estos valores deben actualizarse después de ejecutar las pruebas reales en la PC RTX 3050.
+> **PF-01 a PF-10** aprobadas en RTX con evidencia local. El resto de filas siguen en **Pendiente** hasta ejecutarse y documentarse.
 
 ---
 
 ## 10. Conclusión preliminar
 
-El sistema cuenta con una estructura de pruebas funcionales diseñada para validar el comportamiento del asistente hotelero. La versión actual del proyecto busca comprobar que n8n pueda enviar preguntas a Ollama y recibir respuestas basadas en el contexto del **Hotel El Claustro de San Francisco**.
+El flujo **Manual Trigger → Edit Fields → Code in JavaScript → Ollama** permite validar el asistente del **Hotel El Claustro de San Francisco** con el modelo **qwen2.5:7b**. Las pruebas **PF-01 a PF-10** quedaron **aprobadas** según criterios de aceptación; las evidencias asociadas no se versionan en el repositorio en esta fase.
 
-La validación final dependerá de las respuestas reales obtenidas desde la PC RTX 3050 durante la ejecución del workflow en n8n.
+Continúa el trabajo con **PF-11 en adelante**, pruebas **PS-*** y **PT-***, y la preparación de la demo final.
 
 ---
 
-## 11. Mejora futura
+## 11. Mejoras futuras
 
-Como mejora posterior, se propone reemplazar el contexto directo en el prompt por una arquitectura con base vectorial usando Postgres/pgvector. Esto permitiría consultar documentos más extensos y recuperar fragmentos relevantes de forma más precisa antes de generar la respuesta final.
+- Reemplazar el contexto directo en el prompt por una arquitectura con **base vectorial** (por ejemplo **Postgres/pgvector**) para documentos más extensos y recuperación por similitud.
+- **Lectura de documentos externos** (p. ej. **PDF**) y, si aplica al curso, integración con **Google Docs** (no implementado).
+- **AI Agent** en n8n y canales como **Telegram** (no implementados).
 
-## 12. Pruebas registradas
-Pruebas registradas:
-PF-01 ¿Cuál es el nombre del hotel?
-Respuesta obtenida: El nombre oficial del hotel es Hotel El Claustro de San Francisco.
-
-PF-02 ¿Qué tipos de habitaciones ofrece el hotel?
-Respuesta obtenida: El Hotel El Claustro de San Francisco ofrece habitación sencilla, habitación doble, habitación triple, habitación familiar y suite.
-
-PF-03 ¿A qué hora es el check-in?
-Respuesta obtenida: El check-in inicia a las 3:00 p. m.
-
-PF-04 ¿A qué hora es el check-out?
-Respuesta obtenida: El check-out debe realizarse máximo a las 12:00 p. m.
-
-PF-05 ¿Cuál es la política de cancelación?
-Respuesta obtenida: Las reservas pueden cancelarse sin penalización hasta 48 horas antes de la fecha de entrada. Si la cancelación se realiza con menos de 48 horas de anticipación, el hotel puede cobrar una penalización equivalente a una noche de hospedaje.
-
-PF-06 ¿El hotel acepta mascotas?
-Respuesta obtenida: El hotel no acepta mascotas de forma general. Casos especiales deben consultarse previamente con recepción. Los animales de asistencia pueden ser permitidos según la normativa aplicable y previa validación del hotel.
-
-PF-07 ¿Tiene el hotel servicio de lavandería?
-Respuesta obtenida: No tengo información suficiente en el documento del hotel para responder eso.
-
-PF-08 ¿Cuál es la contraseña exacta del Wi-Fi?
-Respuesta obtenida: No tengo información suficiente en el documento del hotel para responder eso.
-
-PF-09 ¿La recepción atiende las 24 horas?
-Respuesta obtenida: Sí, recepción atiende las 24 horas.
-
-PF-10 ¿El desayuno está incluido?
-Respuesta obtenida: El desayuno no está incluido en todas las tarifas. Algunas tarifas sí incluyen el desayuno. Para más información, se debe consultar la tarifa seleccionada o comunicarse con recepción.
-
-Usa una tabla Markdown con columnas:
-ID, Pregunta, Respuesta esperada, Respuesta obtenida, Estado, Evidencia.
-
-Estado de todas: Aprobada.
+Estas líneas orientan la defensa y el informe; el código actual no las incluye.

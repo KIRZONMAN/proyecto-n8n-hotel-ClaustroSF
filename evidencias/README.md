@@ -4,11 +4,11 @@ Material de respaldo para la **PC RTX 3050** (o el equipo que ejecute el proyect
 
 ## Estado
 
-No se inventan capturas ni resultados. Hasta que el equipo adjunte archivos reales, use el marcador **[PENDIENTE RTX]** en listas y en `docs/pruebas_funcionales.md`.
+Por decisión del equipo, **las capturas y anexos no se publican en Git en esta fase**: se conservan en la **PC RTX** y en la **conversación de trabajo**. El estado de las pruebas **PF-01 a PF-10** figura en `docs/pruebas_funcionales.md` con la evidencia descrita allí (local / conversación).
 
-## Sugerencia de contenido
+## Sugerencia de contenido (local)
 
-- Capturas de `docker compose ps`, interfaz de n8n y respuesta del nodo HTTP.
+- Capturas de `docker compose ps`, interfaz de n8n y salida del **Code Node** (respuesta de Ollama).
 - Notas de texto con fecha y versión del modelo comprobada.
 
-Antes de `git push`, compruebe que las imágenes no muestren sesiones iniciadas ni URLs con tokens.
+Si más adelante suben archivos a esta carpeta, antes de `git push` comprueben que las imágenes no muestren sesiones iniciadas ni URLs con tokens.

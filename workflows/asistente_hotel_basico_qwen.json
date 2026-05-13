@@ -19,7 +19,7 @@
             {
               "id": "d5208ae5-707d-4b7d-b379-8dbd4d4f03bb",
               "name": "pregunta_usuario",
-              "value": "¿Cuál es la política de cancelación?",
+              "value": "¿El desayuno está incluido?",
               "type": "string"
             }
           ]
@@ -81,7 +81,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "b16d1589-5d1b-4d6d-a2bc-600e2d6508e2",
+  "versionId": "a91d606f-2c8d-4277-9863-bb641307da52",
   "meta": {
     "instanceId": "4c3ad71e0fa26083d20cc4a7c2184c4b827da0540a8ab0905fefbc39e27588b8"
   },

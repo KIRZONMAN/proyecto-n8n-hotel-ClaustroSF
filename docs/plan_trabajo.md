@@ -6,12 +6,14 @@ Proyecto académico **proyecto-n8n-hotel-ClaustroSF** — asistente para **Hotel
 
 | Fase | Descripción | Estado |
 |------|-------------|--------|
-| **Fase 1** | Infraestructura **Docker Compose + n8n + Ollama**; red y volúmenes; modelo `qwen2.5:7b` disponible. | Avance según `control/avances_rtx.md` y evidencias [PENDIENTE RTX]. |
-| **Fase 2** | Asistente **básico** con **contexto directo** en el prompt del nodo HTTP; workflow exportado en `workflows/`. | Diseño alineado a documentación; validación en laboratorio pendiente de evidencias. |
-| **Fase 3** | **Pruebas funcionales** documentadas y ejecutadas en la RTX 3050 según `docs/pruebas_funcionales.md`. | Tablas con resultados reales: [PENDIENTE RTX]. |
+| **Fase 1** | Infraestructura **Docker Compose + n8n + Ollama**; red y volúmenes; modelo `qwen2.5:7b` disponible. | Operativa en RTX según pruebas del equipo. |
+| **Fase 2** | Asistente **básico** con **contexto directo** en el prompt, armado en **Code Node** (JavaScript) con `this.helpers.httpRequest` hacia Ollama; workflow oficial `workflows/asistente_hotel_basico_qwen.json`. | Implementado en RTX; reexportar JSON para alinear repo. |
+| **Fase 3** | **Pruebas funcionales** según `docs/pruebas_funcionales.md`. | **PF-01 a PF-10** aprobadas; resto pendiente. Evidencias locales (no en Git en esta fase). |
 | **Fase 4** | **Documentación** (`docs/`, `README.md`) y **evidencias** (capturas, notas) en `evidencias/`. | En curso / revisión continua. |
 | **Fase futura** | Lectura de **documentos externos** (p. ej. PDF) integrada al flujo con criterios de gobernanza del curso. | No implementada. |
+| **Fase futura** | **Google Docs** u otras fuentes documentales en la nube. | No implementada. |
 | **Fase futura** | **AI Agent** en n8n (o patrón equivalente) para diálogo y herramientas. | No implementada. |
+| **Fase futura** | **Telegram** u otros canales de mensajería. | No implementada. |
 | **Fase futura** | **Postgres** con **pgvector** u otra **base vectorial** para RAG y escalado del contexto. | No implementada. |
 
 ## Dependencias entre fases

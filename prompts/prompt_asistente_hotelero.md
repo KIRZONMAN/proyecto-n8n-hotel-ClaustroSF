@@ -3,7 +3,7 @@
 **Hotel (nombre formal):** Hotel El Claustro de San Francisco.  
 **Repositorio:** proyecto-n8n-hotel-ClaustroSF (**ClaustroSF** = abreviatura).
 
-Este texto es la referencia para el mensaje de sistema y contexto que debe enviarse a Ollama (p. ej. en el cuerpo JSON del nodo **HTTP Request** en n8n). El documento completo del dominio está en `documentos/Documento_Base_Hotel.md`; el fragmento siguiente es el **resumen operativo** alineado al flujo básico actual.
+Este texto es la referencia para el mensaje de sistema y contexto que debe enviarse a Ollama (p. ej. en el cuerpo JSON que arma el nodo **Code in JavaScript** y envía con **`this.helpers.httpRequest`** en n8n). El documento completo del dominio está en `documentos/Documento_Base_Hotel.md`; el fragmento siguiente es el **resumen operativo** alineado al flujo básico actual.
 
 ---
 
