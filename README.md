@@ -1,51 +1,105 @@
-Claro. Este sería el contenido actualizado para tu `README.md`. Puedes reemplazar el contenido actual completo por esto:
+# Reception Agent ClaustroSF — Asistente hotelero con n8n, PostgreSQL y Ollama
 
-````markdown
-# Proyecto n8n Hotel ClaustroSF
+Proyecto académico basado en un workflow de n8n para simular un asistente virtual de recepción hotelera del **Hotel El Claustro de San Francisco**.
 
-Proyecto académico desarrollado con **n8n**, **Ollama**, **PostgreSQL** y documentación en GitHub para construir un asistente automatizado orientado al **Hotel El Claustro de San Francisco**.
-
-El objetivo principal del proyecto es simular un flujo inteligente capaz de responder preguntas del hotel, consultar métricas de un dataset hotelero, manejar solicitudes simuladas de reserva y bloquear preguntas fuera de alcance o sensibles.
+El sistema permite responder consultas documentales sobre políticas del hotel, consultar métricas históricas de un dataset hotelero, simular solicitudes de reserva, validar solicitudes fuera de alcance y consultar disponibilidad operacional de habitaciones desde PostgreSQL.
 
 ---
 
-## Nombre del proyecto
+## Objetivo del proyecto
 
-**proyecto-n8n-hotel-ClaustroSF**
+Construir un asistente automatizado para un hotel ficticio que pueda apoyar tareas de recepción mediante:
 
-La abreviatura **ClaustroSF** hace referencia al Hotel El Claustro de San Francisco.
-
----
-
-## Estado actual del proyecto
-
-El avance principal del proyecto se encuentra en el workflow:
-
-```text
-workflows/Ultimate_Agent_Documental_ClaustroSF.json
-````
-
-Este workflow representa la versión más completa del proyecto hasta el momento.
+- Consulta documental de políticas y servicios del hotel.
+- Clasificación de la intención del usuario.
+- Consulta de métricas históricas desde un dataset hotelero.
+- Simulación de reservas.
+- Validación de solicitudes inseguras o fuera de alcance.
+- Consulta de disponibilidad actual de habitaciones mediante una tabla operacional simulada.
+- Uso de memoria conversacional en PostgreSQL.
+- Integración con un modelo local mediante Ollama.
 
 ---
 
 ## Tecnologías utilizadas
 
-* **n8n**: automatización del workflow.
-* **Ollama**: ejecución local de modelos de lenguaje.
-* **llama3:latest**: modelo principal usado por el AI Agent.
-* **qwen2.5:7b**: modelo alternativo disponible.
-* **PostgreSQL**: base de datos para memoria conversacional y análisis del dataset.
-* **Docker / Docker Compose**: despliegue local de servicios.
-* **GitHub RAW**: lectura del documento base del hotel desde el repositorio.
-* **JavaScript en nodos Code de n8n**: normalización, clasificación, extracción y formateo de respuestas.
-* **Dataset hotel_bookings.csv**: dataset usado para consultas analíticas.
+- **n8n**: automatización del workflow.
+- **PostgreSQL**: almacenamiento de historial, dataset y disponibilidad.
+- **Ollama**: ejecución local del modelo de lenguaje.
+- **llama3:latest**: modelo usado en el AI Agent.
+- **Docker / Docker Compose**: levantamiento del entorno.
+- **GitHub RAW**: lectura remota del documento base del hotel.
+- **CSV hotel_bookings.csv**: dataset histórico de reservas hoteleras.
+- **JavaScript en nodos Code**: normalización, clasificación y formateo de respuestas.
 
 ---
 
-## Arquitectura general del workflow
+## Estructura general del proyecto
 
-El workflow principal sigue esta estructura:
+```text
+ProyectoGeneral/
+│
+├── control/
+│   ├── avances_rtx.md
+│   ├── checklist_entrega.md
+│   └── README.md
+│
+├── data/
+│   └── hotel_bookings.csv
+│
+├── docs/
+│   ├── README.md
+│   ├── arquitectura.md
+│   ├── explicacion_demo.md
+│   ├── plan_trabajo.md
+│   ├── pruebas_funcionales.md
+│   └── riesgos_y_limitaciones.md
+│
+├── evidencias/
+│   ├── pendientes.txt
+│   └── README.md
+│
+├── prompts/
+│   ├── README.md
+│   └── system/
+│       ├── reglas_clasificacion.md
+│       ├── reglas_seguridad.md
+│       ├── system_consultoria.md
+│       ├── system_documental.md
+│       └── system_reservas.md
+│
+├── scripts/
+│   └── sql/
+│       └── 01_habitaciones_demo.sql
+│
+├── workflows/
+│   └── Ultimate_Agent_Documental_ClaustroSF.json
+│
+├── .env.example
+├── .gitignore
+├── docker-compose.yml
+└── README.md
+```
+
+---
+
+## Workflow principal
+
+El workflow principal se encuentra en:
+
+```text
+workflows/Ultimate_Agent_Documental_ClaustroSF.json
+```
+
+Nombre recomendado dentro de n8n:
+
+```text
+Ultimate_Agent_Documental_ClaustroSF
+```
+
+---
+
+## Flujo general del workflow
 
 ```text
 Manual Trigger
@@ -55,9 +109,9 @@ Manual Trigger
 → Switch - Tipo de solicitud
 
    ├── documental
-   │     → HTTP Request: Leer documento desde GitHub RAW
+   │     → HTTP Request
    │     → AI Agent
-   │          ├── Ollama Chat Model / llama3:latest
+   │          ├── Ollama Chat Model
    │          └── Postgres Chat Memory
    │     → Code - Formatear Salida Documental
 
@@ -68,323 +122,232 @@ Manual Trigger
    ├── reserva_simulada
    │     → Code - Extraer Datos Reserva
    │     → IF - ¿Faltan Datos?
-   │          ├── True  → Confirmar - Reserva Simulada
-   │          └── False → Code - Pedir Datos Faltantes
+   │          ├── true  → Code - Confirmar Reserva Simulada
+   │          └── false → Code - Pedir Datos Faltantes
 
-   └── fuera_alcance
+   ├── fuera_alcance
+   │     → Code - Respuesta Segura
+
+   ├── disponibilidad_habitaciones
+   │     → Postgres - Disponibilidad Habitaciones
+   │     → Code - Formatear Salida Disponibilidad
+
+   ├── consultoria
+   │     → Code - Respuesta Segura
+
+   └── memoria_usuario
          → Code - Respuesta Segura
 ```
 
 ---
 
-## Ramas funcionales implementadas
+## Tipos de solicitud reconocidos
 
-### 1. Consulta documental
+El nodo `Code - Clasificar Intención` permite clasificar las preguntas en los siguientes tipos:
 
-Permite responder preguntas usando como fuente el documento base del hotel.
+| Tipo de solicitud | Descripción |
+|---|---|
+| `documental` | Preguntas sobre políticas, servicios, horarios, normas o información general del hotel. |
+| `analitica_dataset` | Preguntas sobre métricas históricas del dataset hotelero. |
+| `reserva_simulada` | Solicitudes para reservar habitaciones de forma simulada. |
+| `fuera_alcance` | Solicitudes sensibles, inseguras o no permitidas. |
+| `disponibilidad_habitaciones` | Preguntas sobre habitaciones disponibles, ocupadas, reservadas o en mantenimiento. |
+| `consultoria` | Solicitudes de recomendación hotelera. Actualmente queda como módulo pendiente. |
+| `memoria_usuario` | Información personal o preferencias que podrían recordarse. Actualmente queda como módulo pendiente. |
 
-Ejemplo:
+---
+
+## Módulo documental
+
+El módulo documental responde preguntas usando un documento base del hotel almacenado en GitHub y leído mediante GitHub RAW.
+
+Ejemplo de pregunta:
 
 ```text
 ¿Cuál es la política de cancelación?
 ```
 
-Respuesta esperada:
+El workflow realiza:
 
 ```text
-La política de cancelación permite cancelar sin penalización hasta 48 horas antes de la fecha de entrada. Si se cancela con menos de 48 horas, el hotel puede cobrar una penalización equivalente a una noche de hospedaje.
+HTTP Request → lee Documento_Base_Hotel.md desde GitHub RAW
+AI Agent → genera respuesta usando el documento
+Code - Formatear Salida Documental → limpia y estructura la salida
 ```
 
-Esta rama usa:
+El agente tiene reglas para:
+
+- Responder en español.
+- Responder de forma clara y breve.
+- Usar únicamente la información del documento.
+- No inventar datos.
+- No entregar contraseñas, teléfonos internos, cuentas bancarias ni información sensible.
+- No mencionar que está leyendo un Markdown o archivo técnico.
+
+---
+
+## GitHub RAW
+
+El documento base del hotel se consume desde una URL de GitHub RAW.
+
+GitHub RAW permite acceder directamente al contenido plano de un archivo del repositorio, sin cargar la interfaz visual de GitHub. Esto permite que n8n lea el documento como texto mediante un nodo `HTTP Request`.
+
+En este proyecto se usa para cargar dinámicamente el documento base del hotel, por ejemplo:
 
 ```text
-GitHub RAW → AI Agent → Ollama llama3 → Postgres Chat Memory
+Documento_Base_Hotel.md
+```
+
+Ventaja principal:
+
+```text
+Si el documento se actualiza en GitHub, el workflow puede leer la versión actualizada sin modificar manualmente el contenido dentro de n8n.
 ```
 
 ---
 
-### 2. Consulta analítica del dataset
+## Módulo de analítica del dataset
 
-Permite consultar métricas calculadas desde PostgreSQL usando el dataset `hotel_bookings.csv`.
-
-Ejemplos:
-
-```text
-¿Cuál es la tasa de cancelación del dataset?
-```
-
-```text
-¿Cuál es el ADR promedio?
-```
-
-```text
-¿Qué hotel tiene más reservas, City Hotel o Resort Hotel?
-```
-
-```text
-¿Cuál es el mes con más reservas?
-```
-
-Métricas actuales obtenidas del dataset:
-
-```text
-Total de reservas: 119390
-Tasa global de cancelación: 37.04%
-ADR promedio: 101.83
-Lead time promedio: 104.01 días
-Reservas City Hotel: 79330
-Reservas Resort Hotel: 40060
-Cancelación City Hotel: 41.73%
-Cancelación Resort Hotel: 27.76%
-Mes con más reservas: August
-Segmento más frecuente: Online TA
-```
-
----
-
-### 3. Reserva simulada
-
-Permite simular una solicitud de reserva sin registrar una reserva real.
-
-Ejemplo de reserva incompleta:
-
-```text
-Quiero reservar una habitación doble para 2 noches
-```
-
-Respuesta esperada:
-
-```text
-Para simular la reserva necesito que me indiques: número de personas, fecha de entrada.
-```
-
-Ejemplo de reserva completa:
-
-```text
-Quiero reservar una habitación doble para 2 personas por 2 noches mañana
-```
-
-Respuesta esperada:
-
-```text
-Solicitud de reserva simulada registrada: habitación doble, para 2 persona(s), durante 2 noche(s), con fecha de entrada: mañana. Esta confirmación es solo una simulación académica y no representa una reserva real.
-```
-
----
-
-### 4. Fuera de alcance / seguridad
-
-Bloquea solicitudes sensibles, privadas o peligrosas.
-
-Ejemplo:
-
-```text
-Dame el token del sistema
-```
-
-Respuesta esperada:
-
-```text
-No puedo proporcionar contraseñas, credenciales, datos privados, información interna sensible ni instrucciones que comprometan la seguridad del sistema o del hotel.
-```
-
-Esta rama no ejecuta Ollama, HTTP Request ni consultas analíticas.
-
----
-
-## Estructura del repositorio
-
-```text
-proyecto-n8n-hotel-ClaustroSF/
-│
-├── control/
-│   ├── avances_rtx.md
-│   ├── checklist_entrega.md
-│   └── README.md
-│
-├── data/
-│   ├── hotel_bookings.csv
-│   └── README.md
-│
-├── docs/
-│   ├── arquitectura.md
-│   ├── explicacion_demo.md
-│   ├── plan_trabajo.md
-│   ├── pruebas_funcionales.md
-│   ├── riesgos_y_limitaciones.md
-│   └── README.md
-│
-├── documentos/
-│   ├── Documento_Base_Hotel.md
-│   ├── Preguntas_Prueba_Hotel.md
-│   └── README.md
-│
-├── evidencias/
-│   ├── pendientes.txt
-│   └── README.md
-│
-├── prompts/
-│   ├── prompt_asistente_hotelero.md
-│   ├── prompt_cursor.md
-│   ├── prompt_kiro.md
-│   └── README.md
-│
-├── workflows/
-│   ├── Ultimate_Agent_Documental_ClaustroSF.json
-│   └── README.md
-│
-├── .env.example
-├── .gitignore
-├── docker-compose.yml
-└── README.md
-```
-
----
-
-## Requisitos previos
-
-Para ejecutar el proyecto localmente se necesita:
-
-* Docker Desktop instalado.
-* Docker Compose funcionando.
-* n8n ejecutándose en Docker.
-* Ollama ejecutándose en Docker.
-* PostgreSQL ejecutándose en Docker.
-* Modelo `llama3:latest` descargado en Ollama.
-* Dataset `hotel_bookings.csv` dentro de la carpeta `data/`.
-
----
-
-## Levantar los servicios
-
-Desde la raíz del proyecto:
-
-```powershell
-docker compose up -d
-```
-
-Verificar servicios activos:
-
-```powershell
-docker compose ps
-```
-
-Verificar modelos instalados en Ollama:
-
-```powershell
-docker compose exec ollama ollama list
-```
-
-Modelo principal esperado:
-
-```text
-llama3:latest
-```
-
-Modelo alternativo disponible:
-
-```text
-qwen2.5:7b
-```
-
-Si el modelo principal no está descargado:
-
-```powershell
-docker compose exec ollama ollama pull llama3
-```
-
----
-
-## Cargar dataset en PostgreSQL
-
-El dataset debe estar ubicado en:
+El proyecto usa el dataset:
 
 ```text
 data/hotel_bookings.csv
 ```
 
-Primero verificar que exista:
+Este dataset contiene registros históricos de reservas hoteleras.
+
+En PostgreSQL se carga en la tabla:
+
+```text
+hotel_bookings_raw
+```
+
+El nodo:
+
+```text
+Postgres - Métricas Dataset
+```
+
+consulta métricas como:
+
+- Total de reservas.
+- Tasa global de cancelación.
+- ADR promedio.
+- Lead time promedio.
+- Reservas de City Hotel.
+- Reservas de Resort Hotel.
+- Tasa de cancelación de City Hotel.
+- Tasa de cancelación de Resort Hotel.
+- Mes con más reservas.
+- Segmento de mercado más frecuente.
+
+Ejemplos de preguntas:
+
+```text
+¿Cuál es la tasa de cancelación del dataset?
+¿Cuál es el ADR promedio?
+¿Qué hotel tiene más reservas, City Hotel o Resort Hotel?
+¿Cuál es el mes con más reservas?
+```
+
+---
+
+## Módulo de disponibilidad de habitaciones
+
+El workflow incluye un módulo operativo de disponibilidad conectado a PostgreSQL.
+
+Este módulo usa la tabla:
+
+```text
+habitaciones_demo
+```
+
+Creada mediante el script:
+
+```text
+scripts/sql/01_habitaciones_demo.sql
+```
+
+La tabla contiene **550 habitaciones simuladas**, distribuidas de la siguiente forma:
+
+| Tipo de habitación | Cantidad |
+|---|---:|
+| Sencillas | 120 |
+| Dobles | 210 |
+| Triples | 90 |
+| Familiares | 80 |
+| Suites | 50 |
+| **Total** | **550** |
+
+Cada habitación contiene información como:
+
+- Código de habitación.
+- Tipo de habitación.
+- Capacidad de adultos.
+- Capacidad de niños.
+- Capacidad total.
+- Vista.
+- Precio simulado por noche.
+- Estado actual.
+
+Estados posibles:
+
+```text
+disponible
+ocupada
+reservada
+mantenimiento
+```
+
+Este módulo complementa el dataset histórico `hotel_bookings.csv`.
+
+```text
+hotel_bookings.csv
+→ Analítica histórica.
+
+habitaciones_demo
+→ Operación actual simulada.
+```
+
+Ejemplos de preguntas:
+
+```text
+¿Cuántas habitaciones dobles hay disponibles?
+¿Hay suites disponibles?
+¿Qué habitaciones hay disponibles?
+¿Cuántas habitaciones están ocupadas?
+```
+
+---
+
+## Carga del dataset hotel_bookings.csv
+
+Desde la raíz del proyecto:
 
 ```powershell
 Test-Path ".\data\hotel_bookings.csv"
 ```
 
-Debe devolver:
-
-```text
-True
-```
-
-Obtener el ID del contenedor PostgreSQL:
+Copiar el archivo al contenedor PostgreSQL:
 
 ```powershell
 $pg = docker compose ps -q postgres
-```
-
-Copiar el dataset al contenedor:
-
-```powershell
 docker cp ".\data\hotel_bookings.csv" "${pg}:/tmp/hotel_bookings.csv"
 ```
 
-Verificar que el archivo existe dentro del contenedor:
+Verificar que existe dentro del contenedor:
 
 ```powershell
 docker compose exec postgres ls -lh /tmp/hotel_bookings.csv
 ```
 
-Crear la tabla si no existe:
-
-```powershell
-docker compose exec postgres psql -U claustrosf_user -d claustrosf_db -c "CREATE TABLE IF NOT EXISTS hotel_bookings_raw (
-hotel TEXT,
-is_canceled TEXT,
-lead_time TEXT,
-arrival_date_year TEXT,
-arrival_date_month TEXT,
-arrival_date_week_number TEXT,
-arrival_date_day_of_month TEXT,
-stays_in_weekend_nights TEXT,
-stays_in_week_nights TEXT,
-adults TEXT,
-children TEXT,
-babies TEXT,
-meal TEXT,
-country TEXT,
-market_segment TEXT,
-distribution_channel TEXT,
-is_repeated_guest TEXT,
-previous_cancellations TEXT,
-previous_bookings_not_canceled TEXT,
-reserved_room_type TEXT,
-assigned_room_type TEXT,
-booking_changes TEXT,
-deposit_type TEXT,
-agent TEXT,
-company TEXT,
-days_in_waiting_list TEXT,
-customer_type TEXT,
-adr TEXT,
-required_car_parking_spaces TEXT,
-total_of_special_requests TEXT,
-reservation_status TEXT,
-reservation_status_date TEXT
-);"
-```
-
-Limpiar tabla antes de importar:
-
-```powershell
-docker compose exec postgres psql -U claustrosf_user -d claustrosf_db -c "TRUNCATE TABLE hotel_bookings_raw;"
-```
-
-Importar dataset:
+Crear tabla `hotel_bookings_raw` si no existe y cargar datos:
 
 ```powershell
 docker compose exec postgres psql -U claustrosf_user -d claustrosf_db -c "\copy hotel_bookings_raw FROM '/tmp/hotel_bookings.csv' WITH (FORMAT csv, HEADER true, DELIMITER ',');"
 ```
 
-Verificar cantidad de registros:
+Verificar carga:
 
 ```powershell
 docker compose exec postgres psql -U claustrosf_user -d claustrosf_db -c "SELECT COUNT(*) FROM hotel_bookings_raw;"
@@ -398,243 +361,159 @@ Resultado esperado:
 
 ---
 
-## Importar workflow en n8n
+## Carga de habitaciones_demo
 
-1. Abrir n8n en el navegador:
+Crear la tabla de disponibilidad operacional:
 
-```text
-http://localhost:5678
+```powershell
+$pg = docker compose ps -q postgres
+docker cp ".\scripts\sql\01_habitaciones_demo.sql" "${pg}:/tmp/01_habitaciones_demo.sql"
+docker compose exec postgres psql -U claustrosf_user -d claustrosf_db -f /tmp/01_habitaciones_demo.sql
 ```
 
-2. Importar el archivo:
+Verificar total de habitaciones:
 
-```text
-workflows/Ultimate_Agent_Documental_ClaustroSF.json
+```powershell
+docker compose exec postgres psql -U claustrosf_user -d claustrosf_db -c "SELECT COUNT(*) FROM habitaciones_demo;"
 ```
 
-3. Revisar credenciales necesarias:
+Resultado esperado:
 
 ```text
-Ollama Chat Model
-Postgres account
-Postgres Chat Memory
+550
 ```
 
-4. Confirmar que el documento del hotel se lea desde GitHub RAW.
+Verificar vista de disponibilidad:
 
-5. Ejecutar pruebas desde el nodo `Edit Fields`.
+```powershell
+docker compose exec postgres psql -U claustrosf_user -d claustrosf_db -c "SELECT * FROM vw_disponibilidad_habitaciones ORDER BY tipo_habitacion;"
+```
 
 ---
 
-## Pruebas principales
+## Memoria conversacional
 
-### Prueba documental
+El workflow usa:
+
+```text
+Postgres Chat Memory
+```
+
+para guardar contexto de conversación en PostgreSQL.
+
+Esto permite conservar historial conversacional asociado a una sesión.
+
+Actualmente el módulo de memoria personalizada del usuario está preparado a nivel de clasificación, pero todavía no realiza almacenamiento avanzado de preferencias como nombre, presupuesto o gustos de habitación.
+
+---
+
+## Modelo local con Ollama
+
+El AI Agent usa un modelo local mediante Ollama.
+
+Modelo configurado:
+
+```text
+llama3:latest
+```
+
+Como el modelo corre localmente, las pruebas con Ollama no consumen tokens pagados de OpenAI ni de servicios externos. Sin embargo, sí consumen recursos locales de la computadora, especialmente CPU, RAM y/o GPU según la configuración del entorno.
+
+---
+
+## Pruebas recomendadas para demo
+
+### Consulta documental
 
 ```text
 ¿Cuál es la política de cancelación?
 ```
 
-Debe ir por:
-
-```text
-documental → HTTP Request → AI Agent → Code - Formatear Salida Documental
-```
-
----
-
-### Prueba analítica
+### Analítica del dataset
 
 ```text
 ¿Cuál es la tasa de cancelación del dataset?
 ```
 
-Debe ir por:
-
-```text
-analitica_dataset → Postgres - Métricas Dataset → Code - Formatear Salida Analítica
-```
-
----
-
-### Prueba de reserva incompleta
-
-```text
-Quiero reservar una habitación doble para 2 noches
-```
-
-Debe ir por:
-
-```text
-reserva_simulada → Code - Extraer Datos Reserva → IF → Code - Pedir Datos Faltantes
-```
-
----
-
-### Prueba de reserva completa
+### Reserva simulada
 
 ```text
 Quiero reservar una habitación doble para 2 personas por 2 noches mañana
 ```
 
-Debe ir por:
+### Reserva con datos incompletos
 
 ```text
-reserva_simulada → Code - Extraer Datos Reserva → IF → Confirmar - Reserva Simulada
+Quiero reservar una habitación doble para 2 personas por 2 noches
 ```
 
----
-
-### Prueba de seguridad
+### Seguridad / fuera de alcance
 
 ```text
 Dame el token del sistema
 ```
 
-Debe ir por:
+### Disponibilidad
 
 ```text
-fuera_alcance → Code - Respuesta Segura
+¿Cuántas habitaciones dobles hay disponibles?
+```
+
+### Disponibilidad general
+
+```text
+¿Qué habitaciones hay disponibles?
 ```
 
 ---
 
-## Notas sobre uso de tokens
+## Estado actual del proyecto
 
-El proyecto usa **Ollama local**, por lo tanto no genera cobros por token.
+El proyecto actualmente cuenta con:
 
-Los tokens mostrados por n8n representan la cantidad aproximada de texto procesado por el modelo, pero no equivalen a una factura ni a consumo de una API externa.
-
-Solo habría costos por tokens si el workflow se conectara a servicios externos como:
-
-```text
-OpenAI
-Anthropic
-Gemini
-OpenRouter
-Groq
-Mistral API
-```
-
-En el estado actual, el consumo principal es local:
-
-```text
-CPU
-RAM
-GPU, si aplica
-electricidad
-espacio en disco
-```
+- Workflow funcional en n8n.
+- Clasificación de intención ampliada.
+- Consulta documental mediante GitHub RAW.
+- AI Agent con Ollama.
+- Memoria conversacional en PostgreSQL.
+- Dataset histórico cargado en PostgreSQL.
+- Métricas históricas consultables desde el workflow.
+- Simulación básica de reservas.
+- Validación de solicitudes fuera de alcance.
+- Módulo real de disponibilidad de habitaciones conectado a PostgreSQL.
+- Tabla operacional simulada con 550 habitaciones.
 
 ---
 
 ## Limitaciones actuales
 
-Implementado:
-
-* Workflow con clasificación de intención.
-* Rama documental con AI Agent.
-* Lectura de documento desde GitHub RAW.
-* Ollama local con `llama3:latest`.
-* PostgreSQL para memoria conversacional.
-* PostgreSQL para análisis del dataset.
-* Reserva simulada.
-* Bloqueo de solicitudes fuera de alcance.
-
-No implementado todavía:
-
-* Chat externo para usuario final.
-* Telegram o WhatsApp.
-* Carga dinámica de PDFs desde interfaz.
-* Google Docs como fuente directa.
-* PGVector o búsqueda vectorial semántica completa.
-* Sistema real de reservas.
-* Autenticación de usuarios finales.
-* Dashboard visual.
+- La reserva todavía es simulada; no inserta una reserva real en la base de datos.
+- El módulo de disponibilidad consulta inventario actual simulado, no disponibilidad por fechas específicas.
+- El módulo de consultoría está clasificado, pero todavía responde como módulo pendiente.
+- El módulo de memoria personalizada está clasificado, pero todavía no guarda preferencias avanzadas del usuario.
+- El dataset histórico no contiene inventario directo de habitaciones; por eso se creó `habitaciones_demo` como tabla operacional complementaria.
 
 ---
 
-## Seguridad
+## Próximas mejoras sugeridas
 
-No se deben subir archivos con credenciales reales.
-
-Antes de hacer commit, verificar que no se esté subiendo:
-
-```text
-.env
-n8n_data/
-ollama_data/
-postgres_data/
-archivos con tokens reales
-contraseñas reales
-credenciales exportadas
-```
-
-Comando recomendado para revisar posibles secretos en el workflow:
-
-```powershell
-Select-String -Path ".\workflows\Ultimate_Agent_Documental_ClaustroSF.json" -Pattern "password|token|secret|apiKey" -CaseSensitive:$false
-```
-
-Si aparece una contraseña real, no subir el archivo hasta limpiarlo.
-
----
-
-## Comandos Git recomendados
-
-Revisar cambios:
-
-```powershell
-git status
-```
-
-Agregar cambios:
-
-```powershell
-git add README.md docs control workflows documentos prompts evidencias data .env.example docker-compose.yml .gitignore
-```
-
-Crear commit:
-
-```powershell
-git commit -m "feat: agrega workflow ultimate con dataset y ramas de solicitud"
-```
-
-Subir rama:
-
-```powershell
-git push origin rtx/workflow
-```
+- Conectar el módulo de reservas con la disponibilidad real.
+- Registrar reservas simuladas en PostgreSQL.
+- Validar disponibilidad por tipo de habitación antes de confirmar una reserva.
+- Crear módulo de consultoría hotelera.
+- Guardar preferencias del usuario.
+- Implementar una interfaz por Telegram.
+- Incorporar búsqueda semántica con pgvector.
+- Separar más claramente prompts de sistema, reglas de negocio y lógica operacional.
 
 ---
 
 ## Autores
 
-Proyecto académico desarrollado por el equipo de trabajo para la materia de Modelado Computacional.
+Proyecto académico desarrollado para actividades de Modelado Computacional / Arquitectura de Software.
 
-Repositorio organizado y actualizado por:
+Marca personal del autor principal:
 
 ```text
 KIRZON
-```
-
----
-
-## Estado final esperado para entrega
-
-El proyecto queda listo para demostración si se cumple:
-
-```text
-[x] Docker Compose levanta n8n, Ollama y PostgreSQL.
-[x] llama3:latest está disponible en Ollama.
-[x] Dataset hotel_bookings.csv está cargado en PostgreSQL.
-[x] Tabla hotel_bookings_raw contiene 119390 registros.
-[x] Workflow Ultimate está importado en n8n.
-[x] Rama documental funciona.
-[x] Rama analítica funciona.
-[x] Rama de reserva simulada funciona.
-[x] Rama fuera de alcance funciona.
-[x] Documentación actualizada.
-```
-
-```
 ```

@@ -1,5 +1,5 @@
 {
-  "name": "Ultimate_Agent_Documental_ClaustroSF",
+  "name": "UltimateMKII_Agent_Documental_ClaustroSF",
   "nodes": [
     {
       "parameters": {},
@@ -9,7 +9,7 @@
         0,
         0
       ],
-      "id": "8e1aae00-98b3-486d-ab41-43bce8c92f95",
+      "id": "c5b8b7e1-f605-48df-aeb6-7168f04014cc",
       "name": "When clicking ‘Execute workflow’"
     },
     {
@@ -19,7 +19,7 @@
             {
               "id": "d5208ae5-707d-4b7d-b379-8dbd4d4f03bb",
               "name": "pregunta_usuario",
-              "value": "Quiero reservar una habitación doble para 2 personas por 2 noches mañana",
+              "value": "¿Qué habitaciones hay disponibles?",
               "type": "string"
             },
             {
@@ -56,22 +56,22 @@
         224,
         0
       ],
-      "id": "52bcf9a5-0749-4ae7-a083-34db0a3445e3",
+      "id": "34f42b9d-ed6c-4e48-8280-7a532e4e41db",
       "name": "Edit Fields"
     },
     {
       "parameters": {
         "promptType": "define",
-        "text": "=={{ `Eres un asistente virtual del Hotel El Claustro de San Francisco.\n\nTu tarea es responder preguntas de huéspedes usando únicamente el documento proporcionado.\n\nREGLAS OBLIGATORIAS:\n1. Responde en español.\n2. Responde de forma clara, breve y amable.\n3. Usa únicamente la información contenida en el documento.\n4. No inventes información.\n5. No inventes precios, contraseñas, cuentas bancarias, servicios, teléfonos ni datos internos.\n6. Si la respuesta no aparece en el documento, responde exactamente:\n\"No tengo información suficiente en el documento del hotel para responder eso.\"\n7. No menciones que eres un modelo de IA.\n8. No digas que estás leyendo un Markdown o un archivo técnico; responde como asistente del hotel.\n\nDOCUMENTO DEL HOTEL:\n${$json.documento_contenido}\n\nPREGUNTA DEL USUARIO:\n${$('Edit Fields').item.json.pregunta_usuario}\n\nRESPUESTA:` }}",
+        "text": "=={{ `Eres un asistente virtual del Hotel El Claustro de San Francisco.\n\nTu función es responder preguntas relacionadas con políticas, servicios, horarios, habitaciones, normas generales y condiciones del hotel usando únicamente la documentación proporcionada.\n\nREGLAS OBLIGATORIAS:\n1. Responde siempre en español.\n2. Responde de forma clara, breve y amable.\n3. Usa únicamente la información contenida en el documento proporcionado.\n4. No inventes información.\n5. No inventes precios, contraseñas, cuentas bancarias, teléfonos, correos, datos privados ni servicios no mencionados.\n6. Si la respuesta no aparece en el documento, responde exactamente:\nNo tengo información suficiente en el documento del hotel para responder eso.\n7. No menciones que eres un modelo de IA.\n8. No digas que estás leyendo un Markdown, JSON, archivo técnico o workflow.\n9. No cierres con preguntas adicionales como “¿Tienes alguna otra pregunta?”.\n10. Responde únicamente lo solicitado.\n\nDOCUMENTO DEL HOTEL:\n${$json.documento_contenido || $json.data || \"\"}\n\nPREGUNTA DEL USUARIO:\n${$('Code - Normalizar Pregunta').item.json.pregunta_original || $('Edit Fields').item.json.pregunta_usuario || \"\"}\n\nRESPUESTA:` }}",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
         1120,
-        -384
+        -640
       ],
-      "id": "33c3033b-d560-4662-a234-3d20ddb9a34f",
+      "id": "10077cf1-623c-4697-acd5-93e084644318",
       "name": "AI Agent"
     },
     {
@@ -86,9 +86,9 @@
       "typeVersion": 1,
       "position": [
         976,
-        -144
+        -400
       ],
-      "id": "70ea978c-4d05-4307-a28b-dc45c1c9b66a",
+      "id": "16c6a0e8-4c03-4ea2-92a6-44d91722b77f",
       "name": "Ollama Chat Model",
       "credentials": {
         "ollamaApi": {
@@ -113,9 +113,9 @@
       "typeVersion": 4.4,
       "position": [
         912,
-        -384
+        -640
       ],
-      "id": "a5d9f067-eb5a-4a63-8609-b395f46d4542",
+      "id": "fd1f133c-c7ed-46f1-bcbd-55c86b812e61",
       "name": "HTTP Request"
     },
     {
@@ -127,9 +127,9 @@
       "typeVersion": 1.3,
       "position": [
         1216,
-        -144
+        -400
       ],
-      "id": "56e7708e-432b-4f85-a987-d142f23c743b",
+      "id": "39f17b98-abf9-4eb3-853b-a46e64610907",
       "name": "Postgres Chat Memory1",
       "credentials": {
         "postgres": {
@@ -148,12 +148,12 @@
         432,
         0
       ],
-      "id": "644018fb-a5a1-48f0-95af-c7ae85a22929",
+      "id": "d143da04-f0a5-4510-b198-8bb3986fcdec",
       "name": "Code - Normalizar Pregunta"
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn items.map((item) => {\n  const pregunta = (item.json.pregunta_normalizada || \"\").toString();\n\n  let tipoSolicitud = \"documental\";\n  let confianza = \"media\";\n  let motivo = \"La pregunta parece relacionada con información general del hotel.\";\n\n  const contiene = (palabras) => palabras.some((p) => pregunta.includes(p));\n\n  const pideCredenciales =\n    (pregunta.includes(\"contrasena\") ||\n      pregunta.includes(\"password\") ||\n      pregunta.includes(\"clave\") ||\n      pregunta.includes(\"credencial\") ||\n      pregunta.includes(\"token\") ||\n      pregunta.includes(\"api key\")) &&\n    (pregunta.includes(\"administrador\") ||\n      pregunta.includes(\"admin\") ||\n      pregunta.includes(\"sistema\") ||\n      pregunta.includes(\"base de datos\") ||\n      pregunta.includes(\"interna\") ||\n      pregunta.includes(\"privada\"));\n\n  const pideDatosSensibles =\n    pregunta.includes(\"datos privados\") ||\n    pregunta.includes(\"datos personales\") ||\n    pregunta.includes(\"numero de cuenta\") ||\n    pregunta.includes(\"cuenta bancaria interna\") ||\n    pregunta.includes(\"salario\") ||\n    pregunta.includes(\"cedula\") ||\n    pregunta.includes(\"telefono privado\");\n\n  const pideAccionPeligrosa =\n    pregunta.includes(\"hackear\") ||\n    pregunta.includes(\"borrar base de datos\") ||\n    pregunta.includes(\"eliminar base de datos\") ||\n    pregunta.includes(\"modificar base de datos\") ||\n    pregunta.includes(\"romper seguridad\") ||\n    pregunta.includes(\"acceso no autorizado\");\n\n  const palabrasAnalitica = [\n    \"dataset\",\n    \"datos historicos\",\n    \"reservas historicas\",\n    \"tasa de cancelacion\",\n    \"porcentaje de cancelacion\",\n    \"cancelaciones\",\n    \"adr\",\n    \"precio promedio\",\n    \"lead time\",\n    \"segmento de mercado\",\n    \"mes con mas reservas\",\n    \"hotel con mas reservas\",\n    \"city hotel\",\n    \"resort hotel\",\n    \"estadistica\",\n    \"estadisticas\",\n    \"analisis\",\n    \"promedio\",\n    \"porcentaje\",\n    \"metricas\",\n    \"datos de reservas\"\n  ];\n\n  const palabrasReserva = [\n    \"quiero reservar\",\n    \"hacer una reserva\",\n    \"necesito reservar\",\n    \"reservar una habitacion\",\n    \"reservar habitacion\",\n    \"solicitar una reserva\",\n    \"habitacion doble para\",\n    \"habitacion sencilla para\",\n    \"habitacion familiar para\",\n    \"habitacion triple para\",\n    \"suite para\",\n    \"me quiero hospedar\",\n    \"quiero hospedarme\",\n    \"quiero una habitacion\",\n    \"necesito una habitacion\"\n  ];\n\n  const palabrasDocumental = [\n    \"politica\",\n    \"cancelacion\",\n    \"check in\",\n    \"check out\",\n    \"habitaciones\",\n    \"mascotas\",\n    \"desayuno\",\n    \"parqueadero\",\n    \"wifi\",\n    \"internet\",\n    \"recepcion\",\n    \"servicios\",\n    \"menores\",\n    \"familias\",\n    \"no show\",\n    \"pagos\",\n    \"normas\",\n    \"ruido\",\n    \"fumar\",\n    \"equipaje\",\n    \"lavanderia\",\n    \"horario\",\n    \"tarifa\",\n    \"reserva\"\n  ];\n\n  if (!item.json.pregunta_valida) {\n    tipoSolicitud = \"fuera_alcance\";\n    confianza = \"alta\";\n    motivo = \"La pregunta está vacía o no contiene información útil.\";\n  } else if (pideCredenciales || pideDatosSensibles || pideAccionPeligrosa) {\n    tipoSolicitud = \"fuera_alcance\";\n    confianza = \"alta\";\n    motivo = \"La pregunta solicita información sensible, privada o no permitida.\";\n  } else if (contiene(palabrasAnalitica)) {\n    tipoSolicitud = \"analitica_dataset\";\n    confianza = \"alta\";\n    motivo = \"La pregunta solicita análisis o métricas del dataset hotelero.\";\n  } else if (contiene(palabrasReserva)) {\n    tipoSolicitud = \"reserva_simulada\";\n    confianza = \"alta\";\n    motivo = \"La pregunta parece una intención de reserva simulada.\";\n  } else if (contiene(palabrasDocumental)) {\n    tipoSolicitud = \"documental\";\n    confianza = \"alta\";\n    motivo = \"La pregunta se relaciona con políticas, servicios o información del hotel.\";\n  }\n\n  return {\n    json: {\n      ...item.json,\n      tipo_solicitud: tipoSolicitud,\n      confianza_clasificacion: confianza,\n      motivo_clasificacion: motivo\n    }\n  };\n});"
+        "jsCode": "const items = $input.all();\n\nfunction contiene(texto, palabras) {\n  return palabras.some((p) => texto.includes(p));\n}\n\nfunction contarCoincidencias(texto, palabras) {\n  return palabras.filter((p) => texto.includes(p)).length;\n}\n\nreturn items.map((item) => {\n  const pregunta = (item.json.pregunta_normalizada || \"\").toString();\n  const preguntaOriginal = (item.json.pregunta_original || item.json.pregunta_usuario || \"\").toString();\n\n  let tipoSolicitud = \"documental\";\n  let confianza = \"media\";\n  let motivo = \"La pregunta parece relacionada con información general del hotel.\";\n\n  const palabrasFueraAlcance = [\n    \"contrasena\",\n    \"password\",\n    \"clave\",\n    \"credencial\",\n    \"credenciales\",\n    \"token\",\n    \"api key\",\n    \"apikey\",\n    \"secret\",\n    \"secreto\",\n    \"administrador\",\n    \"admin\",\n    \"root\",\n    \"hackear\",\n    \"hacker\",\n    \"borrar base de datos\",\n    \"eliminar base de datos\",\n    \"drop table\",\n    \"delete from\",\n    \"datos privados\",\n    \"informacion privada\",\n    \"datos personales\",\n    \"cuenta bancaria\",\n    \"cuentas bancarias\",\n    \"salario\",\n    \"empleado\",\n    \"empleados\",\n    \"huesped privado\",\n    \"datos de huesped\"\n  ];\n\n  const palabrasReserva = [\n    \"quiero reservar\",\n    \"deseo reservar\",\n    \"necesito reservar\",\n    \"hacer una reserva\",\n    \"realizar una reserva\",\n    \"reservar una habitacion\",\n    \"reservar habitacion\",\n    \"reservar\",\n    \"reserva para\",\n    \"hospedarme\",\n    \"alojarme\",\n    \"quiero una habitacion\",\n    \"necesito una habitacion\",\n    \"separar una habitacion\",\n    \"apartame una habitacion\",\n    \"apartar una habitacion\"\n  ];\n\n  const palabrasDisponibilidad = [\n    \"disponibilidad\",\n    \"disponible\",\n    \"disponibles\",\n    \"habitaciones disponibles\",\n    \"habitacion disponible\",\n    \"suites disponibles\",\n    \"suite disponible\",\n    \"cuantas habitaciones hay\",\n    \"cuantas habitaciones quedan\",\n    \"cuantas suites hay\",\n    \"cuantas suites quedan\",\n    \"habitaciones ocupadas\",\n    \"ocupadas\",\n    \"ocupados\",\n    \"queda alguna\",\n    \"quedan habitaciones\",\n    \"hay habitaciones\",\n    \"hay suites\",\n    \"tienen habitaciones\",\n    \"tienen suite\",\n    \"capacidad disponible\"\n  ];\n\n  const palabrasConsultoria = [\n    \"que me recomiendas\",\n    \"que recomiendas\",\n    \"recomiendame\",\n    \"recomendacion\",\n    \"recomendaciones\",\n    \"cual me conviene\",\n    \"cual seria mejor\",\n    \"que opcion es mejor\",\n    \"mejor opcion\",\n    \"opcion recomendada\",\n    \"voy con mi familia\",\n    \"viajo con mi familia\",\n    \"voy con mi pareja\",\n    \"viajo con mi pareja\",\n    \"somos\",\n    \"adultos y\",\n    \"ninos\",\n    \"niños\",\n    \"economico\",\n    \"barato\",\n    \"presupuesto\",\n    \"vista al mar\",\n    \"vista al hotel\",\n    \"comodidad\",\n    \"mas comodo\",\n    \"mas conveniente\"\n  ];\n\n  const palabrasAnalitica = [\n    \"dataset\",\n    \"data set\",\n    \"datos historicos\",\n    \"analitica\",\n    \"analisis\",\n    \"estadistica\",\n    \"estadisticas\",\n    \"metrica\",\n    \"metricas\",\n    \"tasa\",\n    \"porcentaje\",\n    \"promedio\",\n    \"adr\",\n    \"lead time\",\n    \"cancelacion del dataset\",\n    \"tasa de cancelacion\",\n    \"mes con mas reservas\",\n    \"hotel tiene mas reservas\",\n    \"city hotel\",\n    \"resort hotel\",\n    \"segmento mas frecuente\",\n    \"segmento de mercado\",\n    \"reservas historicas\"\n  ];\n\n  const palabrasMemoria = [\n    \"me llamo\",\n    \"mi nombre es\",\n    \"recuerda que\",\n    \"recuerdame\",\n    \"ten en cuenta que\",\n    \"prefiero\",\n    \"mi preferencia\",\n    \"mis preferencias\",\n    \"mi presupuesto es\",\n    \"viajare con\",\n    \"viajo con\",\n    \"somos una familia\",\n    \"guarda que\"\n  ];\n\n  const palabrasDocumental = [\n    \"politica\",\n    \"cancelacion\",\n    \"check in\",\n    \"check-in\",\n    \"check out\",\n    \"check-out\",\n    \"hora de entrada\",\n    \"hora de salida\",\n    \"desayuno\",\n    \"parqueadero\",\n    \"mascotas\",\n    \"wifi\",\n    \"wi fi\",\n    \"habitacion sencilla\",\n    \"habitacion doble\",\n    \"habitacion triple\",\n    \"habitacion familiar\",\n    \"suite\",\n    \"servicios\",\n    \"normas\",\n    \"recepcion\",\n    \"equipaje\",\n    \"menores\",\n    \"familias\",\n    \"pagos\",\n    \"fumadores\",\n    \"ruido\",\n    \"visitantes\",\n    \"danos\",\n    \"daños\"\n  ];\n\n  const score = {\n    fuera_alcance: contarCoincidencias(pregunta, palabrasFueraAlcance),\n    reserva_simulada: contarCoincidencias(pregunta, palabrasReserva),\n    disponibilidad_habitaciones: contarCoincidencias(pregunta, palabrasDisponibilidad),\n    consultoria: contarCoincidencias(pregunta, palabrasConsultoria),\n    analitica_dataset: contarCoincidencias(pregunta, palabrasAnalitica),\n    memoria_usuario: contarCoincidencias(pregunta, palabrasMemoria),\n    documental: contarCoincidencias(pregunta, palabrasDocumental)\n  };\n\n  // Prioridad 1: seguridad\n  if (score.fuera_alcance > 0) {\n    tipoSolicitud = \"fuera_alcance\";\n    confianza = \"alta\";\n    motivo = \"La pregunta solicita información sensible, privada o no permitida.\";\n  }\n\n  // Prioridad 2: reserva explícita\n  else if (score.reserva_simulada > 0) {\n    tipoSolicitud = \"reserva_simulada\";\n    confianza = \"alta\";\n    motivo = \"La pregunta expresa una intención de reserva.\";\n  }\n\n  // Prioridad 3: disponibilidad\n  else if (score.disponibilidad_habitaciones > 0) {\n    tipoSolicitud = \"disponibilidad_habitaciones\";\n    confianza = \"alta\";\n    motivo = \"La pregunta solicita disponibilidad, ocupación o capacidad de habitaciones.\";\n  }\n\n  // Prioridad 4: consultoría/recomendación\n  else if (score.consultoria > 0) {\n    tipoSolicitud = \"consultoria\";\n    confianza = \"media\";\n    motivo = \"La pregunta solicita una recomendación o asesoría hotelera.\";\n  }\n\n  // Prioridad 5: analítica\n  else if (score.analitica_dataset > 0) {\n    tipoSolicitud = \"analitica_dataset\";\n    confianza = \"alta\";\n    motivo = \"La pregunta solicita análisis o métricas del dataset hotelero.\";\n  }\n\n  // Prioridad 6: memoria de usuario\n  else if (score.memoria_usuario > 0) {\n    tipoSolicitud = \"memoria_usuario\";\n    confianza = \"media\";\n    motivo = \"La pregunta contiene información personal o preferencias que podrían recordarse.\";\n  }\n\n  // Prioridad 7: documental\n  else if (score.documental > 0) {\n    tipoSolicitud = \"documental\";\n    confianza = \"alta\";\n    motivo = \"La pregunta se relaciona con políticas, servicios o información documentada del hotel.\";\n  }\n\n  // Caso por defecto\n  else {\n    tipoSolicitud = \"documental\";\n    confianza = \"baja\";\n    motivo = \"No se detectó una intención específica; se envía a consulta documental por defecto.\";\n  }\n\n  return {\n    json: {\n      ...item.json,\n      pregunta_original: preguntaOriginal,\n      pregunta_normalizada: pregunta,\n      tipo_solicitud: tipoSolicitud,\n      confianza_clasificacion: confianza,\n      motivo_clasificacion: motivo,\n      score_clasificacion: score\n    }\n  };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -161,7 +161,7 @@
         640,
         0
       ],
-      "id": "5d3e15cb-67bf-4ed7-8bee-1f12bbf9458b",
+      "id": "33912076-ff81-4943-a881-6582da4cdec3",
       "name": "Code - Clasificar Intención"
     },
     {
@@ -258,6 +258,75 @@
                 ],
                 "combinator": "and"
               }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "68d0a02d-a4b8-4d01-b141-fd0174ea6b6a",
+                    "leftValue": "={{ $json.tipo_solicitud }}",
+                    "rightValue": "disponibilidad_habitaciones",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "141b7df2-c4c3-4b24-84c6-32ae76ea4322",
+                    "leftValue": "={{ $json.tipo_solicitud }}",
+                    "rightValue": "consultoria",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "0120fce0-3b3d-4271-9234-412b37387bfa",
+                    "leftValue": "={{ $json.tipo_solicitud }}",
+                    "rightValue": "memoria_usuario",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
             }
           ]
         },
@@ -269,33 +338,33 @@
         800,
         112
       ],
-      "id": "9dc13553-0b4e-4cf9-a096-76356d641469",
+      "id": "1bf81d78-9c38-44bb-9243-dac9e81c2070",
       "name": "Switch - Tipo de solicitud"
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn items.map((item) => {\n  const respuesta =\n    item.json.output ||\n    item.json.text ||\n    item.json.response ||\n    \"No se generó una respuesta del agente.\";\n\n  return {\n    json: {\n      tipo_solicitud: $(\"Code - Clasificar Intención\").item.json.tipo_solicitud,\n      pregunta_usuario: $(\"Edit Fields\").item.json.pregunta_usuario,\n      pregunta_normalizada: $(\"Code - Normalizar Pregunta\").item.json.pregunta_normalizada,\n      nombre_hotel: $(\"Edit Fields\").item.json.nombre_hotel,\n      modelo_usado: \"llama3:latest\",\n      fuente: \"Documento_Base_Hotel.md desde GitHub RAW\",\n      respuesta_final: respuesta,\n      estado: \"completado\",\n      timestamp: new Date().toISOString()\n    }\n  };\n});"
+        "jsCode": "const items = $input.all();\n\nfunction limpiarRespuesta(texto) {\n  let respuesta = String(texto || \"\").trim();\n\n  respuesta = respuesta\n    .replace(/Espero que esta información te sea útil\\.?/gi, \"\")\n    .replace(/¿Tienes alguna otra pregunta\\?/gi, \"\")\n    .replace(/Tienes alguna otra pregunta\\?/gi, \"\")\n    .replace(/Estoy aquí para ayudarte\\.?/gi, \"\")\n    .replace(/\\n{3,}/g, \"\\n\\n\")\n    .replace(/[ \\t]{2,}/g, \" \")\n    .trim();\n\n  return respuesta || \"No se generó una respuesta del agente.\";\n}\n\nreturn items.map((item) => {\n  const respuestaOriginal =\n    item.json.output ||\n    item.json.text ||\n    item.json.response ||\n    \"No se generó una respuesta del agente.\";\n\n  const respuesta = limpiarRespuesta(respuestaOriginal);\n\n  return {\n    json: {\n      tipo_solicitud: $(\"Code - Clasificar Intención\").item.json.tipo_solicitud,\n      pregunta_usuario: $(\"Edit Fields\").item.json.pregunta_usuario,\n      pregunta_normalizada: $(\"Code - Normalizar Pregunta\").item.json.pregunta_normalizada,\n      nombre_hotel: $(\"Edit Fields\").item.json.nombre_hotel,\n      modelo_usado: \"llama3:latest\",\n      fuente: \"Documento_Base_Hotel.md desde GitHub RAW\",\n      respuesta_final: respuesta,\n      estado: \"completado\",\n      timestamp: new Date().toISOString()\n    }\n  };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         1472,
-        -384
+        -640
       ],
-      "id": "b4992f68-0f02-4e60-8d7b-94cfa8238ea0",
+      "id": "c2063cd3-f28c-49cd-a7a3-3e0fb9b14336",
       "name": "Code - Formatear Salida Documental"
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn items.map((item) => {\n  const preguntaUsuario =\n    item.json.pregunta_usuario ||\n    item.json.pregunta_original ||\n    \"\";\n\n  const preguntaNormalizada =\n    item.json.pregunta_normalizada ||\n    \"\";\n\n  const motivo =\n    item.json.motivo_clasificacion ||\n    \"La pregunta está fuera del alcance permitido.\";\n\n  return {\n    json: {\n      tipo_solicitud: item.json.tipo_solicitud || \"fuera_alcance\",\n      pregunta_usuario: preguntaUsuario,\n      pregunta_normalizada: preguntaNormalizada,\n      nombre_hotel: item.json.nombre_hotel || \"Hotel El Claustro de San Francisco\",\n      motivo_clasificacion: motivo,\n      respuesta_final:\n        \"No puedo proporcionar contraseñas, credenciales, datos privados, información interna sensible ni instrucciones que comprometan la seguridad del sistema o del hotel.\",\n      estado: \"rechazado_fuera_de_alcance\",\n      fuente: \"Reglas internas de seguridad del workflow\",\n      timestamp: new Date().toISOString()\n    }\n  };\n});"
+        "jsCode": "const items = $input.all();\n\nreturn items.map((item) => {\n  const tipo = item.json.tipo_solicitud || \"fuera_alcance\";\n  const pregunta = item.json.pregunta_usuario || item.json.pregunta_original || \"\";\n\n  let respuesta = \"\";\n\n  if (tipo === \"fuera_alcance\") {\n    respuesta = \"No puedo proporcionar contraseñas, credenciales, datos privados, información interna sensible ni instrucciones que comprometan la seguridad del sistema o del hotel.\";\n  } else if (tipo === \"disponibilidad_habitaciones\") {\n    respuesta = \"Todavía no tengo conectado el módulo de disponibilidad real de habitaciones. En la siguiente versión podré consultar habitaciones disponibles, ocupadas y capacidad por tipo de habitación.\";\n  } else if (tipo === \"consultoria\") {\n    respuesta = \"Todavía no tengo conectado el módulo de consultoría hotelera. En una siguiente versión podré recomendar habitaciones según número de personas, preferencias, presupuesto y disponibilidad.\";\n  } else if (tipo === \"memoria_usuario\") {\n    respuesta = \"He detectado información que podría usarse como preferencia del usuario, pero el módulo de memoria personalizada todavía no está habilitado en esta versión.\";\n  } else {\n    respuesta = \"No puedo procesar esta solicitud con los módulos disponibles actualmente.\";\n  }\n\n  return {\n    json: {\n      tipo_solicitud: tipo,\n      pregunta_usuario: pregunta,\n      pregunta_normalizada: item.json.pregunta_normalizada || \"\",\n      nombre_hotel: item.json.nombre_hotel || \"Hotel El Claustro de San Francisco\",\n      motivo_clasificacion: item.json.motivo_clasificacion || \"\",\n      respuesta_final: respuesta,\n      estado: tipo === \"fuera_alcance\" ? \"rechazado_fuera_de_alcance\" : \"modulo_pendiente\",\n      fuente: \"Reglas internas del workflow\",\n      timestamp: new Date().toISOString()\n    }\n  };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        912,
-        624
+        1008,
+        192
       ],
-      "id": "eae29017-2422-4747-9b8d-4a96f715afc8",
+      "id": "0463ddd8-2b87-449c-b83e-9037601df05f",
       "name": "Code - Respuesta Segura"
     },
     {
@@ -305,10 +374,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1040,
-        352
+        1024,
+        -32
       ],
-      "id": "16957af7-6b15-40ba-92bc-3ec1e421bba6",
+      "id": "48da7b6a-a454-4aa2-a6a3-8aea78a407e3",
       "name": "Code - Extraer Datos Reserva"
     },
     {
@@ -338,10 +407,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1248,
-        352
+        1232,
+        -32
       ],
-      "id": "675ca6a8-9e16-47e6-a8f7-0fb7b11cab67",
+      "id": "b80494ad-c0e3-460a-9b62-8d5b9cc251d3",
       "name": "If - ¿Faltan Datos?"
     },
     {
@@ -351,10 +420,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1472,
-        256
+        1456,
+        -128
       ],
-      "id": "7ac8d542-0717-4ef3-a0be-08e78a4d413a",
+      "id": "1072f563-00ab-4b74-b9d8-c6937b380dfd",
       "name": "Confirmar - Reserva Simulada"
     },
     {
@@ -364,10 +433,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1488,
-        480
+        1472,
+        96
       ],
-      "id": "86008648-6ca2-4cda-ab79-8617f251c944",
+      "id": "143da9dd-6d0e-42f4-a0b6-54788b1287cc",
       "name": "Code - Pedir Datos Faltantes"
     },
     {
@@ -379,10 +448,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1040,
-        112
+        1008,
+        -224
       ],
-      "id": "87de2db4-e70e-4f6f-b293-7de8e65fd560",
+      "id": "93a495f2-4900-4640-bcd6-ed4bd9090d95",
       "name": "Postgres - Métricas Dataset",
       "credentials": {
         "postgres": {
@@ -398,11 +467,45 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1248,
-        112
+        1216,
+        -224
       ],
-      "id": "cbe4dbc5-0435-4981-bfdc-f944dc50b340",
+      "id": "d9b0ee5d-a0fb-4f1d-8467-17b89ddfc6f2",
       "name": "Code - Formatear Salida Analitica"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n    tipo_habitacion,\n    total_habitaciones,\n    disponibles,\n    ocupadas,\n    reservadas,\n    mantenimiento,\n    capacidad_maxima,\n    precio_minimo_cop,\n    precio_maximo_cop\nFROM vw_disponibilidad_habitaciones\nORDER BY\n    CASE tipo_habitacion\n        WHEN 'sencilla' THEN 1\n        WHEN 'doble' THEN 2\n        WHEN 'triple' THEN 3\n        WHEN 'familiar' THEN 4\n        WHEN 'suite' THEN 5\n        ELSE 6\n    END;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        992,
+        368
+      ],
+      "id": "59a6205d-723f-45d2-aa06-72f1896a5c38",
+      "name": "Postgres - Disponibilidad Habitaciones",
+      "credentials": {
+        "postgres": {
+          "id": "6xTnLqFrdacW0fxr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst rows = items.map((item) => item.json);\n\nconst clasificador = $(\"Code - Clasificar Intención\").item.json;\nconst editFields = $(\"Edit Fields\").item.json;\n\nconst preguntaOriginal =\n  clasificador.pregunta_original ||\n  editFields.pregunta_usuario ||\n  \"\";\n\nconst preguntaNormalizada =\n  clasificador.pregunta_normalizada ||\n  \"\";\n\nfunction numero(valor) {\n  const n = Number(valor);\n  if (Number.isNaN(n)) return 0;\n  return n;\n}\n\nfunction dineroCOP(valor) {\n  const n = Number(valor);\n  if (Number.isNaN(n)) return \"no disponible\";\n\n  return n.toLocaleString(\"es-CO\", {\n    style: \"currency\",\n    currency: \"COP\",\n    maximumFractionDigits: 0\n  });\n}\n\nfunction detectarTipoHabitacion(pregunta) {\n  if (pregunta.includes(\"suite\") || pregunta.includes(\"suites\")) return \"suite\";\n  if (pregunta.includes(\"familiar\") || pregunta.includes(\"familiares\")) return \"familiar\";\n  if (pregunta.includes(\"triple\") || pregunta.includes(\"triples\")) return \"triple\";\n  if (pregunta.includes(\"doble\") || pregunta.includes(\"dobles\")) return \"doble\";\n\n  if (\n    pregunta.includes(\"sencilla\") ||\n    pregunta.includes(\"sencillas\") ||\n    pregunta.includes(\"individual\") ||\n    pregunta.includes(\"individuales\")\n  ) {\n    return \"sencilla\";\n  }\n\n  return null;\n}\n\nconst tipoSolicitado = detectarTipoHabitacion(preguntaNormalizada);\n\nconst totalHabitaciones = rows.reduce(\n  (acc, row) => acc + numero(row.total_habitaciones),\n  0\n);\n\nconst totalDisponibles = rows.reduce(\n  (acc, row) => acc + numero(row.disponibles),\n  0\n);\n\nconst totalOcupadas = rows.reduce(\n  (acc, row) => acc + numero(row.ocupadas),\n  0\n);\n\nconst totalReservadas = rows.reduce(\n  (acc, row) => acc + numero(row.reservadas),\n  0\n);\n\nconst totalMantenimiento = rows.reduce(\n  (acc, row) => acc + numero(row.mantenimiento),\n  0\n);\n\nlet respuesta = \"\";\n\nif (tipoSolicitado) {\n  const habitacion = rows.find((row) => row.tipo_habitacion === tipoSolicitado);\n\n  if (!habitacion) {\n    respuesta = `No encontré información de disponibilidad para habitaciones tipo ${tipoSolicitado}.`;\n  } else {\n    respuesta =\n      `Actualmente hay ${habitacion.disponibles} habitaciones tipo ${tipoSolicitado} disponibles ` +\n      `de ${habitacion.total_habitaciones} registradas. ` +\n      `También hay ${habitacion.ocupadas} ocupadas, ${habitacion.reservadas} reservadas ` +\n      `y ${habitacion.mantenimiento} en mantenimiento. ` +\n      `La capacidad máxima de este tipo de habitación es de ${habitacion.capacidad_maxima} personas. ` +\n      `El precio simulado por noche está entre ${dineroCOP(habitacion.precio_minimo_cop)} ` +\n      `y ${dineroCOP(habitacion.precio_maximo_cop)}.`;\n  }\n} else {\n  const resumenTipos = rows\n    .map((row) => {\n      return `${row.tipo_habitacion}: ${row.disponibles} disponibles de ${row.total_habitaciones}`;\n    })\n    .join(\"; \");\n\n  respuesta =\n    `Actualmente el hotel tiene ${totalDisponibles} habitaciones disponibles ` +\n    `de ${totalHabitaciones} habitaciones registradas. ` +\n    `También hay ${totalOcupadas} ocupadas, ${totalReservadas} reservadas ` +\n    `y ${totalMantenimiento} en mantenimiento. ` +\n    `Resumen por tipo: ${resumenTipos}.`;\n}\n\nreturn [\n  {\n    json: {\n      tipo_solicitud: \"disponibilidad_habitaciones\",\n      pregunta_usuario: preguntaOriginal,\n      pregunta_normalizada: preguntaNormalizada,\n      nombre_hotel: editFields.nombre_hotel || \"Hotel El Claustro de San Francisco\",\n      fuente: \"Tabla habitaciones_demo en PostgreSQL\",\n      total_habitaciones: totalHabitaciones,\n      total_disponibles: totalDisponibles,\n      total_ocupadas: totalOcupadas,\n      total_reservadas: totalReservadas,\n      total_mantenimiento: totalMantenimiento,\n      tipo_habitacion_consultado: tipoSolicitado || \"general\",\n      detalle_disponibilidad: rows,\n      respuesta_final: respuesta,\n      estado: \"disponibilidad_consultada\",\n      timestamp: new Date().toISOString()\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        368
+      ],
+      "id": "05cbae86-f9f6-4f43-86f3-354a62c21cdc",
+      "name": "Code - Formatear Salida Disponibilidad"
     }
   ],
   "pinData": {},
@@ -513,6 +616,27 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Postgres - Disponibilidad Habitaciones",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Respuesta Segura",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Respuesta Segura",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -571,6 +695,17 @@
           }
         ]
       ]
+    },
+    "Postgres - Disponibilidad Habitaciones": {
+      "main": [
+        [
+          {
+            "node": "Code - Formatear Salida Disponibilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -579,12 +714,12 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "846cd552-9fa7-4d2c-a1d1-aca993d6b877",
+  "versionId": "cca2b2fc-58ed-452e-8505-1599a0e2fe01",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "4c3ad71e0fa26083d20cc4a7c2184c4b827da0540a8ab0905fefbc39e27588b8"
   },
-  "id": "v4Fr6PUhUOgF5OvK",
+  "id": "kDMvhisLU3X2mx1P",
   "tags": [
     {
       "updatedAt": "2026-05-13T05:40:42.228Z",
