@@ -19,7 +19,7 @@
             {
               "id": "d5208ae5-707d-4b7d-b379-8dbd4d4f03bb",
               "name": "pregunta_usuario",
-              "value": "¿Qué habitaciones hay disponibles?",
+              "value": "Quiero reservar la habitación D-006 para 5 personas por 2 noches mañana",
               "type": "string"
             },
             {
@@ -369,7 +369,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nconst numerosTexto = {\n  \"una\": 1,\n  \"un\": 1,\n  \"uno\": 1,\n  \"dos\": 2,\n  \"tres\": 3,\n  \"cuatro\": 4,\n  \"cinco\": 5,\n  \"seis\": 6,\n  \"siete\": 7,\n  \"ocho\": 8,\n  \"nueve\": 9,\n  \"diez\": 10\n};\n\nfunction convertirNumero(valor) {\n  if (!valor) return null;\n  const limpio = valor.toString().toLowerCase().trim();\n  if (!isNaN(Number(limpio))) return Number(limpio);\n  return numerosTexto[limpio] || null;\n}\n\nreturn items.map((item) => {\n  const preguntaOriginal = item.json.pregunta_usuario || item.json.pregunta_original || \"\";\n  const pregunta = item.json.pregunta_normalizada || preguntaOriginal.toLowerCase();\n\n  let tipoHabitacion = null;\n\n  if (pregunta.includes(\"sencilla\")) tipoHabitacion = \"habitación sencilla\";\n  else if (pregunta.includes(\"doble\")) tipoHabitacion = \"habitación doble\";\n  else if (pregunta.includes(\"triple\")) tipoHabitacion = \"habitación triple\";\n  else if (pregunta.includes(\"familiar\")) tipoHabitacion = \"habitación familiar\";\n  else if (pregunta.includes(\"suite\")) tipoHabitacion = \"suite\";\n\n  const matchNoches = pregunta.match(/(\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\s+(noche|noches|dia|dias)/);\n  const numeroNoches = matchNoches ? convertirNumero(matchNoches[1]) : null;\n\n  const matchPersonas = pregunta.match(/para\\s+(\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\s+(persona|personas|huesped|huespedes|adulto|adultos)/);\n  const numeroPersonas = matchPersonas ? convertirNumero(matchPersonas[1]) : null;\n\n  const matchFechaISO = pregunta.match(/\\b(20\\d{2}-\\d{2}-\\d{2})\\b/);\n  const matchFechaLatam = pregunta.match(/\\b(\\d{1,2}\\/\\d{1,2}\\/20\\d{2})\\b/);\n\n  let fechaEntrada = null;\n  if (matchFechaISO) fechaEntrada = matchFechaISO[1];\n  else if (matchFechaLatam) fechaEntrada = matchFechaLatam[1];\n  else if (pregunta.includes(\"manana\")) fechaEntrada = \"mañana\";\n  else if (pregunta.includes(\"hoy\")) fechaEntrada = \"hoy\";\n\n  const datosFaltantes = [];\n\n  if (!tipoHabitacion) datosFaltantes.push(\"tipo de habitación\");\n  if (!numeroNoches) datosFaltantes.push(\"número de noches\");\n  if (!numeroPersonas) datosFaltantes.push(\"número de personas\");\n  if (!fechaEntrada) datosFaltantes.push(\"fecha de entrada\");\n\n  return {\n    json: {\n      ...item.json,\n      tipo_habitacion: tipoHabitacion,\n      numero_noches: numeroNoches,\n      numero_personas: numeroPersonas,\n      fecha_entrada: fechaEntrada,\n      datos_faltantes: datosFaltantes,\n      reserva_completa: datosFaltantes.length === 0,\n      estado_extraccion_reserva: datosFaltantes.length === 0 ? \"datos_completos\" : \"faltan_datos\"\n    }\n  };\n});"
+        "jsCode": "const items = $input.all();\n\nconst numerosTexto = {\n  \"una\": 1,\n  \"un\": 1,\n  \"uno\": 1,\n  \"dos\": 2,\n  \"tres\": 3,\n  \"cuatro\": 4,\n  \"cinco\": 5,\n  \"seis\": 6,\n  \"siete\": 7,\n  \"ocho\": 8,\n  \"nueve\": 9,\n  \"diez\": 10\n};\n\nfunction convertirNumero(valor) {\n  if (!valor) return null;\n\n  const limpio = valor.toString().toLowerCase().trim();\n\n  if (!isNaN(Number(limpio))) return Number(limpio);\n\n  return numerosTexto[limpio] || null;\n}\n\nfunction extraerCodigoHabitacion(texto) {\n  const textoUpper = String(texto || \"\").toUpperCase();\n\n  // Detecta códigos como:\n  // D-007, D007, SU-005, SU005, T-010, S-001, F-003\n  const match = textoUpper.match(/\\b(SU|D|T|S|F)\\s*-?\\s*(\\d{1,3})\\b/);\n\n  if (!match) {\n    return null;\n  }\n\n  const prefijo = match[1];\n  const numero = match[2].padStart(3, \"0\");\n\n  return `${prefijo}-${numero}`;\n}\n\nfunction inferirTipoPorCodigo(codigo) {\n  if (!codigo) return null;\n\n  const prefijo = codigo.split(\"-\")[0];\n\n  const mapa = {\n    S: \"sencilla\",\n    D: \"doble\",\n    T: \"triple\",\n    SU: \"suite\",\n    F: \"familiar\"\n  };\n\n  return mapa[prefijo] || null;\n}\n\nfunction convertirTipoVisible(tipoDb) {\n  const mapa = {\n    sencilla: \"habitación sencilla\",\n    doble: \"habitación doble\",\n    triple: \"habitación triple\",\n    familiar: \"habitación familiar\",\n    suite: \"suite\"\n  };\n\n  return mapa[tipoDb] || null;\n}\n\nreturn items.map((item) => {\n  const preguntaOriginal = item.json.pregunta_usuario || item.json.pregunta_original || \"\";\n  const pregunta = item.json.pregunta_normalizada || preguntaOriginal.toLowerCase();\n\n  const codigoHabitacionSolicitado = extraerCodigoHabitacion(\n    pregunta || preguntaOriginal\n  );\n\n  const tipoInferidoPorCodigo = inferirTipoPorCodigo(codigoHabitacionSolicitado);\n\n  let tipoHabitacion = null;\n  let tipoHabitacionDb = null;\n\n  if (pregunta.includes(\"sencilla\")) {\n    tipoHabitacion = \"habitación sencilla\";\n    tipoHabitacionDb = \"sencilla\";\n  } else if (pregunta.includes(\"doble\")) {\n    tipoHabitacion = \"habitación doble\";\n    tipoHabitacionDb = \"doble\";\n  } else if (pregunta.includes(\"triple\")) {\n    tipoHabitacion = \"habitación triple\";\n    tipoHabitacionDb = \"triple\";\n  } else if (pregunta.includes(\"familiar\")) {\n    tipoHabitacion = \"habitación familiar\";\n    tipoHabitacionDb = \"familiar\";\n  } else if (pregunta.includes(\"suite\")) {\n    tipoHabitacion = \"suite\";\n    tipoHabitacionDb = \"suite\";\n  }\n\n  // Si el usuario no dijo \"doble\", \"suite\", etc.,\n  // pero sí dijo un código como D-007, inferimos el tipo desde el código.\n  if (!tipoHabitacionDb && tipoInferidoPorCodigo) {\n    tipoHabitacionDb = tipoInferidoPorCodigo;\n    tipoHabitacion = convertirTipoVisible(tipoInferidoPorCodigo);\n  }\n\n  const matchNoches = pregunta.match(/(\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\s+(noche|noches|dia|dias)/);\n  const numeroNoches = matchNoches ? convertirNumero(matchNoches[1]) : null;\n\n  const matchPersonas = pregunta.match(/para\\s+(\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\s+(persona|personas|huesped|huespedes|adulto|adultos)/);\n  const numeroPersonas = matchPersonas ? convertirNumero(matchPersonas[1]) : null;\n\n  const matchFechaISO = pregunta.match(/\\b(20\\d{2}-\\d{2}-\\d{2})\\b/);\n  const matchFechaLatam = pregunta.match(/\\b(\\d{1,2}\\/\\d{1,2}\\/20\\d{2})\\b/);\n\n  let fechaEntrada = null;\n\n  if (matchFechaISO) fechaEntrada = matchFechaISO[1];\n  else if (matchFechaLatam) fechaEntrada = matchFechaLatam[1];\n  else if (pregunta.includes(\"manana\")) fechaEntrada = \"mañana\";\n  else if (pregunta.includes(\"mañana\")) fechaEntrada = \"mañana\";\n  else if (pregunta.includes(\"hoy\")) fechaEntrada = \"hoy\";\n\n  const datosFaltantes = [];\n\n  // Antes exigíamos siempre tipo de habitación.\n  // Ahora aceptamos tipo de habitación O código de habitación.\n  if (!tipoHabitacionDb && !codigoHabitacionSolicitado) {\n    datosFaltantes.push(\"tipo de habitación o código de habitación\");\n  }\n\n  if (!numeroNoches) datosFaltantes.push(\"número de noches\");\n  if (!numeroPersonas) datosFaltantes.push(\"número de personas\");\n  if (!fechaEntrada) datosFaltantes.push(\"fecha de entrada\");\n\n  const reservaCompleta = datosFaltantes.length === 0;\n\n  return {\n    json: {\n      ...item.json,\n\n      tipo_habitacion: tipoHabitacion,\n      tipo_habitacion_db: tipoHabitacionDb,\n\n      codigo_habitacion_solicitado: codigoHabitacionSolicitado,\n      tipo_habitacion_inferida_codigo: tipoInferidoPorCodigo,\n\n      numero_noches: numeroNoches,\n      numero_personas: numeroPersonas,\n      fecha_entrada: fechaEntrada,\n\n      datos_faltantes: datosFaltantes,\n      reserva_completa: reservaCompleta,\n      estado_extraccion_reserva: reservaCompleta ? \"datos_completos\" : \"faltan_datos\"\n    }\n  };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -379,52 +379,6 @@
       ],
       "id": "48da7b6a-a454-4aa2-a6a3-8aea78a407e3",
       "name": "Code - Extraer Datos Reserva"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "050745be-a5aa-4a38-9f56-0a90cc83c949",
-              "leftValue": "={{ $json.reserva_completa }}",
-              "rightValue": "={{ true }}",
-              "operator": {
-                "type": "boolean",
-                "operation": "equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        1232,
-        -32
-      ],
-      "id": "b80494ad-c0e3-460a-9b62-8d5b9cc251d3",
-      "name": "If - ¿Faltan Datos?"
-    },
-    {
-      "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn items.map((item) => {\n  return {\n    json: {\n      tipo_solicitud: \"reserva_simulada\",\n      pregunta_usuario: item.json.pregunta_usuario || item.json.pregunta_original || \"\",\n      nombre_hotel: item.json.nombre_hotel || \"Hotel El Claustro de San Francisco\",\n      tipo_habitacion: item.json.tipo_habitacion,\n      numero_noches: item.json.numero_noches,\n      numero_personas: item.json.numero_personas,\n      fecha_entrada: item.json.fecha_entrada,\n      respuesta_final:\n        `Solicitud de reserva simulada registrada: ${item.json.tipo_habitacion}, ` +\n        `para ${item.json.numero_personas} persona(s), durante ${item.json.numero_noches} noche(s), ` +\n        `con fecha de entrada: ${item.json.fecha_entrada}. ` +\n        `Esta confirmación es solo una simulación académica y no representa una reserva real.`,\n      estado: \"reserva_simulada_confirmada\",\n      fuente: \"Reglas internas de simulación de reserva\",\n      timestamp: new Date().toISOString()\n    }\n  };\n});"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        1456,
-        -128
-      ],
-      "id": "1072f563-00ab-4b74-b9d8-c6937b380dfd",
-      "name": "Confirmar - Reserva Simulada"
     },
     {
       "parameters": {
@@ -506,6 +460,202 @@
       ],
       "id": "05cbae86-f9f6-4f43-86f3-354a62c21cdc",
       "name": "Code - Formatear Salida Disponibilidad"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction sqlText(valor) {\n  return String(valor ?? \"\")\n    .replace(/'/g, \"''\")\n    .trim();\n}\n\nreturn items.map((item) => {\n  const data = item.json;\n\n  const tipoHabitacionDb =\n    data.tipo_habitacion_db ||\n    data.tipo_habitacion_inferida_codigo ||\n    null;\n\n  const codigoHabitacionSolicitado =\n    data.codigo_habitacion_solicitado || null;\n\n  return {\n    json: {\n      ...data,\n\n      tipo_habitacion_db: tipoHabitacionDb,\n      tipo_habitacion_db_sql: sqlText(tipoHabitacionDb || \"\"),\n\n      codigo_habitacion_solicitado: codigoHabitacionSolicitado,\n      codigo_habitacion_solicitado_sql: sqlText(codigoHabitacionSolicitado || \"\"),\n\n      numero_personas: Number(data.numero_personas),\n      numero_noches: Number(data.numero_noches),\n\n      fecha_entrada: data.fecha_entrada,\n      fecha_entrada_sql: sqlText(data.fecha_entrada || \"\"),\n\n      pregunta_usuario_sql: sqlText(data.pregunta_usuario || data.pregunta_original || \"\"),\n      sessionId_sql: sqlText(data.sessionId || \"demo-claustrosf\")\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        -128
+      ],
+      "id": "29352495-50b2-46b2-8e28-9acf4e7556f1",
+      "name": "Code - Preparar Consulta Reserva"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b6c7c3c9-9207-4e0a-a1d6-9ffbd3a7d877",
+              "leftValue": "={{ Number($json.habitaciones_disponibles || 0) }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            },
+            {
+              "id": "284ba3ec-3803-4fa8-9288-d79124df1030",
+              "leftValue": "={{ $json.resultado_disponibilidad || \"\" }}",
+              "rightValue": "disponible",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2080,
+        -128
+      ],
+      "id": "3dac49b4-a053-4b0a-8651-7279b93746aa",
+      "name": "If - ¿Hay disponibilidad?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction dineroCOP(valor) {\n  const n = Number(valor);\n  if (Number.isNaN(n)) return \"no disponible\";\n\n  return n.toLocaleString(\"es-CO\", {\n    style: \"currency\",\n    currency: \"COP\",\n    maximumFractionDigits: 0\n  });\n}\n\nreturn items.map((item) => {\n  const disponibilidad = item.json;\n\n  let datosReserva = {};\n  try {\n    datosReserva = $(\"Code - Preparar Consulta Reserva\").item.json;\n  } catch (error) {\n    datosReserva = {};\n  }\n\n  let editFields = {};\n  try {\n    editFields = $(\"Edit Fields\").item.json;\n  } catch (error) {\n    editFields = {};\n  }\n\n  const preguntaUsuario =\n    datosReserva.pregunta_usuario ||\n    datosReserva.pregunta_original ||\n    editFields.pregunta_usuario ||\n    disponibilidad.pregunta_usuario ||\n    \"\";\n\n  const nombreHotel =\n    datosReserva.nombre_hotel ||\n    editFields.nombre_hotel ||\n    \"Hotel El Claustro de San Francisco\";\n\n  const codigoSolicitado =\n    disponibilidad.codigo_habitacion_solicitado ||\n    datosReserva.codigo_habitacion_solicitado ||\n    null;\n\n  const tipoHabitacion =\n    datosReserva.tipo_habitacion ||\n    datosReserva.tipo_habitacion_db ||\n    disponibilidad.tipo_habitacion ||\n    \"habitación solicitada\";\n\n  const tipoHabitacionDb =\n    datosReserva.tipo_habitacion_db ||\n    disponibilidad.tipo_habitacion ||\n    null;\n\n  const numeroPersonas = Number(\n    datosReserva.numero_personas ??\n    disponibilidad.numero_personas ??\n    0\n  );\n\n  const numeroNoches = Number(\n    datosReserva.numero_noches ??\n    disponibilidad.numero_noches ??\n    0\n  );\n\n  const fechaEntrada =\n    datosReserva.fecha_entrada ||\n    disponibilidad.fecha_entrada ||\n    null;\n\n  const resultado =\n    disponibilidad.resultado_disponibilidad || \"sin_disponibilidad\";\n\n  const motivo =\n    disponibilidad.motivo_no_disponibilidad ||\n    \"No hay disponibilidad para la solicitud indicada.\";\n\n  let respuesta = \"\";\n\n  if (resultado === \"codigo_no_existe\") {\n    respuesta =\n      `No pude registrar la reserva porque la habitación ${codigoSolicitado} no existe en el inventario demo del ${nombreHotel}. ` +\n      `Puedes intentar con otro código de habitación o consultar disponibilidad general.`;\n  } else if (resultado === \"habitacion_no_disponible\") {\n    respuesta =\n      `No pude registrar la reserva porque la habitación ${codigoSolicitado} existe, pero no está disponible actualmente. ` +\n      `Puedes intentar con otra habitación disponible del mismo tipo o consultar disponibilidad general.`;\n  } else if (resultado === \"capacidad_insuficiente\") {\n    respuesta =\n      `No pude registrar la reserva porque la habitación ${codigoSolicitado} no tiene capacidad suficiente para ${numeroPersonas} persona(s). ` +\n      `Puedes intentar con una habitación de mayor capacidad, como una familiar o suite, según disponibilidad.`;\n  } else if (resultado === \"sin_disponibilidad\") {\n    respuesta =\n      `No encontré habitaciones disponibles del tipo ${tipoHabitacionDb || tipoHabitacion} con capacidad para ${numeroPersonas} persona(s) en este momento. ` +\n      `Puedes intentar con otro tipo de habitación o consultar disponibilidad general.`;\n  } else {\n    respuesta =\n      `No pude registrar la reserva. ${motivo} ` +\n      `Puedes intentar con otra habitación o consultar disponibilidad general.`;\n  }\n\n  return {\n    json: {\n      tipo_solicitud: \"reserva_simulada\",\n      pregunta_usuario: preguntaUsuario,\n      nombre_hotel: nombreHotel,\n\n      tipo_habitacion_solicitada: tipoHabitacion,\n      tipo_habitacion_db: tipoHabitacionDb,\n      codigo_habitacion_solicitado: codigoSolicitado,\n\n      numero_personas: numeroPersonas || null,\n      numero_noches: numeroNoches || null,\n      fecha_entrada: fechaEntrada,\n\n      habitaciones_disponibles: Number(disponibilidad.habitaciones_disponibles || 0),\n      resultado_disponibilidad: resultado,\n      motivo_no_disponibilidad: motivo,\n\n      precio_noche_cop: disponibilidad.precio_noche_cop\n        ? Number(disponibilidad.precio_noche_cop)\n        : null,\n\n      respuesta_final: respuesta,\n      estado: \"sin_disponibilidad_para_reserva\",\n      fuente: \"Tabla habitaciones_demo en PostgreSQL\",\n      timestamp: new Date().toISOString()\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        -32
+      ],
+      "id": "fa27cf17-569c-4014-b004-86059fe79e9f",
+      "name": "Code - Sin Disponibilidad"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "050745be-a5aa-4a38-9f56-0a90cc83c949",
+              "leftValue": "={{ $json.reserva_completa }}",
+              "rightValue": "={{ true }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1232,
+        -32
+      ],
+      "id": "b80494ad-c0e3-460a-9b62-8d5b9cc251d3",
+      "name": "If - ¿Reserva Completa?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH params AS (\n    SELECT\n        NULLIF('{{ $json.codigo_habitacion_solicitado_sql || \"\" }}', '') AS codigo_solicitado,\n        NULLIF('{{ $json.tipo_habitacion_db_sql || $json.tipo_habitacion_db || \"\" }}', '') AS tipo_solicitado,\n        {{ $json.numero_personas }}::int AS personas\n),\n\nhabitacion_manual AS (\n    SELECT\n        h.codigo_habitacion,\n        h.tipo_habitacion,\n        h.capacidad_total,\n        h.vista,\n        h.precio_noche_cop,\n        h.descripcion,\n        h.estado\n    FROM habitaciones_demo h\n    CROSS JOIN params p\n    WHERE p.codigo_solicitado IS NOT NULL\n      AND UPPER(h.codigo_habitacion) = UPPER(p.codigo_solicitado)\n    LIMIT 1\n),\n\ncandidatas_auto AS (\n    SELECT\n        h.codigo_habitacion,\n        h.tipo_habitacion,\n        h.capacidad_total,\n        h.vista,\n        h.precio_noche_cop,\n        h.descripcion,\n        h.estado\n    FROM habitaciones_demo h\n    CROSS JOIN params p\n    WHERE p.codigo_solicitado IS NULL\n      AND h.tipo_habitacion = p.tipo_solicitado\n      AND h.estado = 'disponible'\n      AND h.capacidad_total >= p.personas\n),\n\nconteo_auto AS (\n    SELECT COUNT(*)::int AS habitaciones_disponibles\n    FROM candidatas_auto\n),\n\nseleccion_auto AS (\n    SELECT *\n    FROM candidatas_auto\n    ORDER BY\n        capacidad_total ASC,\n        precio_noche_cop ASC,\n        CAST(regexp_replace(codigo_habitacion, '[^0-9]', '', 'g') AS INTEGER) ASC\n    LIMIT 1\n),\n\nseleccion_manual AS (\n    SELECT h.*\n    FROM habitacion_manual h\n    CROSS JOIN params p\n    WHERE h.estado = 'disponible'\n      AND h.capacidad_total >= p.personas\n),\n\nseleccion_final AS (\n    SELECT\n        *,\n        'manual' AS modo_seleccion\n    FROM seleccion_manual\n\n    UNION ALL\n\n    SELECT\n        *,\n        'automatica' AS modo_seleccion\n    FROM seleccion_auto\n),\n\ndiagnostico AS (\n    SELECT\n        CASE\n            WHEN p.codigo_solicitado IS NOT NULL\n                 AND NOT EXISTS (SELECT 1 FROM habitacion_manual)\n                THEN 'codigo_no_existe'\n\n            WHEN p.codigo_solicitado IS NOT NULL\n                 AND EXISTS (\n                     SELECT 1\n                     FROM habitacion_manual\n                     WHERE estado <> 'disponible'\n                 )\n                THEN 'habitacion_no_disponible'\n\n            WHEN p.codigo_solicitado IS NOT NULL\n                 AND EXISTS (\n                     SELECT 1\n                     FROM habitacion_manual\n                     WHERE capacidad_total < p.personas\n                 )\n                THEN 'capacidad_insuficiente'\n\n            WHEN p.codigo_solicitado IS NULL\n                 AND NOT EXISTS (SELECT 1 FROM candidatas_auto)\n                THEN 'sin_disponibilidad'\n\n            ELSE 'disponible'\n        END AS resultado_disponibilidad,\n\n        CASE\n            WHEN p.codigo_solicitado IS NOT NULL\n                 AND NOT EXISTS (SELECT 1 FROM habitacion_manual)\n                THEN 'La habitación solicitada no existe en el inventario demo.'\n\n            WHEN p.codigo_solicitado IS NOT NULL\n                 AND EXISTS (\n                     SELECT 1\n                     FROM habitacion_manual\n                     WHERE estado <> 'disponible'\n                 )\n                THEN 'La habitación solicitada existe, pero no está disponible actualmente.'\n\n            WHEN p.codigo_solicitado IS NOT NULL\n                 AND EXISTS (\n                     SELECT 1\n                     FROM habitacion_manual\n                     WHERE capacidad_total < p.personas\n                 )\n                THEN 'La habitación solicitada no tiene capacidad suficiente para la cantidad de personas indicada.'\n\n            WHEN p.codigo_solicitado IS NULL\n                 AND NOT EXISTS (SELECT 1 FROM candidatas_auto)\n                THEN 'No hay habitaciones disponibles que cumplan con el tipo y la capacidad solicitada.'\n\n            ELSE 'Habitación disponible.'\n        END AS motivo_no_disponibilidad\n    FROM params p\n)\n\nSELECT\n    CASE\n        WHEN EXISTS (SELECT 1 FROM seleccion_final)\n            THEN\n                CASE\n                    WHEN p.codigo_solicitado IS NOT NULL THEN 1\n                    ELSE COALESCE((SELECT habitaciones_disponibles FROM conteo_auto), 0)\n                END\n        ELSE 0\n    END AS habitaciones_disponibles,\n\n    p.codigo_solicitado AS codigo_habitacion_solicitado,\n    d.resultado_disponibilidad,\n    d.motivo_no_disponibilidad,\n\n    s.codigo_habitacion,\n    s.tipo_habitacion,\n    s.capacidad_total,\n    s.vista,\n    s.precio_noche_cop,\n    s.descripcion,\n    s.estado,\n    s.modo_seleccion\n\nFROM params p\nCROSS JOIN diagnostico d\nLEFT JOIN seleccion_final s ON true;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1872,
+        -128
+      ],
+      "id": "e43726fa-98a4-4b4e-9cc3-cc7e37d6c80a",
+      "name": "Postgres - Buscar Habitación Disponible",
+      "credentials": {
+        "postgres": {
+          "id": "6xTnLqFrdacW0fxr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map((item) => {\n  const data = item.json;\n\n  const datosFaltantes = [];\n\n  const tieneTipoHabitacion = Boolean(data.tipo_habitacion_db);\n  const tieneCodigoHabitacion = Boolean(data.codigo_habitacion_solicitado);\n\n  if (!tieneTipoHabitacion && !tieneCodigoHabitacion) {\n    datosFaltantes.push(\"tipo de habitación o código de habitación\");\n  }\n\n  if (!data.numero_personas) {\n    datosFaltantes.push(\"número de personas\");\n  }\n\n  if (!data.numero_noches) {\n    datosFaltantes.push(\"número de noches\");\n  }\n\n  if (!data.fecha_entrada) {\n    datosFaltantes.push(\"fecha de entrada\");\n  }\n\n  const reservaCompleta = datosFaltantes.length === 0;\n\n  return {\n    json: {\n      ...data,\n\n      tipo_habitacion_db:\n        data.tipo_habitacion_db ||\n        data.tipo_habitacion_inferida_codigo ||\n        null,\n\n      codigo_habitacion_solicitado:\n        data.codigo_habitacion_solicitado || null,\n\n      tipo_habitacion_inferida_codigo:\n        data.tipo_habitacion_inferida_codigo || null,\n\n      datos_faltantes: datosFaltantes,\n      reserva_completa: reservaCompleta,\n      estado_validacion_reserva: reservaCompleta\n        ? \"reserva_completa\"\n        : \"faltan_datos_reserva\"\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1456,
+        -128
+      ],
+      "id": "1072f563-00ab-4b74-b9d8-c6937b380dfd",
+      "name": "Code - Validar Reserva Completa"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction sqlText(valor) {\n  return String(valor ?? \"\")\n    .replace(/'/g, \"''\")\n    .trim();\n}\n\nfunction generarCodigoReserva() {\n  const fecha = new Date()\n    .toISOString()\n    .replace(/[-:.TZ]/g, \"\")\n    .slice(0, 14);\n\n  const random = Math.random()\n    .toString(36)\n    .substring(2, 8)\n    .toUpperCase();\n\n  return `RSV-${fecha}-${random}`;\n}\n\nreturn items.map((item) => {\n  const habitacion = item.json;\n  const datosReserva = $(\"Code - Preparar Consulta Reserva\").item.json;\n\n  const numeroPersonas = Number(datosReserva.numero_personas);\n  const numeroNoches = Number(datosReserva.numero_noches);\n  const precioNoche = Number(habitacion.precio_noche_cop);\n  const totalEstimado = precioNoche * numeroNoches;\n\n  const modoSeleccion =\n    habitacion.modo_seleccion ||\n    (datosReserva.codigo_habitacion_solicitado ? \"manual\" : \"automatica\");\n\n  const codigoReserva = generarCodigoReserva();\n\n  return {\n    json: {\n      ...datosReserva,\n      ...habitacion,\n\n      codigo_reserva: codigoReserva,\n      codigo_reserva_sql: sqlText(codigoReserva),\n\n      codigo_habitacion: habitacion.codigo_habitacion,\n      codigo_habitacion_sql: sqlText(habitacion.codigo_habitacion),\n\n      codigo_habitacion_solicitado: datosReserva.codigo_habitacion_solicitado || null,\n      codigo_habitacion_solicitado_sql: sqlText(datosReserva.codigo_habitacion_solicitado || \"\"),\n\n      tipo_habitacion: habitacion.tipo_habitacion,\n      tipo_habitacion_db: habitacion.tipo_habitacion,\n\n      capacidad_total: Number(habitacion.capacidad_total),\n      vista: habitacion.vista,\n      descripcion: habitacion.descripcion,\n\n      numero_personas: numeroPersonas,\n      numero_noches: numeroNoches,\n\n      fecha_entrada: datosReserva.fecha_entrada,\n      fecha_entrada_sql: sqlText(datosReserva.fecha_entrada || \"\"),\n\n      precio_noche_cop: precioNoche,\n      total_estimado_cop: totalEstimado,\n\n      pregunta_usuario: datosReserva.pregunta_usuario || datosReserva.pregunta_original,\n      pregunta_usuario_sql: sqlText(datosReserva.pregunta_usuario || datosReserva.pregunta_original || \"\"),\n\n      sessionId: datosReserva.sessionId || \"demo-claustrosf\",\n      sessionId_sql: sqlText(datosReserva.sessionId || \"demo-claustrosf\"),\n\n      nombre_hotel: datosReserva.nombre_hotel || \"Hotel El Claustro de San Francisco\",\n\n      modo_seleccion: modoSeleccion,\n      modo_seleccion_sql: sqlText(modoSeleccion)\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2288,
+        -224
+      ],
+      "id": "79e7b595-5317-4202-893b-4b0870eee6ab",
+      "name": "Code - Preparar Registro Reserva"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH datos AS (\n    SELECT\n        '{{ $json.codigo_reserva_sql || $json.codigo_reserva }}'::text AS codigo_reserva,\n        '{{ $json.codigo_habitacion_sql || $json.codigo_habitacion }}'::text AS codigo_habitacion,\n        '{{ $json.tipo_habitacion_db || $json.tipo_habitacion }}'::text AS tipo_habitacion,\n        {{ Number($json.numero_personas || 0) }}::int AS numero_personas,\n        {{ Number($json.numero_noches || 0) }}::int AS numero_noches,\n        '{{ $json.fecha_entrada_sql || $json.fecha_entrada || \"\" }}'::text AS fecha_entrada_texto,\n        {{ Number($json.precio_noche_cop || 0) }}::numeric AS precio_noche_cop,\n        {{ Number($json.total_estimado_cop || 0) }}::numeric AS total_estimado_cop,\n        '{{ $json.pregunta_usuario_sql || \"\" }}'::text AS pregunta_usuario,\n        '{{ $json.sessionId_sql || \"demo-claustrosf\" }}'::text AS session_id,\n        '{{ $json.nombre_hotel || \"Hotel El Claustro de San Francisco\" }}'::text AS nombre_hotel,\n        '{{ $json.modo_seleccion_sql || $json.modo_seleccion || \"automatica\" }}'::text AS modo_seleccion,\n        '{{ $json.codigo_habitacion_solicitado_sql || $json.codigo_habitacion_solicitado || \"\" }}'::text AS codigo_habitacion_solicitado\n),\n\nhabitacion_actualizada AS (\n    UPDATE habitaciones_demo h\n    SET estado = 'reservada'\n    FROM datos d\n    WHERE h.codigo_habitacion = d.codigo_habitacion\n      AND h.estado = 'disponible'\n    RETURNING\n        h.codigo_habitacion,\n        h.tipo_habitacion,\n        h.capacidad_total,\n        h.vista,\n        h.precio_noche_cop,\n        h.descripcion,\n        h.estado AS estado_habitacion\n),\n\nreserva_insertada AS (\n    INSERT INTO reservas_demo (\n        codigo_reserva,\n        codigo_habitacion,\n        tipo_habitacion,\n        numero_personas,\n        numero_noches,\n        total_estimado_cop,\n        estado_reserva\n    )\n    SELECT\n        d.codigo_reserva,\n        d.codigo_habitacion,\n        d.tipo_habitacion,\n        d.numero_personas,\n        d.numero_noches,\n        d.total_estimado_cop,\n        'confirmada_demo'\n    FROM datos d\n    JOIN habitacion_actualizada h ON true\n    RETURNING\n        codigo_reserva,\n        codigo_habitacion,\n        tipo_habitacion,\n        numero_personas,\n        numero_noches,\n        total_estimado_cop,\n        estado_reserva\n)\n\nSELECT\n    true AS success,\n\n    r.codigo_reserva,\n    r.codigo_habitacion,\n    r.tipo_habitacion,\n    r.numero_personas,\n    r.numero_noches,\n    r.total_estimado_cop,\n    r.estado_reserva,\n\n    h.capacidad_total,\n    h.vista,\n    h.precio_noche_cop,\n    h.descripcion,\n    h.estado_habitacion,\n\n    d.fecha_entrada_texto,\n    d.pregunta_usuario,\n    d.session_id,\n    d.nombre_hotel,\n    d.modo_seleccion,\n    d.codigo_habitacion_solicitado\n\nFROM reserva_insertada r\nJOIN habitacion_actualizada h ON h.codigo_habitacion = r.codigo_habitacion\nJOIN datos d ON true;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2496,
+        -224
+      ],
+      "id": "c3f4f981-1ee7-484c-af44-8d6e4cbddbbd",
+      "name": "Postgres - Registrar Reserva Demo",
+      "credentials": {
+        "postgres": {
+          "id": "6xTnLqFrdacW0fxr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction dineroCOP(valor) {\n  const n = Number(valor);\n  if (Number.isNaN(n)) return \"no disponible\";\n\n  return n.toLocaleString(\"es-CO\", {\n    style: \"currency\",\n    currency: \"COP\",\n    maximumFractionDigits: 0\n  });\n}\n\nreturn items.map((item) => {\n  const reserva = item.json;\n  const datosRegistro = $(\"Code - Preparar Registro Reserva\").item.json;\n\n  const codigoReserva = reserva.codigo_reserva || datosRegistro.codigo_reserva;\n  const codigoHabitacion = reserva.codigo_habitacion || datosRegistro.codigo_habitacion;\n  const tipoHabitacion = reserva.tipo_habitacion || datosRegistro.tipo_habitacion;\n  const capacidadTotal = Number(reserva.capacidad_total || datosRegistro.capacidad_total);\n  const vista = reserva.vista || datosRegistro.vista;\n\n  const numeroPersonas = Number(reserva.numero_personas || datosRegistro.numero_personas);\n  const numeroNoches = Number(reserva.numero_noches || datosRegistro.numero_noches);\n  const fechaEntrada = reserva.fecha_entrada_texto || datosRegistro.fecha_entrada;\n\n  const precioNoche = Number(reserva.precio_noche_cop || datosRegistro.precio_noche_cop);\n  const totalEstimado = Number(reserva.total_estimado_cop || datosRegistro.total_estimado_cop);\n\n  const modoSeleccion = reserva.modo_seleccion || datosRegistro.modo_seleccion || \"automatica\";\n\n  const fraseSeleccion =\n    modoSeleccion === \"manual\"\n      ? \"Se respetó la habitación solicitada por el usuario.\"\n      : \"El sistema asignó automáticamente una habitación disponible.\";\n\n  const respuesta =\n    `Reserva demo registrada correctamente. ` +\n    `${fraseSeleccion} ` +\n    `Código de reserva: ${codigoReserva}. ` +\n    `Se asignó la habitación ${codigoHabitacion}, tipo ${tipoHabitacion}, ` +\n    `con capacidad para ${capacidadTotal} persona(s), ${vista}. ` +\n    `La fecha de entrada indicada es ${fechaEntrada}. ` +\n    `El precio por noche es ${dineroCOP(precioNoche)} y el total estimado para ${numeroNoches} noche(s) es ${dineroCOP(totalEstimado)}. ` +\n    `Esta reserva pertenece a un entorno académico/demo.`;\n\n  return {\n    json: {\n      tipo_solicitud: \"reserva_simulada\",\n      pregunta_usuario: reserva.pregunta_usuario || datosRegistro.pregunta_usuario,\n      nombre_hotel: reserva.nombre_hotel || datosRegistro.nombre_hotel,\n\n      codigo_reserva: codigoReserva,\n      codigo_habitacion: codigoHabitacion,\n      codigo_habitacion_solicitado:\n        reserva.codigo_habitacion_solicitado || datosRegistro.codigo_habitacion_solicitado || null,\n\n      tipo_habitacion: tipoHabitacion,\n      capacidad_total: capacidadTotal,\n      vista,\n\n      numero_personas: numeroPersonas,\n      numero_noches: numeroNoches,\n      fecha_entrada: fechaEntrada,\n\n      precio_noche_cop: precioNoche,\n      total_estimado_cop: totalEstimado,\n\n      modo_seleccion: modoSeleccion,\n      estado_reserva: reserva.estado_reserva || \"confirmada_demo\",\n      estado_habitacion: reserva.estado_habitacion || \"reservada\",\n\n      respuesta_final: respuesta,\n      estado: \"reserva_demo_registrada\",\n      fuente: \"Tabla reservas_demo y habitaciones_demo en PostgreSQL\",\n      timestamp: new Date().toISOString()\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2704,
+        -224
+      ],
+      "id": "c5e60b2a-2c8e-4b83-a449-e72d7db2aa68",
+      "name": "Code - Confirmar Reserva Registrada"
+    },
+    {
+      "parameters": {
+        "jsCode": "function extraerCodigoHabitacion(texto) {\n  const textoUpper = String(texto || \"\").toUpperCase();\n\n  const match = textoUpper.match(/\\b(SU|D|T|S|F)\\s*-?\\s*(\\d{1,3})\\b/);\n\n  if (!match) {\n    return null;\n  }\n\n  const prefijo = match[1];\n  const numero = match[2].padStart(3, \"0\");\n\n  return `${prefijo}-${numero}`;\n}\n\nfunction inferirTipoPorCodigo(codigo) {\n  if (!codigo) return null;\n\n  const prefijo = codigo.split(\"-\")[0];\n\n  const mapa = {\n    S: \"sencilla\",\n    D: \"doble\",\n    T: \"triple\",\n    SU: \"suite\",\n    F: \"familiar\"\n  };\n\n  return mapa[prefijo] || null;\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2848,
+        128
+      ],
+      "id": "f273f218-480f-4988-bb8a-00b4b8d0d3ef",
+      "name": "Code - Extraer Datos Reserva1"
     }
   ],
   "pinData": {},
@@ -655,25 +805,7 @@
       "main": [
         [
           {
-            "node": "If - ¿Faltan Datos?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "If - ¿Faltan Datos?": {
-      "main": [
-        [
-          {
-            "node": "Confirmar - Reserva Simulada",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Code - Pedir Datos Faltantes",
+            "node": "If - ¿Reserva Completa?",
             "type": "main",
             "index": 0
           }
@@ -706,6 +838,97 @@
           }
         ]
       ]
+    },
+    "Code - Preparar Consulta Reserva": {
+      "main": [
+        [
+          {
+            "node": "Postgres - Buscar Habitación Disponible",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If - ¿Hay disponibilidad?": {
+      "main": [
+        [
+          {
+            "node": "Code - Preparar Registro Reserva",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Sin Disponibilidad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If - ¿Reserva Completa?": {
+      "main": [
+        [
+          {
+            "node": "Code - Validar Reserva Completa",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Pedir Datos Faltantes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres - Buscar Habitación Disponible": {
+      "main": [
+        [
+          {
+            "node": "If - ¿Hay disponibilidad?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Validar Reserva Completa": {
+      "main": [
+        [
+          {
+            "node": "Code - Preparar Consulta Reserva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Preparar Registro Reserva": {
+      "main": [
+        [
+          {
+            "node": "Postgres - Registrar Reserva Demo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres - Registrar Reserva Demo": {
+      "main": [
+        [
+          {
+            "node": "Code - Confirmar Reserva Registrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -714,7 +937,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "cca2b2fc-58ed-452e-8505-1599a0e2fe01",
+  "versionId": "a2f0cf18-7aaa-419e-852f-4a6fee81e904",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "4c3ad71e0fa26083d20cc4a7c2184c4b827da0540a8ab0905fefbc39e27588b8"

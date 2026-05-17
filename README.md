@@ -1,8 +1,30 @@
 # Reception Agent ClaustroSF — Asistente hotelero con n8n, PostgreSQL y Ollama
 
-Proyecto académico basado en un workflow de n8n para simular un asistente virtual de recepción hotelera del **Hotel El Claustro de San Francisco**.
+Proyecto académico basado en un workflow de **n8n** que simula un asistente virtual de recepción para el **Hotel El Claustro de San Francisco**.
 
-El sistema permite responder consultas documentales sobre políticas del hotel, consultar métricas históricas de un dataset hotelero, simular solicitudes de reserva, validar solicitudes fuera de alcance y consultar disponibilidad operacional de habitaciones desde PostgreSQL.
+El sistema permite responder consultas documentales sobre políticas del hotel, consultar métricas históricas de un dataset hotelero, consultar disponibilidad operacional de habitaciones y registrar reservas demo en PostgreSQL.
+
+---
+
+## Estado actual del proyecto
+
+Versión actual:
+
+```text
+MKII — Reserva demo con disponibilidad realista en PostgreSQL
+```
+
+Esta versión mejora el MVP inicial porque ya no solo simula una reserva con texto, sino que:
+
+- Consulta habitaciones disponibles desde PostgreSQL.
+- Permite selección automática de habitación.
+- Permite selección manual por código de habitación.
+- Valida si la habitación existe.
+- Valida si la habitación está disponible.
+- Valida si la habitación tiene capacidad suficiente.
+- Registra la reserva demo en PostgreSQL.
+- Cambia el estado de la habitación de `disponible` a `reservada`.
+- Rechaza reservas inválidas con mensajes seguros y claros.
 
 ---
 
@@ -10,12 +32,12 @@ El sistema permite responder consultas documentales sobre políticas del hotel, 
 
 Construir un asistente automatizado para un hotel ficticio que pueda apoyar tareas de recepción mediante:
 
-- Consulta documental de políticas y servicios del hotel.
-- Clasificación de la intención del usuario.
+- Consulta documental de políticas, normas, servicios y condiciones del hotel.
+- Clasificación automática de la intención del usuario.
 - Consulta de métricas históricas desde un dataset hotelero.
-- Simulación de reservas.
-- Validación de solicitudes inseguras o fuera de alcance.
-- Consulta de disponibilidad actual de habitaciones mediante una tabla operacional simulada.
+- Consulta de disponibilidad operacional de habitaciones.
+- Registro de reservas demo en base de datos.
+- Validación de solicitudes inseguras, incompletas o fuera de alcance.
 - Uso de memoria conversacional en PostgreSQL.
 - Integración con un modelo local mediante Ollama.
 
@@ -23,14 +45,17 @@ Construir un asistente automatizado para un hotel ficticio que pueda apoyar tare
 
 ## Tecnologías utilizadas
 
-- **n8n**: automatización del workflow.
-- **PostgreSQL**: almacenamiento de historial, dataset y disponibilidad.
-- **Ollama**: ejecución local del modelo de lenguaje.
-- **llama3:latest**: modelo usado en el AI Agent.
-- **Docker / Docker Compose**: levantamiento del entorno.
-- **GitHub RAW**: lectura remota del documento base del hotel.
-- **CSV hotel_bookings.csv**: dataset histórico de reservas hoteleras.
-- **JavaScript en nodos Code**: normalización, clasificación y formateo de respuestas.
+| Tecnología | Uso dentro del proyecto |
+|---|---|
+| n8n | Orquestación del workflow. |
+| PostgreSQL | Almacenamiento de dataset, habitaciones, reservas demo y memoria conversacional. |
+| Docker / Docker Compose | Levantamiento del entorno local. |
+| Ollama | Ejecución local del modelo de lenguaje. |
+| llama3:latest | Modelo usado por el AI Agent. |
+| GitHub RAW | Lectura remota del documento base del hotel. |
+| JavaScript | Lógica de normalización, clasificación, extracción y formateo. |
+| CSV | Dataset histórico `hotel_bookings.csv`. |
+| Markdown | Documentación del proyecto y prompts del sistema. |
 
 ---
 
@@ -55,6 +80,9 @@ ProyectoGeneral/
 │   ├── pruebas_funcionales.md
 │   └── riesgos_y_limitaciones.md
 │
+├── documentos/
+│   └── Documento_Base_Hotel.md
+│
 ├── evidencias/
 │   ├── pendientes.txt
 │   └── README.md
@@ -70,10 +98,11 @@ ProyectoGeneral/
 │
 ├── scripts/
 │   └── sql/
-│       └── 01_habitaciones_demo.sql
+│       ├── 01_habitaciones_demo.sql
+│       └── 03_reset_reservas_demo.sql
 │
 ├── workflows/
-│   └── Ultimate_Agent_Documental_ClaustroSF.json
+│   └── UltimateMKII_Agent_Documental_ClaustroSF.json
 │
 ├── .env.example
 ├── .gitignore
@@ -88,13 +117,13 @@ ProyectoGeneral/
 El workflow principal se encuentra en:
 
 ```text
-workflows/Ultimate_Agent_Documental_ClaustroSF.json
+workflows/UltimateMKII_Agent_Documental_ClaustroSF.json
 ```
 
 Nombre recomendado dentro de n8n:
 
 ```text
-Ultimate_Agent_Documental_ClaustroSF
+UltimateMKII_Agent_Documental_ClaustroSF
 ```
 
 ---
@@ -121,9 +150,19 @@ Manual Trigger
 
    ├── reserva_simulada
    │     → Code - Extraer Datos Reserva
-   │     → IF - ¿Faltan Datos?
-   │          ├── true  → Code - Confirmar Reserva Simulada
-   │          └── false → Code - Pedir Datos Faltantes
+   │     → IF - ¿Reserva Completa?
+   │          ├── false → Code - Pedir Datos Faltantes
+   │          └── true
+   │                → Code - Validar Reserva Completa
+   │                → Code - Preparar Consulta Reserva
+   │                → Postgres - Buscar Habitación Disponible
+   │                → IF - ¿Hay disponibilidad?
+   │                     ├── true
+   │                     │     → Code - Preparar Registro Reserva
+   │                     │     → Postgres - Registrar Reserva Demo
+   │                     │     → Code - Confirmar Reserva Registrada
+   │                     └── false
+   │                           → Code - Sin Disponibilidad
 
    ├── fuera_alcance
    │     → Code - Respuesta Segura
@@ -149,7 +188,7 @@ El nodo `Code - Clasificar Intención` permite clasificar las preguntas en los s
 |---|---|
 | `documental` | Preguntas sobre políticas, servicios, horarios, normas o información general del hotel. |
 | `analitica_dataset` | Preguntas sobre métricas históricas del dataset hotelero. |
-| `reserva_simulada` | Solicitudes para reservar habitaciones de forma simulada. |
+| `reserva_simulada` | Solicitudes para reservar habitaciones en el entorno demo. |
 | `fuera_alcance` | Solicitudes sensibles, inseguras o no permitidas. |
 | `disponibilidad_habitaciones` | Preguntas sobre habitaciones disponibles, ocupadas, reservadas o en mantenimiento. |
 | `consultoria` | Solicitudes de recomendación hotelera. Actualmente queda como módulo pendiente. |
@@ -159,29 +198,29 @@ El nodo `Code - Clasificar Intención` permite clasificar las preguntas en los s
 
 ## Módulo documental
 
-El módulo documental responde preguntas usando un documento base del hotel almacenado en GitHub y leído mediante GitHub RAW.
+El módulo documental responde preguntas usando el documento base del hotel almacenado en GitHub y leído mediante GitHub RAW.
 
-Ejemplo de pregunta:
+Ejemplo:
 
 ```text
 ¿Cuál es la política de cancelación?
 ```
 
-El workflow realiza:
+Flujo interno:
 
 ```text
-HTTP Request → lee Documento_Base_Hotel.md desde GitHub RAW
-AI Agent → genera respuesta usando el documento
-Code - Formatear Salida Documental → limpia y estructura la salida
+HTTP Request
+→ AI Agent
+→ Code - Formatear Salida Documental
 ```
 
 El agente tiene reglas para:
 
 - Responder en español.
-- Responder de forma clara y breve.
-- Usar únicamente la información del documento.
+- Responder de forma clara, breve y amable.
+- Usar únicamente la información contenida en el documento.
 - No inventar datos.
-- No entregar contraseñas, teléfonos internos, cuentas bancarias ni información sensible.
+- No entregar contraseñas, cuentas bancarias, teléfonos internos ni información sensible.
 - No mencionar que está leyendo un Markdown o archivo técnico.
 
 ---
@@ -192,10 +231,10 @@ El documento base del hotel se consume desde una URL de GitHub RAW.
 
 GitHub RAW permite acceder directamente al contenido plano de un archivo del repositorio, sin cargar la interfaz visual de GitHub. Esto permite que n8n lea el documento como texto mediante un nodo `HTTP Request`.
 
-En este proyecto se usa para cargar dinámicamente el documento base del hotel, por ejemplo:
+En este proyecto se usa para cargar dinámicamente:
 
 ```text
-Documento_Base_Hotel.md
+documentos/Documento_Base_Hotel.md
 ```
 
 Ventaja principal:
@@ -239,7 +278,7 @@ consulta métricas como:
 - Tasa de cancelación de City Hotel.
 - Tasa de cancelación de Resort Hotel.
 - Mes con más reservas.
-- Segmento de mercado más frecuente.
+- Segmento más frecuente.
 
 Ejemplos de preguntas:
 
@@ -254,43 +293,29 @@ Ejemplos de preguntas:
 
 ## Módulo de disponibilidad de habitaciones
 
-El workflow incluye un módulo operativo de disponibilidad conectado a PostgreSQL.
-
-Este módulo usa la tabla:
+La disponibilidad se consulta desde la tabla operacional:
 
 ```text
 habitaciones_demo
 ```
 
-Creada mediante el script:
+Esta tabla representa un inventario demo del hotel con aproximadamente:
 
 ```text
-scripts/sql/01_habitaciones_demo.sql
+550 habitaciones
 ```
 
-La tabla contiene **550 habitaciones simuladas**, distribuidas de la siguiente forma:
-
-| Tipo de habitación | Cantidad |
-|---|---:|
-| Sencillas | 120 |
-| Dobles | 210 |
-| Triples | 90 |
-| Familiares | 80 |
-| Suites | 50 |
-| **Total** | **550** |
-
-Cada habitación contiene información como:
+Cada habitación puede tener datos como:
 
 - Código de habitación.
 - Tipo de habitación.
-- Capacidad de adultos.
-- Capacidad de niños.
+- Estado.
 - Capacidad total.
 - Vista.
-- Precio simulado por noche.
-- Estado actual.
+- Precio por noche.
+- Descripción.
 
-Estados posibles:
+Estados usados:
 
 ```text
 disponible
@@ -299,14 +324,14 @@ reservada
 mantenimiento
 ```
 
-Este módulo complementa el dataset histórico `hotel_bookings.csv`.
+Tipos de habitación usados:
 
 ```text
-hotel_bookings.csv
-→ Analítica histórica.
-
-habitaciones_demo
-→ Operación actual simulada.
+sencilla
+doble
+triple
+familiar
+suite
 ```
 
 Ejemplos de preguntas:
@@ -315,113 +340,145 @@ Ejemplos de preguntas:
 ¿Cuántas habitaciones dobles hay disponibles?
 ¿Hay suites disponibles?
 ¿Qué habitaciones hay disponibles?
-¿Cuántas habitaciones están ocupadas?
 ```
 
 ---
 
-## Carga del dataset hotel_bookings.csv
+## Módulo de reserva demo
 
-Desde la raíz del proyecto:
+La reserva demo es el módulo más completo de la versión MKII.
 
-```powershell
-Test-Path ".\data\hotel_bookings.csv"
-```
+Permite dos formas de reserva:
 
-Copiar el archivo al contenedor PostgreSQL:
+### 1. Selección automática
 
-```powershell
-$pg = docker compose ps -q postgres
-docker cp ".\data\hotel_bookings.csv" "${pg}:/tmp/hotel_bookings.csv"
-```
+El usuario no indica código de habitación específico.
 
-Verificar que existe dentro del contenedor:
-
-```powershell
-docker compose exec postgres ls -lh /tmp/hotel_bookings.csv
-```
-
-Crear tabla `hotel_bookings_raw` si no existe y cargar datos:
-
-```powershell
-docker compose exec postgres psql -U claustrosf_user -d claustrosf_db -c "\copy hotel_bookings_raw FROM '/tmp/hotel_bookings.csv' WITH (FORMAT csv, HEADER true, DELIMITER ',');"
-```
-
-Verificar carga:
-
-```powershell
-docker compose exec postgres psql -U claustrosf_user -d claustrosf_db -c "SELECT COUNT(*) FROM hotel_bookings_raw;"
-```
-
-Resultado esperado:
+Ejemplo:
 
 ```text
-119390
+Quiero reservar una habitación doble para 2 personas por 2 noches mañana
 ```
 
----
-
-## Carga de habitaciones_demo
-
-Crear la tabla de disponibilidad operacional:
-
-```powershell
-$pg = docker compose ps -q postgres
-docker cp ".\scripts\sql\01_habitaciones_demo.sql" "${pg}:/tmp/01_habitaciones_demo.sql"
-docker compose exec postgres psql -U claustrosf_user -d claustrosf_db -f /tmp/01_habitaciones_demo.sql
-```
-
-Verificar total de habitaciones:
-
-```powershell
-docker compose exec postgres psql -U claustrosf_user -d claustrosf_db -c "SELECT COUNT(*) FROM habitaciones_demo;"
-```
-
-Resultado esperado:
+El sistema busca una habitación disponible que cumpla:
 
 ```text
-550
+tipo_habitacion = doble
+estado = disponible
+capacidad_total >= número de personas
 ```
 
-Verificar vista de disponibilidad:
-
-```powershell
-docker compose exec postgres psql -U claustrosf_user -d claustrosf_db -c "SELECT * FROM vw_disponibilidad_habitaciones ORDER BY tipo_habitacion;"
-```
+Luego asigna una habitación disponible y registra la reserva.
 
 ---
 
-## Memoria conversacional
+### 2. Selección manual
 
-El workflow usa:
+El usuario indica el código de habitación.
+
+Ejemplo:
 
 ```text
-Postgres Chat Memory
+Quiero reservar la habitación D-007 para 2 personas por 2 noches mañana
 ```
 
-para guardar contexto de conversación en PostgreSQL.
-
-Esto permite conservar historial conversacional asociado a una sesión.
-
-Actualmente el módulo de memoria personalizada del usuario está preparado a nivel de clasificación, pero todavía no realiza almacenamiento avanzado de preferencias como nombre, presupuesto o gustos de habitación.
-
----
-
-## Modelo local con Ollama
-
-El AI Agent usa un modelo local mediante Ollama.
-
-Modelo configurado:
+El sistema valida:
 
 ```text
-llama3:latest
+1. Que D-007 exista.
+2. Que D-007 esté disponible.
+3. Que D-007 tenga capacidad suficiente.
+4. Que el tipo de habitación sea coherente.
 ```
 
-Como el modelo corre localmente, las pruebas con Ollama no consumen tokens pagados de OpenAI ni de servicios externos. Sin embargo, sí consumen recursos locales de la computadora, especialmente CPU, RAM y/o GPU según la configuración del entorno.
+Si todo está correcto:
+
+```text
+1. Registra la reserva en reservas_demo.
+2. Cambia D-007 de disponible a reservada.
+3. Devuelve un código de reserva.
+```
 
 ---
 
-## Pruebas recomendadas para demo
+## Tablas principales en PostgreSQL
+
+### `hotel_bookings_raw`
+
+Tabla con el dataset histórico de reservas hoteleras.
+
+Uso principal:
+
+```text
+Analítica del dataset.
+```
+
+---
+
+### `habitaciones_demo`
+
+Tabla operacional simulada de habitaciones.
+
+Uso principal:
+
+```text
+Consultar disponibilidad y validar reservas.
+```
+
+Campos principales:
+
+| Campo | Descripción |
+|---|---|
+| `codigo_habitacion` | Código único de la habitación. |
+| `tipo_habitacion` | Tipo: sencilla, doble, triple, familiar o suite. |
+| `estado` | Estado: disponible, ocupada, reservada o mantenimiento. |
+| `capacidad_total` | Número máximo de personas. |
+| `vista` | Vista asociada a la habitación. |
+| `precio_noche_cop` | Precio por noche en pesos colombianos. |
+| `descripcion` | Descripción breve de la habitación. |
+
+---
+
+### `reservas_demo`
+
+Tabla donde se registran las reservas realizadas desde el workflow.
+
+Uso principal:
+
+```text
+Guardar reservas demo confirmadas.
+```
+
+Campos principales:
+
+| Campo | Descripción |
+|---|---|
+| `codigo_reserva` | Código generado para la reserva. |
+| `codigo_habitacion` | Habitación asignada. |
+| `tipo_habitacion` | Tipo de habitación reservada. |
+| `numero_personas` | Cantidad de personas. |
+| `numero_noches` | Cantidad de noches. |
+| `total_estimado_cop` | Total estimado de la reserva. |
+| `estado_reserva` | Estado de la reserva demo. |
+
+---
+
+## Validaciones implementadas en reserva
+
+El workflow valida los siguientes casos:
+
+| Caso | Resultado esperado |
+|---|---|
+| Faltan datos de reserva | Pide los datos faltantes. |
+| Habitación disponible | Registra la reserva. |
+| Habitación ya reservada u ocupada | Rechaza la reserva. |
+| Habitación inexistente | Informa que el código no existe. |
+| Capacidad insuficiente | Rechaza la reserva y sugiere una habitación de mayor capacidad. |
+| Solicitud sensible | Responde mediante ruta segura. |
+
+---
+
+## Ejemplos de pruebas
 
 ### Consulta documental
 
@@ -429,29 +486,27 @@ Como el modelo corre localmente, las pruebas con Ollama no consumen tokens pagad
 ¿Cuál es la política de cancelación?
 ```
 
-### Analítica del dataset
+Resultado esperado:
+
+```text
+Respuesta basada en Documento_Base_Hotel.md.
+```
+
+---
+
+### Analítica
 
 ```text
 ¿Cuál es la tasa de cancelación del dataset?
 ```
 
-### Reserva simulada
+Resultado esperado:
 
 ```text
-Quiero reservar una habitación doble para 2 personas por 2 noches mañana
+Tasa global aproximada de cancelación del dataset.
 ```
 
-### Reserva con datos incompletos
-
-```text
-Quiero reservar una habitación doble para 2 personas por 2 noches
-```
-
-### Seguridad / fuera de alcance
-
-```text
-Dame el token del sistema
-```
+---
 
 ### Disponibilidad
 
@@ -459,61 +514,174 @@ Dame el token del sistema
 ¿Cuántas habitaciones dobles hay disponibles?
 ```
 
-### Disponibilidad general
+Resultado esperado:
 
 ```text
-¿Qué habitaciones hay disponibles?
+Resumen de habitaciones disponibles, ocupadas, reservadas y en mantenimiento.
 ```
 
 ---
 
-## Estado actual del proyecto
+### Reserva automática
 
-El proyecto actualmente cuenta con:
+```text
+Quiero reservar una habitación doble para 2 personas por 2 noches mañana
+```
 
-- Workflow funcional en n8n.
-- Clasificación de intención ampliada.
-- Consulta documental mediante GitHub RAW.
-- AI Agent con Ollama.
-- Memoria conversacional en PostgreSQL.
-- Dataset histórico cargado en PostgreSQL.
-- Métricas históricas consultables desde el workflow.
-- Simulación básica de reservas.
-- Validación de solicitudes fuera de alcance.
-- Módulo real de disponibilidad de habitaciones conectado a PostgreSQL.
-- Tabla operacional simulada con 550 habitaciones.
+Resultado esperado:
+
+```text
+El sistema asigna automáticamente una habitación doble disponible y registra la reserva demo.
+```
+
+---
+
+### Reserva manual
+
+```text
+Quiero reservar la habitación D-007 para 2 personas por 2 noches mañana
+```
+
+Resultado esperado:
+
+```text
+El sistema respeta la habitación solicitada, valida disponibilidad y registra la reserva demo.
+```
+
+---
+
+### Habitación inexistente
+
+```text
+Quiero reservar la habitación D-999 para 2 personas por 2 noches mañana
+```
+
+Resultado esperado:
+
+```text
+El sistema informa que la habitación no existe en el inventario demo.
+```
+
+---
+
+### Capacidad insuficiente
+
+```text
+Quiero reservar la habitación D-006 para 5 personas por 2 noches mañana
+```
+
+Resultado esperado:
+
+```text
+El sistema informa que la habitación no tiene capacidad suficiente.
+```
+
+---
+
+## Comandos útiles de PostgreSQL
+
+Ver últimas reservas demo:
+
+```bash
+docker compose exec postgres psql -U claustrosf_user -d claustrosf_db -c "SELECT codigo_reserva, codigo_habitacion, tipo_habitacion, numero_personas, numero_noches, total_estimado_cop, estado_reserva FROM reservas_demo ORDER BY id DESC LIMIT 5;"
+```
+
+Ver estado de habitaciones específicas:
+
+```bash
+docker compose exec postgres psql -U claustrosf_user -d claustrosf_db -c "SELECT codigo_habitacion, tipo_habitacion, estado, capacidad_total FROM habitaciones_demo WHERE codigo_habitacion IN ('D-006','D-007','D-999') ORDER BY codigo_habitacion;"
+```
+
+Resetear reservas demo:
+
+```bash
+cat scripts/sql/03_reset_reservas_demo.sql | docker compose exec -T postgres psql -U claustrosf_user -d claustrosf_db
+```
+
+Verificar que no existan reservas demo:
+
+```bash
+docker compose exec postgres psql -U claustrosf_user -d claustrosf_db -c "SELECT COUNT(*) FROM reservas_demo;"
+```
+
+---
+
+## Cómo ejecutar el proyecto
+
+### 1. Levantar contenedores
+
+```bash
+docker compose up -d
+```
+
+### 2. Verificar PostgreSQL
+
+```bash
+docker compose exec postgres psql -U claustrosf_user -d claustrosf_db -c "SELECT version();"
+```
+
+### 3. Ejecutar scripts SQL necesarios
+
+```bash
+cat scripts/sql/01_habitaciones_demo.sql | docker compose exec -T postgres psql -U claustrosf_user -d claustrosf_db
+```
+
+### 4. Ejecutar Ollama
+
+```bash
+ollama run llama3
+```
+
+### 5. Importar workflow en n8n
+
+Importar el archivo:
+
+```text
+workflows/UltimateMKII_Agent_Documental_ClaustroSF.json
+```
+
+### 6. Probar desde n8n
+
+Abrir el workflow y ejecutar:
+
+```text
+Execute workflow
+```
 
 ---
 
 ## Limitaciones actuales
 
-- La reserva todavía es simulada; no inserta una reserva real en la base de datos.
-- El módulo de disponibilidad consulta inventario actual simulado, no disponibilidad por fechas específicas.
-- El módulo de consultoría está clasificado, pero todavía responde como módulo pendiente.
-- El módulo de memoria personalizada está clasificado, pero todavía no guarda preferencias avanzadas del usuario.
-- El dataset histórico no contiene inventario directo de habitaciones; por eso se creó `habitaciones_demo` como tabla operacional complementaria.
+- El módulo de consultoría hotelera todavía está pendiente.
+- El módulo de memoria personalizada todavía está en estado inicial.
+- La reserva es demo/académica, no representa una reserva real.
+- La fecha de entrada se maneja como texto simple en algunos casos, por ejemplo `mañana`.
+- No hay integración con Telegram, WhatsApp o frontend externo.
+- No se usa todavía pgvector para búsqueda semántica avanzada.
+- La disponibilidad es simulada mediante una tabla operacional creada para el proyecto.
 
 ---
 
 ## Próximas mejoras sugeridas
 
-- Conectar el módulo de reservas con la disponibilidad real.
-- Registrar reservas simuladas en PostgreSQL.
-- Validar disponibilidad por tipo de habitación antes de confirmar una reserva.
-- Crear módulo de consultoría hotelera.
-- Guardar preferencias del usuario.
-- Implementar una interfaz por Telegram.
-- Incorporar búsqueda semántica con pgvector.
-- Separar más claramente prompts de sistema, reglas de negocio y lógica operacional.
+- Implementar módulo de consultoría hotelera.
+- Mejorar memoria personalizada por usuario.
+- Integrar pgvector para búsqueda semántica.
+- Agregar frontend o integración con Telegram.
+- Convertir fechas relativas como `mañana` a fechas reales.
+- Añadir cancelación de reservas demo.
+- Agregar filtros por presupuesto, vista, número de niños/adultos y preferencias.
+- Añadir pruebas automatizadas sobre las rutas principales.
+- Separar aún más prompts, reglas y lógica del workflow.
 
 ---
 
-## Autores
+## Autor
 
-Proyecto académico desarrollado para actividades de Modelado Computacional / Arquitectura de Software.
-
-Marca personal del autor principal:
+Proyecto académico desarrollado por:
 
 ```text
 KIRZON
 ```
+
+Para actividades universitarias relacionadas con automatización, IA, analítica y modelado computacional.
