@@ -19,7 +19,7 @@
             {
               "id": "d5208ae5-707d-4b7d-b379-8dbd4d4f03bb",
               "name": "pregunta_usuario",
-              "value": "Quiero reservar la habitación D-006 para 5 personas por 2 noches mañana",
+              "value": "Quiero reservar la habitación D-042 para 2 personas por 2 noches mañana",
               "type": "string"
             },
             {
@@ -69,7 +69,7 @@
       "typeVersion": 3.1,
       "position": [
         1120,
-        -640
+        -704
       ],
       "id": "10077cf1-623c-4697-acd5-93e084644318",
       "name": "AI Agent"
@@ -86,7 +86,7 @@
       "typeVersion": 1,
       "position": [
         976,
-        -400
+        -464
       ],
       "id": "16c6a0e8-4c03-4ea2-92a6-44d91722b77f",
       "name": "Ollama Chat Model",
@@ -113,7 +113,7 @@
       "typeVersion": 4.4,
       "position": [
         912,
-        -640
+        -704
       ],
       "id": "fd1f133c-c7ed-46f1-bcbd-55c86b812e61",
       "name": "HTTP Request"
@@ -127,7 +127,7 @@
       "typeVersion": 1.3,
       "position": [
         1216,
-        -400
+        -464
       ],
       "id": "39f17b98-abf9-4eb3-853b-a46e64610907",
       "name": "Postgres Chat Memory1",
@@ -153,7 +153,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nfunction contiene(texto, palabras) {\n  return palabras.some((p) => texto.includes(p));\n}\n\nfunction contarCoincidencias(texto, palabras) {\n  return palabras.filter((p) => texto.includes(p)).length;\n}\n\nreturn items.map((item) => {\n  const pregunta = (item.json.pregunta_normalizada || \"\").toString();\n  const preguntaOriginal = (item.json.pregunta_original || item.json.pregunta_usuario || \"\").toString();\n\n  let tipoSolicitud = \"documental\";\n  let confianza = \"media\";\n  let motivo = \"La pregunta parece relacionada con información general del hotel.\";\n\n  const palabrasFueraAlcance = [\n    \"contrasena\",\n    \"password\",\n    \"clave\",\n    \"credencial\",\n    \"credenciales\",\n    \"token\",\n    \"api key\",\n    \"apikey\",\n    \"secret\",\n    \"secreto\",\n    \"administrador\",\n    \"admin\",\n    \"root\",\n    \"hackear\",\n    \"hacker\",\n    \"borrar base de datos\",\n    \"eliminar base de datos\",\n    \"drop table\",\n    \"delete from\",\n    \"datos privados\",\n    \"informacion privada\",\n    \"datos personales\",\n    \"cuenta bancaria\",\n    \"cuentas bancarias\",\n    \"salario\",\n    \"empleado\",\n    \"empleados\",\n    \"huesped privado\",\n    \"datos de huesped\"\n  ];\n\n  const palabrasReserva = [\n    \"quiero reservar\",\n    \"deseo reservar\",\n    \"necesito reservar\",\n    \"hacer una reserva\",\n    \"realizar una reserva\",\n    \"reservar una habitacion\",\n    \"reservar habitacion\",\n    \"reservar\",\n    \"reserva para\",\n    \"hospedarme\",\n    \"alojarme\",\n    \"quiero una habitacion\",\n    \"necesito una habitacion\",\n    \"separar una habitacion\",\n    \"apartame una habitacion\",\n    \"apartar una habitacion\"\n  ];\n\n  const palabrasDisponibilidad = [\n    \"disponibilidad\",\n    \"disponible\",\n    \"disponibles\",\n    \"habitaciones disponibles\",\n    \"habitacion disponible\",\n    \"suites disponibles\",\n    \"suite disponible\",\n    \"cuantas habitaciones hay\",\n    \"cuantas habitaciones quedan\",\n    \"cuantas suites hay\",\n    \"cuantas suites quedan\",\n    \"habitaciones ocupadas\",\n    \"ocupadas\",\n    \"ocupados\",\n    \"queda alguna\",\n    \"quedan habitaciones\",\n    \"hay habitaciones\",\n    \"hay suites\",\n    \"tienen habitaciones\",\n    \"tienen suite\",\n    \"capacidad disponible\"\n  ];\n\n  const palabrasConsultoria = [\n    \"que me recomiendas\",\n    \"que recomiendas\",\n    \"recomiendame\",\n    \"recomendacion\",\n    \"recomendaciones\",\n    \"cual me conviene\",\n    \"cual seria mejor\",\n    \"que opcion es mejor\",\n    \"mejor opcion\",\n    \"opcion recomendada\",\n    \"voy con mi familia\",\n    \"viajo con mi familia\",\n    \"voy con mi pareja\",\n    \"viajo con mi pareja\",\n    \"somos\",\n    \"adultos y\",\n    \"ninos\",\n    \"niños\",\n    \"economico\",\n    \"barato\",\n    \"presupuesto\",\n    \"vista al mar\",\n    \"vista al hotel\",\n    \"comodidad\",\n    \"mas comodo\",\n    \"mas conveniente\"\n  ];\n\n  const palabrasAnalitica = [\n    \"dataset\",\n    \"data set\",\n    \"datos historicos\",\n    \"analitica\",\n    \"analisis\",\n    \"estadistica\",\n    \"estadisticas\",\n    \"metrica\",\n    \"metricas\",\n    \"tasa\",\n    \"porcentaje\",\n    \"promedio\",\n    \"adr\",\n    \"lead time\",\n    \"cancelacion del dataset\",\n    \"tasa de cancelacion\",\n    \"mes con mas reservas\",\n    \"hotel tiene mas reservas\",\n    \"city hotel\",\n    \"resort hotel\",\n    \"segmento mas frecuente\",\n    \"segmento de mercado\",\n    \"reservas historicas\"\n  ];\n\n  const palabrasMemoria = [\n    \"me llamo\",\n    \"mi nombre es\",\n    \"recuerda que\",\n    \"recuerdame\",\n    \"ten en cuenta que\",\n    \"prefiero\",\n    \"mi preferencia\",\n    \"mis preferencias\",\n    \"mi presupuesto es\",\n    \"viajare con\",\n    \"viajo con\",\n    \"somos una familia\",\n    \"guarda que\"\n  ];\n\n  const palabrasDocumental = [\n    \"politica\",\n    \"cancelacion\",\n    \"check in\",\n    \"check-in\",\n    \"check out\",\n    \"check-out\",\n    \"hora de entrada\",\n    \"hora de salida\",\n    \"desayuno\",\n    \"parqueadero\",\n    \"mascotas\",\n    \"wifi\",\n    \"wi fi\",\n    \"habitacion sencilla\",\n    \"habitacion doble\",\n    \"habitacion triple\",\n    \"habitacion familiar\",\n    \"suite\",\n    \"servicios\",\n    \"normas\",\n    \"recepcion\",\n    \"equipaje\",\n    \"menores\",\n    \"familias\",\n    \"pagos\",\n    \"fumadores\",\n    \"ruido\",\n    \"visitantes\",\n    \"danos\",\n    \"daños\"\n  ];\n\n  const score = {\n    fuera_alcance: contarCoincidencias(pregunta, palabrasFueraAlcance),\n    reserva_simulada: contarCoincidencias(pregunta, palabrasReserva),\n    disponibilidad_habitaciones: contarCoincidencias(pregunta, palabrasDisponibilidad),\n    consultoria: contarCoincidencias(pregunta, palabrasConsultoria),\n    analitica_dataset: contarCoincidencias(pregunta, palabrasAnalitica),\n    memoria_usuario: contarCoincidencias(pregunta, palabrasMemoria),\n    documental: contarCoincidencias(pregunta, palabrasDocumental)\n  };\n\n  // Prioridad 1: seguridad\n  if (score.fuera_alcance > 0) {\n    tipoSolicitud = \"fuera_alcance\";\n    confianza = \"alta\";\n    motivo = \"La pregunta solicita información sensible, privada o no permitida.\";\n  }\n\n  // Prioridad 2: reserva explícita\n  else if (score.reserva_simulada > 0) {\n    tipoSolicitud = \"reserva_simulada\";\n    confianza = \"alta\";\n    motivo = \"La pregunta expresa una intención de reserva.\";\n  }\n\n  // Prioridad 3: disponibilidad\n  else if (score.disponibilidad_habitaciones > 0) {\n    tipoSolicitud = \"disponibilidad_habitaciones\";\n    confianza = \"alta\";\n    motivo = \"La pregunta solicita disponibilidad, ocupación o capacidad de habitaciones.\";\n  }\n\n  // Prioridad 4: consultoría/recomendación\n  else if (score.consultoria > 0) {\n    tipoSolicitud = \"consultoria\";\n    confianza = \"media\";\n    motivo = \"La pregunta solicita una recomendación o asesoría hotelera.\";\n  }\n\n  // Prioridad 5: analítica\n  else if (score.analitica_dataset > 0) {\n    tipoSolicitud = \"analitica_dataset\";\n    confianza = \"alta\";\n    motivo = \"La pregunta solicita análisis o métricas del dataset hotelero.\";\n  }\n\n  // Prioridad 6: memoria de usuario\n  else if (score.memoria_usuario > 0) {\n    tipoSolicitud = \"memoria_usuario\";\n    confianza = \"media\";\n    motivo = \"La pregunta contiene información personal o preferencias que podrían recordarse.\";\n  }\n\n  // Prioridad 7: documental\n  else if (score.documental > 0) {\n    tipoSolicitud = \"documental\";\n    confianza = \"alta\";\n    motivo = \"La pregunta se relaciona con políticas, servicios o información documentada del hotel.\";\n  }\n\n  // Caso por defecto\n  else {\n    tipoSolicitud = \"documental\";\n    confianza = \"baja\";\n    motivo = \"No se detectó una intención específica; se envía a consulta documental por defecto.\";\n  }\n\n  return {\n    json: {\n      ...item.json,\n      pregunta_original: preguntaOriginal,\n      pregunta_normalizada: pregunta,\n      tipo_solicitud: tipoSolicitud,\n      confianza_clasificacion: confianza,\n      motivo_clasificacion: motivo,\n      score_clasificacion: score\n    }\n  };\n});"
+        "jsCode": "const items = $input.all();\n\nfunction normalizarTexto(texto) {\n  return String(texto || \"\")\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\")\n    .trim();\n}\n\nfunction contieneAlguno(texto, patrones) {\n  return patrones.some((patron) => texto.includes(patron));\n}\n\nfunction coincideAlguno(texto, regexList) {\n  return regexList.some((regex) => regex.test(texto));\n}\n\nreturn items.map((item) => {\n  const data = item.json;\n\n  const preguntaOriginal =\n    data.pregunta_usuario ||\n    data.pregunta_original ||\n    \"\";\n\n  const preguntaNormalizada =\n    data.pregunta_normalizada ||\n    normalizarTexto(preguntaOriginal);\n\n  const pregunta = normalizarTexto(preguntaNormalizada);\n\n  const score = {\n    fuera_alcance: 0,\n    reserva_simulada: 0,\n    disponibilidad_habitaciones: 0,\n    consultoria: 0,\n    analitica_dataset: 0,\n    memoria_usuario: 0,\n    documental: 0\n  };\n\n  // =========================\n  // 1. Señales de reserva\n  // =========================\n\n  const patronesReserva = [\n    \"quiero reservar\",\n    \"deseo reservar\",\n    \"necesito reservar\",\n    \"me gustaria reservar\",\n    \"reservar una habitacion\",\n    \"reservar la habitacion\",\n    \"hacer una reserva\",\n    \"crear una reserva\",\n    \"registrar una reserva\",\n    \"separar una habitacion\",\n    \"apartar una habitacion\",\n    \"reservame\",\n    \"reserva una\",\n    \"reserva la\"\n  ];\n\n  const regexReserva = [\n    /\\breserv(ar|a|ame|acion|aciones)\\b/,\n    /\\b(apartar|separar)\\b.*\\bhabitacion\\b/,\n    /\\bquiero\\b.*\\bhabitacion\\b.*\\bpara\\b.*\\bpersona/,\n    /\\bhabitacion\\s+[a-z]-\\d{3}\\b.*\\bpara\\b.*\\bpersona/\n  ];\n\n  if (contieneAlguno(pregunta, patronesReserva)) score.reserva_simulada += 3;\n  if (coincideAlguno(pregunta, regexReserva)) score.reserva_simulada += 3;\n\n  // Si menciona noches/personas junto con intención de habitación, suma a reserva.\n  if (/\\b(\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\s+(noche|noches|dia|dias)\\b/.test(pregunta)) {\n    score.reserva_simulada += 1;\n  }\n\n  if (/\\bpara\\s+(\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\s+(persona|personas|huesped|huespedes|adulto|adultos)\\b/.test(pregunta)) {\n    score.reserva_simulada += 1;\n  }\n\n  // =========================\n  // 2. Señales de disponibilidad\n  // =========================\n\n  const patronesDisponibilidad = [\n    \"hay disponibilidad\",\n    \"tienen disponibilidad\",\n    \"habitaciones disponibles\",\n    \"habitacion disponible\",\n    \"cuantas habitaciones\",\n    \"que habitaciones hay\",\n    \"consultar disponibilidad\",\n    \"ver disponibilidad\",\n    \"disponibilidad de habitaciones\",\n    \"hay habitaciones\"\n  ];\n\n  if (contieneAlguno(pregunta, patronesDisponibilidad)) {\n    score.disponibilidad_habitaciones += 4;\n  }\n\n  if (/\\b(disponible|disponibles|disponibilidad)\\b/.test(pregunta)) {\n    score.disponibilidad_habitaciones += 2;\n  }\n\n  // =========================\n  // 3. Señales de memoria de usuario\n  // =========================\n\n  const patronesMemoria = [\n    \"me llamo\",\n    \"mi nombre es\",\n    \"soy \",\n    \"prefiero\",\n    \"me gusta\",\n    \"no me gusta\",\n    \"me encantan\",\n    \"me interesa\",\n    \"recuerda que\",\n    \"quiero que recuerdes\",\n    \"ten en cuenta\",\n    \"viajo con\",\n    \"viajamos\",\n    \"somos\",\n    \"mi presupuesto\",\n    \"presupuesto maximo\",\n    \"presupuesto es\",\n    \"tengo un presupuesto\",\n    \"habitaciones tranquilas\",\n    \"habitacion tranquila\",\n    \"vista al patio\",\n    \"vista al hotel\",\n    \"patio colonial\",\n    \"vista exterior\",\n    \"vista interior\"\n  ];\n\n  const regexMemoria = [\n    /\\bme llamo\\s+[a-zñ]+/i,\n    /\\bmi nombre es\\s+[a-zñ]+/i,\n    /\\bsoy\\s+[a-zñ]+/i,\n    /\\bprefiero\\b/,\n    /\\bpreferimos\\b/,\n    /\\bme gusta\\b/,\n    /\\bno me gusta\\b/,\n    /\\brecuerda que\\b/,\n    /\\bten en cuenta\\b/,\n    /\\bsomos\\s+\\d+\\s+(adultos|personas|huespedes)\\b/,\n    /\\b\\d+\\s+adultos?\\b/,\n    /\\b\\d+\\s+ninos?\\b/,\n    /\\b\\d+\\s+niños?\\b/,\n    /\\bpresupuesto\\b/,\n    /\\b\\d{5,9}\\s*(cop|pesos)?\\b.*\\b(noche|habitacion|presupuesto)\\b/,\n    /\\b(sencilla|doble|triple|familiar|suite)\\b.*\\b(comoda|tranquila|preferida|prefiero)\\b/,\n    /\\b(vista|patio colonial|hotel)\\b/\n  ];\n\n  if (contieneAlguno(pregunta, patronesMemoria)) score.memoria_usuario += 3;\n  if (coincideAlguno(pregunta, regexMemoria)) score.memoria_usuario += 3;\n\n  // Frases típicas de memoria sin intención de reservar.\n  if (pregunta.startsWith(\"prefiero\") || pregunta.startsWith(\"me llamo\") || pregunta.startsWith(\"mi presupuesto\") || pregunta.startsWith(\"somos\")) {\n    score.memoria_usuario += 3;\n  }\n\n  // =========================\n  // 4. Señales documentales\n  // =========================\n\n  const patronesDocumental = [\n    \"politicas\",\n    \"politica\",\n    \"check in\",\n    \"check-in\",\n    \"check out\",\n    \"check-out\",\n    \"hora de entrada\",\n    \"hora de salida\",\n    \"desayuno\",\n    \"mascotas\",\n    \"cancelacion\",\n    \"cancelar\",\n    \"normas\",\n    \"reglas\",\n    \"servicios del hotel\",\n    \"wifi\",\n    \"parqueadero\",\n    \"ubicacion\",\n    \"direccion\",\n    \"telefono\",\n    \"contacto\"\n  ];\n\n  if (contieneAlguno(pregunta, patronesDocumental)) {\n    score.documental += 3;\n  }\n\n  // =========================\n  // 5. Señales de analítica/dataset\n  // =========================\n\n  const patronesAnalitica = [\n    \"dataset\",\n    \"metricas\",\n    \"estadisticas\",\n    \"promedio\",\n    \"grafica\",\n    \"grafico\",\n    \"analisis\",\n    \"analitica\",\n    \"cuantas reservas\",\n    \"habitaciones mas reservadas\",\n    \"ocupacion\",\n    \"reporte\"\n  ];\n\n  if (contieneAlguno(pregunta, patronesAnalitica)) {\n    score.analitica_dataset += 4;\n  }\n\n  // =========================\n  // 6. Señales de consultoría\n  // =========================\n\n  const patronesConsultoria = [\n    \"que me recomiendas\",\n    \"cual me recomiendas\",\n    \"recomiendame\",\n    \"que habitacion es mejor\",\n    \"cual habitacion es mejor\",\n    \"que opcion es mejor\",\n    \"consejo\",\n    \"sugerencia\"\n  ];\n\n  if (contieneAlguno(pregunta, patronesConsultoria)) {\n    score.consultoria += 3;\n  }\n\n  // =========================\n  // 7. Fuera de alcance\n  // =========================\n\n  const senalesHotel =\n    score.reserva_simulada > 0 ||\n    score.disponibilidad_habitaciones > 0 ||\n    score.memoria_usuario > 0 ||\n    score.documental > 0 ||\n    score.analitica_dataset > 0 ||\n    score.consultoria > 0;\n\n  if (!senalesHotel) {\n    score.fuera_alcance += 2;\n  }\n\n  // =========================\n  // 8. Reglas de prioridad\n  // =========================\n\n  let tipoSolicitud = \"fuera_alcance\";\n  let motivoClasificacion = \"La pregunta no coincide con las funciones disponibles del asistente.\";\n  let confianzaClasificacion = \"baja\";\n\n  // Prioridad 1: reserva explícita.\n  // Si el usuario dice reservar/apartar/separar, se respeta como reserva aunque incluya preferencias.\n  if (score.reserva_simulada >= 4) {\n    tipoSolicitud = \"reserva_simulada\";\n    motivoClasificacion = \"La pregunta expresa una intención clara de registrar una reserva.\";\n    confianzaClasificacion = \"alta\";\n  }\n\n  // Prioridad 2: disponibilidad.\n  else if (score.disponibilidad_habitaciones >= 4) {\n    tipoSolicitud = \"disponibilidad_habitaciones\";\n    motivoClasificacion = \"La pregunta solicita consultar disponibilidad de habitaciones.\";\n    confianzaClasificacion = \"alta\";\n  }\n\n  // Prioridad 3: memoria de usuario.\n  else if (score.memoria_usuario >= 3) {\n    tipoSolicitud = \"memoria_usuario\";\n    motivoClasificacion = \"La pregunta contiene información personal, preferencias o datos útiles para recordar.\";\n    confianzaClasificacion = score.memoria_usuario >= 6 ? \"alta\" : \"media\";\n  }\n\n  // Prioridad 4: analítica.\n  else if (score.analitica_dataset >= 4) {\n    tipoSolicitud = \"analitica_dataset\";\n    motivoClasificacion = \"La pregunta solicita métricas, estadísticas o análisis del dataset.\";\n    confianzaClasificacion = \"alta\";\n  }\n\n  // Prioridad 5: documental.\n  else if (score.documental >= 3) {\n    tipoSolicitud = \"documental\";\n    motivoClasificacion = \"La pregunta solicita información documental o políticas del hotel.\";\n    confianzaClasificacion = \"media\";\n  }\n\n  // Prioridad 6: consultoría.\n  else if (score.consultoria >= 3) {\n    tipoSolicitud = \"consultoria\";\n    motivoClasificacion = \"La pregunta solicita recomendación o asesoría sobre opciones del hotel.\";\n    confianzaClasificacion = \"media\";\n  }\n\n  return {\n    json: {\n      ...data,\n      pregunta_original: data.pregunta_original || preguntaOriginal,\n      pregunta_normalizada: pregunta,\n      pregunta_valida: Boolean(data.pregunta_valida ?? true),\n      longitud_pregunta: preguntaOriginal.length,\n\n      tipo_solicitud: tipoSolicitud,\n      confianza_clasificacion: confianzaClasificacion,\n      motivo_clasificacion: motivoClasificacion,\n      score_clasificacion: score\n    }\n  };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -349,7 +349,7 @@
       "typeVersion": 2,
       "position": [
         1472,
-        -640
+        -704
       ],
       "id": "c2063cd3-f28c-49cd-a7a3-3e0fb9b14336",
       "name": "Code - Formatear Salida Documental"
@@ -361,8 +361,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1008,
-        192
+        1056,
+        160
       ],
       "id": "0463ddd8-2b87-449c-b83e-9037601df05f",
       "name": "Code - Respuesta Segura"
@@ -387,7 +387,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1472,
+        1856,
         96
       ],
       "id": "143da9dd-6d0e-42f4-a0b6-54788b1287cc",
@@ -402,8 +402,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1008,
-        -224
+        960,
+        -320
       ],
       "id": "93a495f2-4900-4640-bcd6-ed4bd9090d95",
       "name": "Postgres - Métricas Dataset",
@@ -421,8 +421,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1216,
-        -224
+        1168,
+        -320
       ],
       "id": "d9b0ee5d-a0fb-4f1d-8467-17b89ddfc6f2",
       "name": "Code - Formatear Salida Analitica"
@@ -436,8 +436,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        992,
-        368
+        1040,
+        320
       ],
       "id": "59a6205d-723f-45d2-aa06-72f1896a5c38",
       "name": "Postgres - Disponibilidad Habitaciones",
@@ -455,20 +455,20 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1200,
-        368
+        1248,
+        320
       ],
       "id": "05cbae86-f9f6-4f43-86f3-354a62c21cdc",
       "name": "Code - Formatear Salida Disponibilidad"
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nfunction sqlText(valor) {\n  return String(valor ?? \"\")\n    .replace(/'/g, \"''\")\n    .trim();\n}\n\nreturn items.map((item) => {\n  const data = item.json;\n\n  const tipoHabitacionDb =\n    data.tipo_habitacion_db ||\n    data.tipo_habitacion_inferida_codigo ||\n    null;\n\n  const codigoHabitacionSolicitado =\n    data.codigo_habitacion_solicitado || null;\n\n  return {\n    json: {\n      ...data,\n\n      tipo_habitacion_db: tipoHabitacionDb,\n      tipo_habitacion_db_sql: sqlText(tipoHabitacionDb || \"\"),\n\n      codigo_habitacion_solicitado: codigoHabitacionSolicitado,\n      codigo_habitacion_solicitado_sql: sqlText(codigoHabitacionSolicitado || \"\"),\n\n      numero_personas: Number(data.numero_personas),\n      numero_noches: Number(data.numero_noches),\n\n      fecha_entrada: data.fecha_entrada,\n      fecha_entrada_sql: sqlText(data.fecha_entrada || \"\"),\n\n      pregunta_usuario_sql: sqlText(data.pregunta_usuario || data.pregunta_original || \"\"),\n      sessionId_sql: sqlText(data.sessionId || \"demo-claustrosf\")\n    }\n  };\n});"
+        "jsCode": "const items = $input.all();\n\nfunction sqlText(valor) {\n  return String(valor ?? \"\")\n    .replace(/'/g, \"''\")\n    .trim();\n}\n\nfunction normalizarTexto(valor) {\n  return String(valor ?? \"\")\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\")\n    .trim();\n}\n\nreturn items.map((item) => {\n  const data = item.json;\n\n  const tipoHabitacionDb =\n    data.tipo_habitacion_db ||\n    data.tipo_habitacion_inferida_codigo ||\n    data.tipo_habitacion_preferida ||\n    data.tipo_habitacion ||\n    null;\n\n  const codigoHabitacionSolicitado =\n    data.codigo_habitacion_solicitado ||\n    data.codigo_habitacion ||\n    null;\n\n  const numeroPersonas =\n    Number(data.numero_personas) ||\n    Number(data.numero_adultos || 0) + Number(data.numero_ninos || 0) ||\n    null;\n\n  const numeroNoches =\n    Number(data.numero_noches) || null;\n\n  const fechaEntrada =\n    data.fecha_entrada ||\n    data.fecha_entrada_texto ||\n    null;\n\n  const vistaPreferida =\n    data.vista_preferida ||\n    null;\n\n  const presupuestoMaxCop =\n    data.presupuesto_max_cop !== null &&\n    data.presupuesto_max_cop !== undefined &&\n    data.presupuesto_max_cop !== \"\"\n      ? Number(data.presupuesto_max_cop)\n      : null;\n\n  return {\n    json: {\n      ...data,\n\n      tipo_habitacion_db: tipoHabitacionDb,\n      tipo_habitacion_db_sql: sqlText(tipoHabitacionDb || \"\"),\n\n      codigo_habitacion_solicitado: codigoHabitacionSolicitado,\n      codigo_habitacion_solicitado_sql: sqlText(codigoHabitacionSolicitado || \"\"),\n\n      numero_personas: numeroPersonas,\n      numero_noches: numeroNoches,\n\n      fecha_entrada: fechaEntrada,\n      fecha_entrada_sql: sqlText(fechaEntrada || \"\"),\n\n      vista_preferida: vistaPreferida,\n      vista_preferida_normalizada: normalizarTexto(vistaPreferida || \"\"),\n      vista_preferida_sql: sqlText(vistaPreferida || \"\"),\n\n      presupuesto_max_cop: presupuestoMaxCop,\n\n      pregunta_usuario_sql: sqlText(data.pregunta_usuario || data.pregunta_original || \"\"),\n      sessionId_sql: sqlText(data.sessionId || data.session_id || \"demo-claustrosf\")\n    }\n  };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1664,
+        2048,
         -128
       ],
       "id": "29352495-50b2-46b2-8e28-9acf4e7556f1",
@@ -511,7 +511,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2080,
+        2464,
         -128
       ],
       "id": "3dac49b4-a053-4b0a-8651-7279b93746aa",
@@ -524,8 +524,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2288,
-        -32
+        2672,
+        16
       ],
       "id": "fa27cf17-569c-4014-b004-86059fe79e9f",
       "name": "Code - Sin Disponibilidad"
@@ -557,7 +557,7 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1232,
+        1616,
         -32
       ],
       "id": "b80494ad-c0e3-460a-9b62-8d5b9cc251d3",
@@ -566,13 +566,13 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "WITH params AS (\n    SELECT\n        NULLIF('{{ $json.codigo_habitacion_solicitado_sql || \"\" }}', '') AS codigo_solicitado,\n        NULLIF('{{ $json.tipo_habitacion_db_sql || $json.tipo_habitacion_db || \"\" }}', '') AS tipo_solicitado,\n        {{ $json.numero_personas }}::int AS personas\n),\n\nhabitacion_manual AS (\n    SELECT\n        h.codigo_habitacion,\n        h.tipo_habitacion,\n        h.capacidad_total,\n        h.vista,\n        h.precio_noche_cop,\n        h.descripcion,\n        h.estado\n    FROM habitaciones_demo h\n    CROSS JOIN params p\n    WHERE p.codigo_solicitado IS NOT NULL\n      AND UPPER(h.codigo_habitacion) = UPPER(p.codigo_solicitado)\n    LIMIT 1\n),\n\ncandidatas_auto AS (\n    SELECT\n        h.codigo_habitacion,\n        h.tipo_habitacion,\n        h.capacidad_total,\n        h.vista,\n        h.precio_noche_cop,\n        h.descripcion,\n        h.estado\n    FROM habitaciones_demo h\n    CROSS JOIN params p\n    WHERE p.codigo_solicitado IS NULL\n      AND h.tipo_habitacion = p.tipo_solicitado\n      AND h.estado = 'disponible'\n      AND h.capacidad_total >= p.personas\n),\n\nconteo_auto AS (\n    SELECT COUNT(*)::int AS habitaciones_disponibles\n    FROM candidatas_auto\n),\n\nseleccion_auto AS (\n    SELECT *\n    FROM candidatas_auto\n    ORDER BY\n        capacidad_total ASC,\n        precio_noche_cop ASC,\n        CAST(regexp_replace(codigo_habitacion, '[^0-9]', '', 'g') AS INTEGER) ASC\n    LIMIT 1\n),\n\nseleccion_manual AS (\n    SELECT h.*\n    FROM habitacion_manual h\n    CROSS JOIN params p\n    WHERE h.estado = 'disponible'\n      AND h.capacidad_total >= p.personas\n),\n\nseleccion_final AS (\n    SELECT\n        *,\n        'manual' AS modo_seleccion\n    FROM seleccion_manual\n\n    UNION ALL\n\n    SELECT\n        *,\n        'automatica' AS modo_seleccion\n    FROM seleccion_auto\n),\n\ndiagnostico AS (\n    SELECT\n        CASE\n            WHEN p.codigo_solicitado IS NOT NULL\n                 AND NOT EXISTS (SELECT 1 FROM habitacion_manual)\n                THEN 'codigo_no_existe'\n\n            WHEN p.codigo_solicitado IS NOT NULL\n                 AND EXISTS (\n                     SELECT 1\n                     FROM habitacion_manual\n                     WHERE estado <> 'disponible'\n                 )\n                THEN 'habitacion_no_disponible'\n\n            WHEN p.codigo_solicitado IS NOT NULL\n                 AND EXISTS (\n                     SELECT 1\n                     FROM habitacion_manual\n                     WHERE capacidad_total < p.personas\n                 )\n                THEN 'capacidad_insuficiente'\n\n            WHEN p.codigo_solicitado IS NULL\n                 AND NOT EXISTS (SELECT 1 FROM candidatas_auto)\n                THEN 'sin_disponibilidad'\n\n            ELSE 'disponible'\n        END AS resultado_disponibilidad,\n\n        CASE\n            WHEN p.codigo_solicitado IS NOT NULL\n                 AND NOT EXISTS (SELECT 1 FROM habitacion_manual)\n                THEN 'La habitación solicitada no existe en el inventario demo.'\n\n            WHEN p.codigo_solicitado IS NOT NULL\n                 AND EXISTS (\n                     SELECT 1\n                     FROM habitacion_manual\n                     WHERE estado <> 'disponible'\n                 )\n                THEN 'La habitación solicitada existe, pero no está disponible actualmente.'\n\n            WHEN p.codigo_solicitado IS NOT NULL\n                 AND EXISTS (\n                     SELECT 1\n                     FROM habitacion_manual\n                     WHERE capacidad_total < p.personas\n                 )\n                THEN 'La habitación solicitada no tiene capacidad suficiente para la cantidad de personas indicada.'\n\n            WHEN p.codigo_solicitado IS NULL\n                 AND NOT EXISTS (SELECT 1 FROM candidatas_auto)\n                THEN 'No hay habitaciones disponibles que cumplan con el tipo y la capacidad solicitada.'\n\n            ELSE 'Habitación disponible.'\n        END AS motivo_no_disponibilidad\n    FROM params p\n)\n\nSELECT\n    CASE\n        WHEN EXISTS (SELECT 1 FROM seleccion_final)\n            THEN\n                CASE\n                    WHEN p.codigo_solicitado IS NOT NULL THEN 1\n                    ELSE COALESCE((SELECT habitaciones_disponibles FROM conteo_auto), 0)\n                END\n        ELSE 0\n    END AS habitaciones_disponibles,\n\n    p.codigo_solicitado AS codigo_habitacion_solicitado,\n    d.resultado_disponibilidad,\n    d.motivo_no_disponibilidad,\n\n    s.codigo_habitacion,\n    s.tipo_habitacion,\n    s.capacidad_total,\n    s.vista,\n    s.precio_noche_cop,\n    s.descripcion,\n    s.estado,\n    s.modo_seleccion\n\nFROM params p\nCROSS JOIN diagnostico d\nLEFT JOIN seleccion_final s ON true;",
+        "query": "WITH params AS (\n    SELECT\n        NULLIF('{{ $json.codigo_habitacion_solicitado_sql || \"\" }}', '')::text AS codigo_solicitado,\n        NULLIF('{{ $json.tipo_habitacion_db_sql || \"\" }}', '')::text AS tipo_solicitado,\n        {{ Number($json.numero_personas || 0) }}::int AS personas,\n        NULLIF('{{ $json.vista_preferida_sql || \"\" }}', '')::text AS vista_preferida,\n        {{ $json.presupuesto_max_cop === null || $json.presupuesto_max_cop === undefined ? 'NULL' : Number($json.presupuesto_max_cop) }}::numeric AS presupuesto_max_cop\n),\n\nhabitacion_exacta AS (\n    SELECT\n        h.codigo_habitacion,\n        h.tipo_habitacion,\n        h.capacidad_total,\n        h.vista,\n        h.precio_noche_cop,\n        h.descripcion,\n        h.estado,\n        'manual'::text AS modo_seleccion\n    FROM habitaciones_demo h\n    CROSS JOIN params p\n    WHERE p.codigo_solicitado IS NOT NULL\n      AND h.codigo_habitacion = p.codigo_solicitado\n      AND h.tipo_habitacion = p.tipo_solicitado\n      AND h.estado = 'disponible'\n      AND h.capacidad_total >= p.personas\n),\n\ncandidatas AS (\n    SELECT\n        h.codigo_habitacion,\n        h.tipo_habitacion,\n        h.capacidad_total,\n        h.vista,\n        h.precio_noche_cop,\n        h.descripcion,\n        h.estado,\n        'automatica'::text AS modo_seleccion,\n\n        CASE\n            WHEN p.vista_preferida IS NOT NULL\n             AND lower(unaccent(h.vista)) LIKE '%' || lower(unaccent(p.vista_preferida)) || '%'\n            THEN 0\n            ELSE 1\n        END AS prioridad_vista,\n\n        CASE\n            WHEN p.presupuesto_max_cop IS NOT NULL\n             AND h.precio_noche_cop <= p.presupuesto_max_cop\n            THEN 0\n            WHEN p.presupuesto_max_cop IS NULL\n            THEN 0\n            ELSE 1\n        END AS prioridad_presupuesto\n\n    FROM habitaciones_demo h\n    CROSS JOIN params p\n    WHERE p.codigo_solicitado IS NULL\n      AND h.tipo_habitacion = p.tipo_solicitado\n      AND h.estado = 'disponible'\n      AND h.capacidad_total >= p.personas\n),\n\nseleccion_automatica AS (\n    SELECT *\n    FROM candidatas\n    ORDER BY\n        prioridad_vista ASC,\n        prioridad_presupuesto ASC,\n        capacidad_total ASC,\n        precio_noche_cop ASC,\n        CAST(regexp_replace(codigo_habitacion, '[^0-9]', '', 'g') AS INTEGER) ASC\n    LIMIT 1\n),\n\nseleccion_final AS (\n    SELECT * FROM habitacion_exacta\n\n    UNION ALL\n\n    SELECT\n        codigo_habitacion,\n        tipo_habitacion,\n        capacidad_total,\n        vista,\n        precio_noche_cop,\n        descripcion,\n        estado,\n        modo_seleccion\n    FROM seleccion_automatica\n\n    LIMIT 1\n),\n\nconteo AS (\n    SELECT COUNT(*)::int AS habitaciones_disponibles\n    FROM habitaciones_demo h\n    CROSS JOIN params p\n    WHERE h.tipo_habitacion = p.tipo_solicitado\n      AND h.estado = 'disponible'\n      AND h.capacidad_total >= p.personas\n),\n\ndiagnostico_codigo AS (\n    SELECT\n        CASE\n            WHEN p.codigo_solicitado IS NULL THEN NULL\n            WHEN NOT EXISTS (\n                SELECT 1\n                FROM habitaciones_demo h\n                WHERE h.codigo_habitacion = p.codigo_solicitado\n            ) THEN 'codigo_no_existe'\n            WHEN EXISTS (\n                SELECT 1\n                FROM habitaciones_demo h\n                WHERE h.codigo_habitacion = p.codigo_solicitado\n                  AND h.estado <> 'disponible'\n            ) THEN 'habitacion_no_disponible'\n            WHEN EXISTS (\n                SELECT 1\n                FROM habitaciones_demo h\n                WHERE h.codigo_habitacion = p.codigo_solicitado\n                  AND h.capacidad_total < p.personas\n            ) THEN 'capacidad_insuficiente'\n            WHEN EXISTS (\n                SELECT 1\n                FROM habitaciones_demo h\n                WHERE h.codigo_habitacion = p.codigo_solicitado\n                  AND h.tipo_habitacion <> p.tipo_solicitado\n            ) THEN 'tipo_no_coincide'\n            ELSE NULL\n        END AS resultado_codigo\n    FROM params p\n)\n\nSELECT\n    CASE\n        WHEN sf.codigo_habitacion IS NOT NULL THEN 1\n        ELSE 0\n    END AS habitaciones_disponibles,\n\n    COALESCE(\n        CASE\n            WHEN sf.codigo_habitacion IS NOT NULL THEN 'disponible'\n            ELSE dc.resultado_codigo\n        END,\n        'sin_disponibilidad'\n    ) AS resultado_disponibilidad,\n\n    CASE\n        WHEN sf.codigo_habitacion IS NOT NULL THEN 'Habitación disponible.'\n        WHEN dc.resultado_codigo = 'codigo_no_existe' THEN 'La habitación solicitada no existe en el inventario demo.'\n        WHEN dc.resultado_codigo = 'habitacion_no_disponible' THEN 'La habitación solicitada existe, pero no está disponible actualmente.'\n        WHEN dc.resultado_codigo = 'capacidad_insuficiente' THEN 'La habitación solicitada no tiene capacidad suficiente para la cantidad de personas indicada.'\n        WHEN dc.resultado_codigo = 'tipo_no_coincide' THEN 'La habitación solicitada existe, pero no coincide con el tipo de habitación solicitado.'\n        ELSE 'No hay habitaciones disponibles que cumplan con los criterios indicados.'\n    END AS motivo_no_disponibilidad,\n\n    sf.codigo_habitacion,\n    sf.tipo_habitacion,\n    sf.capacidad_total,\n    sf.vista,\n    sf.precio_noche_cop,\n    sf.descripcion,\n    sf.estado,\n    sf.modo_seleccion,\n\n    p.codigo_solicitado AS codigo_habitacion_solicitado,\n    p.tipo_solicitado AS tipo_habitacion_solicitada,\n    p.vista_preferida,\n    p.presupuesto_max_cop,\n\n    CASE\n        WHEN sf.codigo_habitacion IS NOT NULL\n         AND p.vista_preferida IS NOT NULL\n         AND lower(unaccent(sf.vista)) LIKE '%' || lower(unaccent(p.vista_preferida)) || '%'\n        THEN true\n        ELSE false\n    END AS coincide_vista_preferida,\n\n    CASE\n        WHEN sf.codigo_habitacion IS NOT NULL\n         AND p.presupuesto_max_cop IS NOT NULL\n         AND sf.precio_noche_cop <= p.presupuesto_max_cop\n        THEN true\n        WHEN sf.codigo_habitacion IS NOT NULL\n         AND p.presupuesto_max_cop IS NULL\n        THEN null\n        ELSE false\n    END AS cumple_presupuesto\n\nFROM params p\nCROSS JOIN conteo c\nCROSS JOIN diagnostico_codigo dc\nLEFT JOIN seleccion_final sf ON true;",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1872,
+        2256,
         -128
       ],
       "id": "e43726fa-98a4-4b4e-9cc3-cc7e37d6c80a",
@@ -591,7 +591,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1456,
+        1840,
         -128
       ],
       "id": "1072f563-00ab-4b74-b9d8-c6937b380dfd",
@@ -604,8 +604,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2288,
-        -224
+        2912,
+        -304
       ],
       "id": "79e7b595-5317-4202-893b-4b0870eee6ab",
       "name": "Code - Preparar Registro Reserva"
@@ -619,8 +619,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        2496,
-        -224
+        3120,
+        -304
       ],
       "id": "c3f4f981-1ee7-484c-af44-8d6e4cbddbbd",
       "name": "Postgres - Registrar Reserva Demo",
@@ -638,24 +638,237 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2704,
-        -224
+        3328,
+        -304
       ],
       "id": "c5e60b2a-2c8e-4b83-a449-e72d7db2aa68",
       "name": "Code - Confirmar Reserva Registrada"
     },
     {
       "parameters": {
-        "jsCode": "function extraerCodigoHabitacion(texto) {\n  const textoUpper = String(texto || \"\").toUpperCase();\n\n  const match = textoUpper.match(/\\b(SU|D|T|S|F)\\s*-?\\s*(\\d{1,3})\\b/);\n\n  if (!match) {\n    return null;\n  }\n\n  const prefijo = match[1];\n  const numero = match[2].padStart(3, \"0\");\n\n  return `${prefijo}-${numero}`;\n}\n\nfunction inferirTipoPorCodigo(codigo) {\n  if (!codigo) return null;\n\n  const prefijo = codigo.split(\"-\")[0];\n\n  const mapa = {\n    S: \"sencilla\",\n    D: \"doble\",\n    T: \"triple\",\n    SU: \"suite\",\n    F: \"familiar\"\n  };\n\n  return mapa[prefijo] || null;\n}"
+        "jsCode": "const items = $input.all();\n\nconst numerosTexto = {\n  \"una\": 1,\n  \"un\": 1,\n  \"uno\": 1,\n  \"dos\": 2,\n  \"tres\": 3,\n  \"cuatro\": 4,\n  \"cinco\": 5,\n  \"seis\": 6,\n  \"siete\": 7,\n  \"ocho\": 8,\n  \"nueve\": 9,\n  \"diez\": 10\n};\n\nfunction quitarTildes(texto) {\n  return String(texto ?? \"\")\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\");\n}\n\nfunction normalizarTexto(texto) {\n  return quitarTildes(texto)\n    .toLowerCase()\n    .replace(/[¿?¡!]/g, \"\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction sqlText(valor) {\n  return String(valor ?? \"\")\n    .replace(/'/g, \"''\")\n    .trim();\n}\n\nfunction convertirNumero(valor) {\n  if (valor === null || valor === undefined) return null;\n\n  const limpio = normalizarTexto(valor);\n\n  if (!Number.isNaN(Number(limpio))) {\n    return Number(limpio);\n  }\n\n  return numerosTexto[limpio] ?? null;\n}\n\nfunction capitalizarNombre(nombre) {\n  if (!nombre) return null;\n\n  return nombre\n    .split(\" \")\n    .filter(Boolean)\n    .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())\n    .join(\" \");\n}\n\nfunction extraerNombre(pregunta) {\n  const patrones = [\n    /\\bme llamo\\s+([a-zñáéíóú]+(?:\\s+[a-zñáéíóú]+){0,3})(?=\\s+(?:y|prefiero|quiero|busco|viajo|somos|tengo|mi|con)|[.,;]|$)/i,\n    /\\bmi nombre es\\s+([a-zñáéíóú]+(?:\\s+[a-zñáéíóú]+){0,3})(?=\\s+(?:y|prefiero|quiero|busco|viajo|somos|tengo|mi|con)|[.,;]|$)/i,\n    /\\bsoy\\s+([a-zñáéíóú]+(?:\\s+[a-zñáéíóú]+){0,2})(?=\\s+(?:y|prefiero|quiero|busco|viajo|somos|tengo|mi|con)|[.,;]|$)/i\n  ];\n\n  for (const patron of patrones) {\n    const match = pregunta.match(patron);\n    if (match && match[1]) {\n      const nombre = match[1].trim();\n\n      const descartados = [\n        \"adulto\",\n        \"adultos\",\n        \"nino\",\n        \"ninos\",\n        \"niño\",\n        \"niños\",\n        \"persona\",\n        \"personas\",\n        \"huesped\",\n        \"huespedes\",\n        \"huésped\",\n        \"huéspedes\"\n      ];\n\n      if (!descartados.includes(normalizarTexto(nombre))) {\n        return capitalizarNombre(nombre);\n      }\n    }\n  }\n\n  return null;\n}\n\nfunction extraerCantidadAntesDePalabra(pregunta, palabras) {\n  const grupoPalabras = palabras.join(\"|\");\n  const patron = new RegExp(\n    `\\\\b(\\\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\\\s+(${grupoPalabras})\\\\b`,\n    \"i\"\n  );\n\n  const match = pregunta.match(patron);\n\n  if (!match) return null;\n\n  return convertirNumero(match[1]);\n}\n\nfunction extraerPresupuesto(preguntaOriginal, preguntaNormalizada) {\n  let texto = preguntaOriginal || \"\";\n  let textoNorm = preguntaNormalizada || normalizarTexto(texto);\n\n  const patrones = [\n    /(?:presupuesto|maximo|maxima|máximo|máxima|hasta|tope|pagar|menos de)[^\\d]{0,25}(\\$?\\s*\\d[\\d.\\s]*)/i,\n    /(\\$?\\s*\\d[\\d.\\s]*)\\s*(?:cop|pesos)?\\s*(?:por noche|la noche|noche)/i\n  ];\n\n  for (const patron of patrones) {\n    const match = texto.match(patron);\n    if (match && match[1]) {\n      const limpio = match[1]\n        .replace(/\\$/g, \"\")\n        .replace(/\\./g, \"\")\n        .replace(/\\s/g, \"\")\n        .trim();\n\n      const numero = Number(limpio);\n      if (!Number.isNaN(numero) && numero > 0) {\n        return numero;\n      }\n    }\n  }\n\n  const matchMil = textoNorm.match(/(?:presupuesto|hasta|maximo|tope|pagar|menos de)[^\\d]{0,25}(\\d+)\\s*mil/);\n  if (matchMil && matchMil[1]) {\n    return Number(matchMil[1]) * 1000;\n  }\n\n  return null;\n}\n\nfunction extraerTipoHabitacionPreferida(pregunta) {\n  if (pregunta.includes(\"suite\")) return \"suite\";\n  if (pregunta.includes(\"familiar\")) return \"familiar\";\n  if (pregunta.includes(\"triple\")) return \"triple\";\n  if (pregunta.includes(\"doble\")) return \"doble\";\n  if (pregunta.includes(\"sencilla\") || pregunta.includes(\"simple\") || pregunta.includes(\"individual\")) return \"sencilla\";\n\n  return null;\n}\n\nfunction extraerVistaPreferida(pregunta) {\n  if (pregunta.includes(\"patio colonial\")) return \"patio colonial\";\n  if (pregunta.includes(\"vista al hotel\")) return \"vista al hotel\";\n  if (pregunta.includes(\"vista premium\")) return \"vista premium al hotel\";\n  if (pregunta.includes(\"vista al mar\")) return \"vista al mar\";\n  if (pregunta.includes(\"vista exterior\")) return \"vista exterior\";\n  if (pregunta.includes(\"vista interior\")) return \"vista interior\";\n\n  const matchVista = pregunta.match(/\\bvista\\s+(?:a|al|hacia|para)?\\s*([a-zñáéíóú\\s]{3,40})(?=,|\\.|;|\\sy\\s|\\scon\\s|$)/i);\n  if (matchVista && matchVista[1]) {\n    return matchVista[1].trim();\n  }\n\n  return null;\n}\n\nfunction extraerPreferenciasTexto(preguntaOriginal, preguntaNormalizada) {\n  const preferencias = [];\n\n  if (\n    preguntaNormalizada.includes(\"tranquila\") ||\n    preguntaNormalizada.includes(\"tranquilo\") ||\n    preguntaNormalizada.includes(\"silenciosa\") ||\n    preguntaNormalizada.includes(\"silencioso\") ||\n    preguntaNormalizada.includes(\"sin ruido\")\n  ) {\n    preferencias.push(\"Prefiere habitaciones tranquilas o silenciosas\");\n  }\n\n  if (\n    preguntaNormalizada.includes(\"barata\") ||\n    preguntaNormalizada.includes(\"barato\") ||\n    preguntaNormalizada.includes(\"economica\") ||\n    preguntaNormalizada.includes(\"economico\") ||\n    preguntaNormalizada.includes(\"económica\") ||\n    preguntaNormalizada.includes(\"económico\")\n  ) {\n    preferencias.push(\"Prefiere opciones económicas\");\n  }\n\n  if (\n    preguntaNormalizada.includes(\"lujo\") ||\n    preguntaNormalizada.includes(\"premium\") ||\n    preguntaNormalizada.includes(\"comoda\") ||\n    preguntaNormalizada.includes(\"comodo\") ||\n    preguntaNormalizada.includes(\"cómoda\") ||\n    preguntaNormalizada.includes(\"cómodo\")\n  ) {\n    preferencias.push(\"Prefiere opciones cómodas o premium\");\n  }\n\n  if (\n    preguntaNormalizada.includes(\"familia\") ||\n    preguntaNormalizada.includes(\"familiar\") ||\n    preguntaNormalizada.includes(\"ninos\") ||\n    preguntaNormalizada.includes(\"niños\")\n  ) {\n    preferencias.push(\"Viaja o se interesa por opciones familiares\");\n  }\n\n  if (preguntaNormalizada.includes(\"patio colonial\")) {\n    preferencias.push(\"Prefiere vista al patio colonial\");\n  }\n\n  if (preguntaNormalizada.includes(\"vista al hotel\")) {\n    preferencias.push(\"Prefiere vista al hotel\");\n  }\n\n  if (preferencias.length > 0) {\n    return preferencias.join(\"; \");\n  }\n\n  if (\n    preguntaNormalizada.includes(\"prefiero\") ||\n    preguntaNormalizada.includes(\"me gusta\") ||\n    preguntaNormalizada.includes(\"busco\") ||\n    preguntaNormalizada.includes(\"quiero recordar\") ||\n    preguntaNormalizada.includes(\"ten en cuenta\")\n  ) {\n    return preguntaOriginal;\n  }\n\n  return null;\n}\n\nreturn items.map((item) => {\n  const data = item.json;\n\n  const preguntaOriginal =\n    data.pregunta_usuario ||\n    data.pregunta_original ||\n    \"\";\n\n  const preguntaNormalizada =\n    data.pregunta_normalizada ||\n    normalizarTexto(preguntaOriginal);\n\n  const pregunta = normalizarTexto(preguntaOriginal || preguntaNormalizada);\n\n  const sessionId = data.sessionId || data.session_id || \"demo-claustrosf\";\n\n  const nombreUsuario = extraerNombre(preguntaOriginal) || extraerNombre(pregunta);\n\n  const numeroAdultos = extraerCantidadAntesDePalabra(pregunta, [\n    \"adulto\",\n    \"adultos\"\n  ]);\n\n  const numeroNinos = extraerCantidadAntesDePalabra(pregunta, [\n    \"nino\",\n    \"ninos\",\n    \"niño\",\n    \"niños\",\n    \"menor\",\n    \"menores\"\n  ]);\n\n  const tipoHabitacionPreferida = extraerTipoHabitacionPreferida(pregunta);\n  const vistaPreferida = extraerVistaPreferida(pregunta);\n  const presupuestoMaxCop = extraerPresupuesto(preguntaOriginal, pregunta);\n  const preferenciasTexto = extraerPreferenciasTexto(preguntaOriginal, pregunta);\n\n  const camposDetectados = [];\n\n  if (nombreUsuario) camposDetectados.push(\"nombre_usuario\");\n  if (numeroAdultos !== null) camposDetectados.push(\"numero_adultos\");\n  if (numeroNinos !== null) camposDetectados.push(\"numero_ninos\");\n  if (tipoHabitacionPreferida) camposDetectados.push(\"tipo_habitacion_preferida\");\n  if (vistaPreferida) camposDetectados.push(\"vista_preferida\");\n  if (presupuestoMaxCop !== null) camposDetectados.push(\"presupuesto_max_cop\");\n  if (preferenciasTexto) camposDetectados.push(\"preferencias_texto\");\n\n  const memoriaDetectada = camposDetectados.length > 0;\n\n  return {\n    json: {\n      ...data,\n\n      session_id: sessionId,\n\n      nombre_usuario: nombreUsuario,\n      numero_adultos: numeroAdultos,\n      numero_ninos: numeroNinos,\n      tipo_habitacion_preferida: tipoHabitacionPreferida,\n      vista_preferida: vistaPreferida,\n      presupuesto_max_cop: presupuestoMaxCop,\n      preferencias_texto: preferenciasTexto,\n      ultima_pregunta: preguntaOriginal,\n\n      memoria_detectada: memoriaDetectada,\n      campos_memoria_detectados: camposDetectados,\n      estado_extraccion_memoria: memoriaDetectada\n        ? \"memoria_detectada\"\n        : \"sin_memoria_detectada\",\n\n      session_id_sql: sqlText(sessionId),\n      nombre_usuario_sql: sqlText(nombreUsuario || \"\"),\n      tipo_habitacion_preferida_sql: sqlText(tipoHabitacionPreferida || \"\"),\n      vista_preferida_sql: sqlText(vistaPreferida || \"\"),\n      preferencias_texto_sql: sqlText(preferenciasTexto || \"\"),\n      ultima_pregunta_sql: sqlText(preguntaOriginal || \"\")\n    }\n  };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2848,
-        128
+        2288,
+        752
       ],
-      "id": "f273f218-480f-4988-bb8a-00b4b8d0d3ef",
-      "name": "Code - Extraer Datos Reserva1"
+      "id": "9b302c6e-f2da-4d07-8faf-84847b27013e",
+      "name": "Code - Extraer Memoria Usuario"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=={{ \n`Eres un extractor de memoria personalizada para un asistente hotelero académico.\n\nTu única tarea es leer el mensaje del usuario y convertirlo en un JSON válido.\n\nNO respondas en lenguaje natural.\nNO uses Markdown.\nNO uses bloques de código.\nNO inventes información.\nNO agregues explicaciones.\nDevuelve únicamente un objeto JSON válido.\n\nCampos permitidos:\n\n{\n  \"memoria_detectada\": true,\n  \"nombre_usuario\": null,\n  \"numero_adultos\": null,\n  \"numero_ninos\": null,\n  \"tipo_habitacion_preferida\": null,\n  \"vista_preferida\": null,\n  \"presupuesto_max_cop\": null,\n  \"preferencias_texto\": null,\n  \"campos_detectados\": [],\n  \"confianza_extraccion\": \"media\"\n}\n\nReglas:\n\n1. \"memoria_detectada\" debe ser true si el usuario entrega datos personales, preferencias, presupuesto, número de personas o información útil para recordar.\n2. \"nombre_usuario\" debe contener solo el nombre de la persona si el usuario dice frases como \"me llamo\", \"mi nombre es\" o \"soy\".\n3. \"numero_adultos\" debe ser número entero o null.\n4. \"numero_ninos\" debe ser número entero o null.\n5. \"tipo_habitacion_preferida\" solo puede ser uno de estos valores:\n   \"sencilla\", \"doble\", \"triple\", \"familiar\", \"suite\" o null.\n6. \"vista_preferida\" puede ser una preferencia como:\n   \"patio colonial\", \"vista al hotel\", \"vista premium al hotel\", \"vista exterior\", \"vista interior\" o null.\n7. \"presupuesto_max_cop\" debe ser un número en pesos colombianos o null.\n8. \"preferencias_texto\" debe resumir preferencias libres del usuario en una frase corta.\n9. \"campos_detectados\" debe listar los nombres de los campos que sí fueron detectados.\n10. \"confianza_extraccion\" solo puede ser \"alta\", \"media\" o \"baja\".\n11. Si no detectas información útil para memoria, devuelve \"memoria_detectada\": false y todos los demás campos en null o [].\n\nEjemplos:\n\nUsuario: \"Me llamo Hector y prefiero habitaciones tranquilas\"\nJSON:\n{\n  \"memoria_detectada\": true,\n  \"nombre_usuario\": \"Hector\",\n  \"numero_adultos\": null,\n  \"numero_ninos\": null,\n  \"tipo_habitacion_preferida\": null,\n  \"vista_preferida\": null,\n  \"presupuesto_max_cop\": null,\n  \"preferencias_texto\": \"Prefiere habitaciones tranquilas\",\n  \"campos_detectados\": [\"nombre_usuario\", \"preferencias_texto\"],\n  \"confianza_extraccion\": \"alta\"\n}\n\nUsuario: \"Somos 2 adultos y 3 niños\"\nJSON:\n{\n  \"memoria_detectada\": true,\n  \"nombre_usuario\": null,\n  \"numero_adultos\": 2,\n  \"numero_ninos\": 3,\n  \"tipo_habitacion_preferida\": null,\n  \"vista_preferida\": null,\n  \"presupuesto_max_cop\": null,\n  \"preferencias_texto\": \"Viaja con 2 adultos y 3 niños\",\n  \"campos_detectados\": [\"numero_adultos\", \"numero_ninos\", \"preferencias_texto\"],\n  \"confianza_extraccion\": \"alta\"\n}\n\nUsuario: \"Mi presupuesto es de 300000 por noche y prefiero vista al patio colonial\"\nJSON:\n{\n  \"memoria_detectada\": true,\n  \"nombre_usuario\": null,\n  \"numero_adultos\": null,\n  \"numero_ninos\": null,\n  \"tipo_habitacion_preferida\": null,\n  \"vista_preferida\": \"patio colonial\",\n  \"presupuesto_max_cop\": 300000,\n  \"preferencias_texto\": \"Prefiere vista al patio colonial y presupuesto máximo de 300000 COP por noche\",\n  \"campos_detectados\": [\"vista_preferida\", \"presupuesto_max_cop\", \"preferencias_texto\"],\n  \"confianza_extraccion\": \"alta\"\n}\n\nUsuario: \"Prefiero una habitación familiar cómoda\"\nJSON:\n{\n  \"memoria_detectada\": true,\n  \"nombre_usuario\": null,\n  \"numero_adultos\": null,\n  \"numero_ninos\": null,\n  \"tipo_habitacion_preferida\": \"familiar\",\n  \"vista_preferida\": null,\n  \"presupuesto_max_cop\": null,\n  \"preferencias_texto\": \"Prefiere una habitación familiar cómoda\",\n  \"campos_detectados\": [\"tipo_habitacion_preferida\", \"preferencias_texto\"],\n  \"confianza_extraccion\": \"alta\"\n}\n\nDatos reales a analizar:\n\nMensaje original del usuario:\n\"${$json.pregunta_usuario || $json.pregunta_original || \"\"}\"\n\nMensaje normalizado:\n\"${$json.pregunta_normalizada || \"\"}\"\n\nSession ID:\n\"${$json.sessionId || $json.session_id || \"demo-claustrosf\"}\"\n\nDevuelve únicamente el JSON final.`\n}}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        912,
+        1040
+      ],
+      "id": "21a9612a-d127-40f1-8d99-eda9815fbdfd",
+      "name": "AI Agent - Extraer Memoria Usuario JSON"
+    },
+    {
+      "parameters": {
+        "model": "llama3:latest",
+        "options": {
+          "temperature": 0.1,
+          "numPredict": 500
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        784,
+        1248
+      ],
+      "id": "4854bb98-d1f8-48bd-8e6a-87df6ac47f8a",
+      "name": "Ollama Chat Model - Extractor Memoria",
+      "credentials": {
+        "ollamaApi": {
+          "id": "0MRfWicfQgR9r00W",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction obtenerOrigen(index) {\n  try {\n    return $(\"Switch - Tipo de solicitud\").item.json || {};\n  } catch (error) {\n    try {\n      return $items(\"Switch - Tipo de solicitud\")[index]?.json || {};\n    } catch (error2) {\n      return {};\n    }\n  }\n}\n\nfunction extraerTextoModelo(itemJson) {\n  if (typeof itemJson.output === \"string\") return itemJson.output;\n  if (typeof itemJson.text === \"string\") return itemJson.text;\n  if (typeof itemJson.response === \"string\") return itemJson.response;\n\n  if (\n    itemJson.response &&\n    itemJson.response.generations &&\n    itemJson.response.generations[0] &&\n    itemJson.response.generations[0][0] &&\n    typeof itemJson.response.generations[0][0].text === \"string\"\n  ) {\n    return itemJson.response.generations[0][0].text;\n  }\n\n  return JSON.stringify(itemJson);\n}\n\nfunction normalizarSalidaCruda(texto) {\n  let salida = String(texto ?? \"\").trim();\n\n  salida = salida\n    .replace(/```json/gi, \"\")\n    .replace(/```/g, \"\")\n    .trim();\n\n  // Intento de decodificación si viene como string JSON.\n  for (let i = 0; i < 3; i++) {\n    if (\n      (salida.startsWith('\"') && salida.endsWith('\"')) ||\n      (salida.startsWith(\"'\") && salida.endsWith(\"'\"))\n    ) {\n      try {\n        salida = JSON.parse(salida);\n      } catch (error) {\n        salida = salida.slice(1, -1);\n      }\n    }\n  }\n\n  salida = salida\n    .replace(/\\\\n/g, \"\\n\")\n    .replace(/\\\\r/g, \"\")\n    .replace(/\\\\\"/g, '\"')\n    .replace(/\\\\\\\\/g, \"\\\\\")\n    .trim();\n\n  return salida;\n}\n\nfunction extraerBloqueJson(texto) {\n  const limpio = normalizarSalidaCruda(texto);\n  const inicio = limpio.indexOf(\"{\");\n  const fin = limpio.lastIndexOf(\"}\");\n\n  if (inicio !== -1 && fin !== -1 && fin > inicio) {\n    return limpio.slice(inicio, fin + 1).trim();\n  }\n\n  return limpio;\n}\n\nfunction parsearJsonEstricto(texto) {\n  const bloque = extraerBloqueJson(texto);\n\n  try {\n    return {\n      ok: true,\n      data: JSON.parse(bloque),\n      texto_limpio: bloque,\n      metodo: \"json_parse\",\n      error: null\n    };\n  } catch (error) {\n    return {\n      ok: false,\n      data: {},\n      texto_limpio: bloque,\n      metodo: \"json_parse_fallido\",\n      error: error.message\n    };\n  }\n}\n\nfunction extraerStringPorClave(texto, clave) {\n  const regex = new RegExp(`\"${clave}\"\\\\s*:\\\\s*(null|\"((?:\\\\\\\\.|[^\"\\\\\\\\])*)\")`, \"i\");\n  const match = texto.match(regex);\n\n  if (!match) return null;\n  if (match[1] === \"null\") return null;\n\n  return String(match[2] ?? \"\")\n    .replace(/\\\\\"/g, '\"')\n    .replace(/\\\\n/g, \"\\n\")\n    .trim();\n}\n\nfunction extraerNumeroPorClave(texto, clave) {\n  const regex = new RegExp(`\"${clave}\"\\\\s*:\\\\s*(null|-?\\\\d+(?:\\\\.\\\\d+)?)`, \"i\");\n  const match = texto.match(regex);\n\n  if (!match) return null;\n  if (match[1] === \"null\") return null;\n\n  const numero = Number(match[1]);\n  return Number.isFinite(numero) ? numero : null;\n}\n\nfunction extraerBooleanPorClave(texto, clave) {\n  const regex = new RegExp(`\"${clave}\"\\\\s*:\\\\s*(true|false|\"true\"|\"false\")`, \"i\");\n  const match = texto.match(regex);\n\n  if (!match) return false;\n\n  return String(match[1]).replace(/\"/g, \"\").toLowerCase() === \"true\";\n}\n\nfunction extraerArrayStringsPorClave(texto, clave) {\n  const regex = new RegExp(`\"${clave}\"\\\\s*:\\\\s*\\\\[([\\\\s\\\\S]*?)\\\\]`, \"i\");\n  const match = texto.match(regex);\n\n  if (!match) return [];\n\n  const contenido = match[1];\n  const valores = [...contenido.matchAll(/\"([^\"]+)\"/g)].map((m) => m[1].trim());\n\n  return valores.filter(Boolean);\n}\n\nfunction parsearJsonConRespaldo(texto) {\n  const estricto = parsearJsonEstricto(texto);\n\n  if (estricto.ok) return estricto;\n\n  const limpio = extraerBloqueJson(texto);\n\n  const data = {\n    memoria_detectada: extraerBooleanPorClave(limpio, \"memoria_detectada\"),\n    nombre_usuario: extraerStringPorClave(limpio, \"nombre_usuario\"),\n    numero_adultos: extraerNumeroPorClave(limpio, \"numero_adultos\"),\n    numero_ninos: extraerNumeroPorClave(limpio, \"numero_ninos\"),\n    tipo_habitacion_preferida: extraerStringPorClave(limpio, \"tipo_habitacion_preferida\"),\n    vista_preferida: extraerStringPorClave(limpio, \"vista_preferida\"),\n    presupuesto_max_cop: extraerNumeroPorClave(limpio, \"presupuesto_max_cop\"),\n    preferencias_texto: extraerStringPorClave(limpio, \"preferencias_texto\"),\n    campos_detectados: extraerArrayStringsPorClave(limpio, \"campos_detectados\"),\n    confianza_extraccion: extraerStringPorClave(limpio, \"confianza_extraccion\")\n  };\n\n  const hayAlgo =\n    data.memoria_detectada ||\n    data.nombre_usuario ||\n    data.numero_adultos !== null ||\n    data.numero_ninos !== null ||\n    data.tipo_habitacion_preferida ||\n    data.vista_preferida ||\n    data.presupuesto_max_cop !== null ||\n    data.preferencias_texto ||\n    data.campos_detectados.length > 0;\n\n  return {\n    ok: hayAlgo,\n    data,\n    texto_limpio: limpio,\n    metodo: hayAlgo ? \"regex_fallback\" : \"fallo_total\",\n    error: estricto.error\n  };\n}\n\nfunction normalizarTexto(valor) {\n  return String(valor ?? \"\")\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\")\n    .trim();\n}\n\nfunction sqlText(valor) {\n  return String(valor ?? \"\")\n    .replace(/'/g, \"''\")\n    .trim();\n}\n\nfunction enteroONull(valor) {\n  if (valor === null || valor === undefined || valor === \"\") return null;\n\n  const numero = Number(valor);\n  if (!Number.isFinite(numero)) return null;\n\n  return Math.trunc(numero);\n}\n\nfunction dineroONull(valor) {\n  if (valor === null || valor === undefined || valor === \"\") return null;\n\n  if (typeof valor === \"number\") {\n    return Number.isFinite(valor) ? valor : null;\n  }\n\n  const limpio = String(valor)\n    .replace(/\\s/g, \"\")\n    .replace(/COP/gi, \"\")\n    .replace(/\\$/g, \"\")\n    .replace(/\\./g, \"\")\n    .replace(/,/g, \"\")\n    .replace(/[^\\d]/g, \"\");\n\n  if (!limpio) return null;\n\n  const numero = Number(limpio);\n  return Number.isFinite(numero) ? numero : null;\n}\n\nfunction normalizarTipoHabitacion(valor) {\n  if (!valor) return null;\n\n  const texto = normalizarTexto(valor);\n\n  if (texto.includes(\"sencilla\") || texto.includes(\"individual\")) return \"sencilla\";\n  if (texto.includes(\"doble\")) return \"doble\";\n  if (texto.includes(\"triple\")) return \"triple\";\n  if (texto.includes(\"familiar\")) return \"familiar\";\n  if (texto.includes(\"suite\")) return \"suite\";\n\n  return null;\n}\n\nfunction normalizarVista(valor) {\n  if (!valor) return null;\n\n  const texto = normalizarTexto(valor);\n\n  if (texto.includes(\"patio\")) return \"patio colonial\";\n  if (texto.includes(\"premium\")) return \"vista premium al hotel\";\n  if (texto.includes(\"hotel\")) return \"vista al hotel\";\n  if (texto.includes(\"exterior\")) return \"vista exterior\";\n  if (texto.includes(\"interior\")) return \"vista interior\";\n\n  return String(valor).trim();\n}\n\nfunction normalizarConfianza(valor) {\n  const texto = normalizarTexto(valor);\n\n  if (texto === \"alta\") return \"alta\";\n  if (texto === \"media\") return \"media\";\n  if (texto === \"baja\") return \"baja\";\n\n  return \"media\";\n}\n\nfunction limpiarCamposDetectados(campos) {\n  const permitidos = [\n    \"nombre_usuario\",\n    \"numero_adultos\",\n    \"numero_ninos\",\n    \"tipo_habitacion_preferida\",\n    \"vista_preferida\",\n    \"presupuesto_max_cop\",\n    \"preferencias_texto\"\n  ];\n\n  if (!Array.isArray(campos)) return [];\n\n  return [...new Set(\n    campos\n      .map((campo) => String(campo ?? \"\").trim())\n      .filter((campo) => permitidos.includes(campo))\n  )];\n}\n\nfunction inferirCamposDetectados(memoriaNormalizada) {\n  const campos = [];\n\n  if (memoriaNormalizada.nombre_usuario) campos.push(\"nombre_usuario\");\n  if (memoriaNormalizada.numero_adultos !== null) campos.push(\"numero_adultos\");\n  if (memoriaNormalizada.numero_ninos !== null) campos.push(\"numero_ninos\");\n  if (memoriaNormalizada.tipo_habitacion_preferida) campos.push(\"tipo_habitacion_preferida\");\n  if (memoriaNormalizada.vista_preferida) campos.push(\"vista_preferida\");\n  if (memoriaNormalizada.presupuesto_max_cop !== null) campos.push(\"presupuesto_max_cop\");\n  if (memoriaNormalizada.preferencias_texto) campos.push(\"preferencias_texto\");\n\n  return campos;\n}\n\nreturn items.map((item, index) => {\n  const origen = obtenerOrigen(index);\n\n  const salidaCruda = extraerTextoModelo(item.json);\n  const resultadoParse = parsearJsonConRespaldo(salidaCruda);\n\n  const memoria = resultadoParse.data;\n\n  const nombreUsuario =\n    typeof memoria.nombre_usuario === \"string\" && memoria.nombre_usuario.trim()\n      ? memoria.nombre_usuario.trim()\n      : null;\n\n  const numeroAdultos = enteroONull(memoria.numero_adultos);\n  const numeroNinos = enteroONull(memoria.numero_ninos);\n\n  const tipoHabitacionPreferida = normalizarTipoHabitacion(memoria.tipo_habitacion_preferida);\n  const vistaPreferida = normalizarVista(memoria.vista_preferida);\n  const presupuestoMaxCop = dineroONull(memoria.presupuesto_max_cop);\n\n  const preferenciasTexto =\n    typeof memoria.preferencias_texto === \"string\" && memoria.preferencias_texto.trim()\n      ? memoria.preferencias_texto.trim()\n      : null;\n\n  let camposDetectados = limpiarCamposDetectados(memoria.campos_detectados);\n\n  const memoriaNormalizada = {\n    nombre_usuario: nombreUsuario,\n    numero_adultos: numeroAdultos,\n    numero_ninos: numeroNinos,\n    tipo_habitacion_preferida: tipoHabitacionPreferida,\n    vista_preferida: vistaPreferida,\n    presupuesto_max_cop: presupuestoMaxCop,\n    preferencias_texto: preferenciasTexto\n  };\n\n  if (camposDetectados.length === 0) {\n    camposDetectados = inferirCamposDetectados(memoriaNormalizada);\n  }\n\n  const memoriaDetectada =\n    memoria.memoria_detectada === true ||\n    memoria.memoria_detectada === \"true\" ||\n    camposDetectados.length > 0;\n\n  const memoriaValida =\n    resultadoParse.ok === true &&\n    memoriaDetectada === true &&\n    camposDetectados.length > 0;\n\n  const sessionId =\n    origen.sessionId ||\n    origen.session_id ||\n    item.json.sessionId ||\n    item.json.session_id ||\n    \"demo-claustrosf\";\n\n  return {\n    json: {\n      ...origen,\n\n      memoria_json_valido: resultadoParse.ok,\n      memoria_valida: memoriaValida,\n      memoria_parse_metodo: resultadoParse.metodo,\n      memoria_error_parse: resultadoParse.error,\n\n      memoria_detectada: memoriaDetectada,\n\n      nombre_usuario: nombreUsuario,\n      numero_adultos: numeroAdultos,\n      numero_ninos: numeroNinos,\n      tipo_habitacion_preferida: tipoHabitacionPreferida,\n      vista_preferida: vistaPreferida,\n      presupuesto_max_cop: presupuestoMaxCop,\n      preferencias_texto: preferenciasTexto,\n\n      campos_detectados: camposDetectados,\n      confianza_extraccion: normalizarConfianza(memoria.confianza_extraccion),\n\n      session_id_memoria: sessionId,\n\n      session_id_memoria_sql: sqlText(sessionId),\n      nombre_usuario_sql: sqlText(nombreUsuario || \"\"),\n      tipo_habitacion_preferida_sql: sqlText(tipoHabitacionPreferida || \"\"),\n      vista_preferida_sql: sqlText(vistaPreferida || \"\"),\n      preferencias_texto_sql: sqlText(preferenciasTexto || \"\"),\n      ultima_pregunta_sql: sqlText(\n        origen.pregunta_usuario ||\n        origen.pregunta_original ||\n        item.json.pregunta_usuario ||\n        item.json.pregunta_original ||\n        \"\"\n      ),\n\n      memoria_output_crudo: salidaCruda,\n      memoria_output_limpio: resultadoParse.texto_limpio,\n\n      estado_validacion_memoria: memoriaValida\n        ? \"memoria_json_valida\"\n        : resultadoParse.ok\n          ? \"json_valido_sin_memoria_util\"\n          : \"json_invalido\"\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        1040
+      ],
+      "id": "6a86e76d-d7ba-4db6-ab49-290a52bbfb12",
+      "name": "Code - Validar Memoria Usuario JSON"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0742c5cb-2f2f-43e2-9695-7abe5b606a8e",
+              "leftValue": "={{ $json.memoria_valida === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1456,
+        1040
+      ],
+      "id": "fe06472e-a746-4374-aee2-41ab663516e2",
+      "name": "If - ¿Memoria Válida?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH datos AS (\n    SELECT\n        NULLIF('{{ $json.session_id_sql || \"demo-claustrosf\" }}', '')::text AS session_id,\n        NULLIF('{{ $json.nombre_usuario_sql || \"\" }}', '')::text AS nombre_usuario,\n\n        {{ $json.numero_adultos === null || $json.numero_adultos === undefined ? 'NULL' : Number($json.numero_adultos) }}::integer AS numero_adultos,\n        {{ $json.numero_ninos === null || $json.numero_ninos === undefined ? 'NULL' : Number($json.numero_ninos) }}::integer AS numero_ninos,\n\n        NULLIF('{{ $json.tipo_habitacion_preferida_sql || \"\" }}', '')::text AS tipo_habitacion_preferida,\n        NULLIF('{{ $json.vista_preferida_sql || \"\" }}', '')::text AS vista_preferida,\n\n        {{ $json.presupuesto_max_cop === null || $json.presupuesto_max_cop === undefined ? 'NULL' : Number($json.presupuesto_max_cop) }}::numeric(12,2) AS presupuesto_max_cop,\n\n        NULLIF('{{ $json.preferencias_texto_sql || \"\" }}', '')::text AS preferencias_texto,\n        NULLIF('{{ $json.ultima_pregunta_sql || \"\" }}', '')::text AS ultima_pregunta\n),\n\nupsert_memoria AS (\n    INSERT INTO memoria_usuario_demo (\n        session_id,\n        nombre_usuario,\n        numero_adultos,\n        numero_ninos,\n        tipo_habitacion_preferida,\n        vista_preferida,\n        presupuesto_max_cop,\n        preferencias_texto,\n        ultima_pregunta\n    )\n    SELECT\n        session_id,\n        nombre_usuario,\n        numero_adultos,\n        numero_ninos,\n        tipo_habitacion_preferida,\n        vista_preferida,\n        presupuesto_max_cop,\n        preferencias_texto,\n        ultima_pregunta\n    FROM datos\n\n    ON CONFLICT (session_id)\n    DO UPDATE SET\n        nombre_usuario = COALESCE(EXCLUDED.nombre_usuario, memoria_usuario_demo.nombre_usuario),\n        numero_adultos = COALESCE(EXCLUDED.numero_adultos, memoria_usuario_demo.numero_adultos),\n        numero_ninos = COALESCE(EXCLUDED.numero_ninos, memoria_usuario_demo.numero_ninos),\n        tipo_habitacion_preferida = COALESCE(EXCLUDED.tipo_habitacion_preferida, memoria_usuario_demo.tipo_habitacion_preferida),\n        vista_preferida = COALESCE(EXCLUDED.vista_preferida, memoria_usuario_demo.vista_preferida),\n        presupuesto_max_cop = COALESCE(EXCLUDED.presupuesto_max_cop, memoria_usuario_demo.presupuesto_max_cop),\n\n        preferencias_texto =\n            CASE\n                WHEN EXCLUDED.preferencias_texto IS NULL THEN memoria_usuario_demo.preferencias_texto\n                WHEN memoria_usuario_demo.preferencias_texto IS NULL THEN EXCLUDED.preferencias_texto\n                WHEN memoria_usuario_demo.preferencias_texto = EXCLUDED.preferencias_texto THEN memoria_usuario_demo.preferencias_texto\n                WHEN memoria_usuario_demo.preferencias_texto ILIKE '%' || EXCLUDED.preferencias_texto || '%' THEN memoria_usuario_demo.preferencias_texto\n                ELSE memoria_usuario_demo.preferencias_texto || ' | ' || EXCLUDED.preferencias_texto\n            END,\n\n        ultima_pregunta = COALESCE(EXCLUDED.ultima_pregunta, memoria_usuario_demo.ultima_pregunta),\n        updated_at = NOW()\n\n    RETURNING\n        id,\n        session_id,\n        nombre_usuario,\n        numero_adultos,\n        numero_ninos,\n        tipo_habitacion_preferida,\n        vista_preferida,\n        presupuesto_max_cop,\n        preferencias_texto,\n        ultima_pregunta,\n        created_at,\n        updated_at\n)\n\nSELECT * FROM upsert_memoria;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1648,
+        912
+      ],
+      "id": "c6de511f-16b2-438d-943a-ddd80020f5d2",
+      "name": "Postgres - Guardar Memoria Usuario",
+      "credentials": {
+        "postgres": {
+          "id": "6xTnLqFrdacW0fxr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction dineroCOP(valor) {\n  const n = Number(valor);\n  if (Number.isNaN(n)) return null;\n\n  return n.toLocaleString(\"es-CO\", {\n    style: \"currency\",\n    currency: \"COP\",\n    maximumFractionDigits: 0\n  });\n}\n\nreturn items.map((item) => {\n  const memoria = item.json;\n\n  const partes = [];\n\n  if (memoria.nombre_usuario) {\n    partes.push(`tu nombre es ${memoria.nombre_usuario}`);\n  }\n\n  if (memoria.numero_adultos !== null && memoria.numero_adultos !== undefined) {\n    partes.push(`viajas con ${memoria.numero_adultos} adulto(s)`);\n  }\n\n  if (memoria.numero_ninos !== null && memoria.numero_ninos !== undefined) {\n    partes.push(`viajas con ${memoria.numero_ninos} niño(s)`);\n  }\n\n  if (memoria.tipo_habitacion_preferida) {\n    partes.push(`prefieres habitación ${memoria.tipo_habitacion_preferida}`);\n  }\n\n  if (memoria.vista_preferida) {\n    partes.push(`prefieres ${memoria.vista_preferida}`);\n  }\n\n  if (memoria.presupuesto_max_cop !== null && memoria.presupuesto_max_cop !== undefined) {\n    partes.push(`tu presupuesto máximo aproximado es ${dineroCOP(memoria.presupuesto_max_cop)}`);\n  }\n\n  if (memoria.preferencias_texto) {\n    partes.push(memoria.preferencias_texto);\n  }\n\n  const resumen =\n    partes.length > 0\n      ? partes.join(\"; \")\n      : \"guardé tus preferencias generales\";\n\n  const respuesta =\n    `Listo, guardé esta información en la memoria demo del asistente: ${resumen}. ` +\n    `La usaré como referencia en futuras consultas dentro de esta sesión académica.`;\n\n  return {\n    json: {\n      tipo_solicitud: \"memoria_usuario\",\n      session_id: memoria.session_id,\n      nombre_usuario: memoria.nombre_usuario,\n      numero_adultos: memoria.numero_adultos,\n      numero_ninos: memoria.numero_ninos,\n      tipo_habitacion_preferida: memoria.tipo_habitacion_preferida,\n      vista_preferida: memoria.vista_preferida,\n      presupuesto_max_cop: memoria.presupuesto_max_cop,\n      preferencias_texto: memoria.preferencias_texto,\n      ultima_pregunta: memoria.ultima_pregunta,\n\n      respuesta_final: respuesta,\n      estado: \"memoria_usuario_guardada\",\n      fuente: \"Tabla memoria_usuario_demo en PostgreSQL\",\n      timestamp: new Date().toISOString()\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1824,
+        912
+      ],
+      "id": "fd552566-82fc-4243-ab93-d976e23f1b9f",
+      "name": "Code - Confirmar Memoria Guardada"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map((item) => {\n  const data = item.json;\n\n  const motivo =\n    data.motivo_validacion_memoria ||\n    data.error_memoria ||\n    \"No se detectó información suficientemente clara para guardar como memoria.\";\n\n  return {\n    json: {\n      tipo_solicitud: \"memoria_usuario\",\n      pregunta_usuario: data.pregunta_usuario || data.pregunta_original || \"\",\n      pregunta_normalizada: data.pregunta_normalizada || \"\",\n      nombre_hotel: data.nombre_hotel || \"Hotel El Claustro de San Francisco\",\n\n      memoria_detectada: data.memoria_detectada ?? false,\n      memoria_valida: false,\n      campos_detectados: data.campos_detectados || [],\n\n      respuesta_final:\n        \"No guardé nueva memoria porque no detecté una preferencia o dato personal suficientemente claro para recordar. \" +\n        \"Puedes indicarme algo como tu nombre, número de personas, tipo de habitación preferida, vista preferida o presupuesto máximo.\",\n\n      motivo_memoria_no_guardada: motivo,\n      estado: \"memoria_no_guardada\",\n      fuente: \"Validación interna del workflow\",\n      timestamp: new Date().toISOString()\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        1136
+      ],
+      "id": "679f5bd6-2a02-4e4b-99ab-e933b2cc7568",
+      "name": "Code - Memoria No Guardada"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH entrada AS (\n    SELECT\n        NULLIF('{{ String($json.sessionId || $json.session_id || \"demo-claustrosf\").replace(/'/g, \"''\") }}', '')::text AS session_id,\n\n        NULLIF('{{ String($json.pregunta_usuario || $json.pregunta_original || \"\").replace(/'/g, \"''\") }}', '')::text AS reserva_pregunta_usuario,\n        NULLIF('{{ String($json.pregunta_original || $json.pregunta_usuario || \"\").replace(/'/g, \"''\") }}', '')::text AS reserva_pregunta_original,\n        NULLIF('{{ String($json.pregunta_normalizada || \"\").replace(/'/g, \"''\") }}', '')::text AS reserva_pregunta_normalizada,\n\n        NULLIF('{{ String($json.documento_url || \"\").replace(/'/g, \"''\") }}', '')::text AS documento_url,\n        NULLIF('{{ String($json.nombre_hotel || \"Hotel El Claustro de San Francisco\").replace(/'/g, \"''\") }}', '')::text AS nombre_hotel,\n        NULLIF('{{ String($json.tipo_documento || \"politicas_hotel\").replace(/'/g, \"''\") }}', '')::text AS tipo_documento,\n\n        {{ $json.pregunta_valida === false ? 'false' : 'true' }}::boolean AS pregunta_valida,\n        {{ Number($json.longitud_pregunta || 0) }}::integer AS longitud_pregunta,\n\n        NULLIF('{{ String($json.tipo_solicitud || \"reserva_simulada\").replace(/'/g, \"''\") }}', '')::text AS tipo_solicitud,\n        NULLIF('{{ String($json.confianza_clasificacion || \"\").replace(/'/g, \"''\") }}', '')::text AS confianza_clasificacion,\n        NULLIF('{{ String($json.motivo_clasificacion || \"\").replace(/'/g, \"''\") }}', '')::text AS motivo_clasificacion,\n\n        NULLIF('{{ String($json.tipo_habitacion || \"\").replace(/'/g, \"''\") }}', '')::text AS reserva_tipo_habitacion,\n        NULLIF('{{ String($json.tipo_habitacion_db || \"\").replace(/'/g, \"''\") }}', '')::text AS reserva_tipo_habitacion_db,\n\n        NULLIF('{{ String($json.codigo_habitacion_solicitado || \"\").replace(/'/g, \"''\") }}', '')::text AS reserva_codigo_habitacion_solicitado,\n        NULLIF('{{ String($json.tipo_habitacion_inferida_codigo || \"\").replace(/'/g, \"''\") }}', '')::text AS reserva_tipo_habitacion_inferida_codigo,\n\n        {{ $json.numero_personas === null || $json.numero_personas === undefined || Number.isNaN(Number($json.numero_personas)) ? 'NULL' : Number($json.numero_personas) }}::integer AS reserva_numero_personas,\n        {{ $json.numero_noches === null || $json.numero_noches === undefined || Number.isNaN(Number($json.numero_noches)) ? 'NULL' : Number($json.numero_noches) }}::integer AS reserva_numero_noches,\n\n        NULLIF('{{ String($json.fecha_entrada || \"\").replace(/'/g, \"''\") }}', '')::text AS reserva_fecha_entrada,\n\n        '{{ JSON.stringify($json.datos_faltantes || []).replace(/'/g, \"''\") }}'::jsonb AS reserva_datos_faltantes_json,\n        {{ $json.reserva_completa === true ? 'true' : 'false' }}::boolean AS reserva_completa_actual,\n\n        NULLIF('{{ String($json.estado_extraccion_reserva || \"\").replace(/'/g, \"''\") }}', '')::text AS estado_extraccion_reserva,\n        NULLIF('{{ String($json.estado_validacion_reserva || \"\").replace(/'/g, \"''\") }}', '')::text AS estado_validacion_reserva\n)\n\nSELECT\n    e.*,\n\n    CASE WHEN m.id IS NULL THEN false ELSE true END AS memoria_encontrada,\n\n    m.id AS memoria_id,\n    m.session_id AS memoria_session_id,\n    m.nombre_usuario AS memoria_nombre_usuario,\n    m.numero_adultos AS memoria_numero_adultos,\n    m.numero_ninos AS memoria_numero_ninos,\n    m.tipo_habitacion_preferida AS memoria_tipo_habitacion_preferida,\n    m.vista_preferida AS memoria_vista_preferida,\n    m.presupuesto_max_cop AS memoria_presupuesto_max_cop,\n    m.preferencias_texto AS memoria_preferencias_texto,\n    m.ultima_pregunta AS memoria_ultima_pregunta,\n    m.updated_at AS memoria_updated_at\n\nFROM entrada e\nLEFT JOIN memoria_usuario_demo m\n    ON m.session_id = e.session_id\nORDER BY m.updated_at DESC NULLS LAST\nLIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1200,
+        -32
+      ],
+      "id": "ca764c7d-5f97-4eb7-a50d-6931c94c945b",
+      "name": "Postgres - Consultar Memoria Usuario Reserva",
+      "credentials": {
+        "postgres": {
+          "id": "6xTnLqFrdacW0fxr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction texto(valor) {\n  if (valor === null || valor === undefined) return null;\n\n  const limpio = String(valor).trim();\n  if (!limpio) return null;\n\n  const normalizado = limpio.toLowerCase();\n\n  if (\n    normalizado === \"null\" ||\n    normalizado === \"undefined\" ||\n    normalizado === \"nan\" ||\n    normalizado === \"none\"\n  ) {\n    return null;\n  }\n\n  return limpio;\n}\n\nfunction sqlText(valor) {\n  return String(valor ?? \"\")\n    .replace(/'/g, \"''\")\n    .trim();\n}\n\nfunction primerValorUtil(...valores) {\n  for (const valor of valores) {\n    const t = texto(valor);\n    if (t !== null) return valor;\n  }\n\n  return null;\n}\n\nfunction entero(valor) {\n  const t = texto(valor);\n  if (!t) return null;\n\n  const limpio = String(t).replace(/[^\\d.-]/g, \"\");\n  const n = Number(limpio);\n\n  if (!Number.isFinite(n)) return null;\n\n  const numeroEntero = Math.trunc(n);\n  return numeroEntero > 0 ? numeroEntero : null;\n}\n\nfunction numeroCOP(valor) {\n  const t = texto(valor);\n  if (!t) return null;\n\n  if (typeof valor === \"number\") {\n    return Number.isFinite(valor) && valor > 0 ? valor : null;\n  }\n\n  let limpio = String(t)\n    .toLowerCase()\n    .replace(/cop/g, \"\")\n    .replace(/\\$/g, \"\")\n    .replace(/\\s+/g, \"\")\n    .replace(/[^\\d.,-]/g, \"\");\n\n  if (!limpio) return null;\n\n  const tieneComa = limpio.includes(\",\");\n  const tienePunto = limpio.includes(\".\");\n\n  if (tieneComa && tienePunto) {\n    const ultimaComa = limpio.lastIndexOf(\",\");\n    const ultimoPunto = limpio.lastIndexOf(\".\");\n\n    if (ultimaComa > ultimoPunto) {\n      limpio = limpio.replace(/\\./g, \"\").replace(\",\", \".\");\n    } else {\n      limpio = limpio.replace(/,/g, \"\");\n    }\n  } else if (tienePunto && !tieneComa) {\n    const partes = limpio.split(\".\");\n\n    if (partes.length > 2 || partes[partes.length - 1].length === 3) {\n      limpio = limpio.replace(/\\./g, \"\");\n    }\n  } else if (tieneComa && !tienePunto) {\n    const partes = limpio.split(\",\");\n\n    if (partes.length > 2 || partes[partes.length - 1].length === 3) {\n      limpio = limpio.replace(/,/g, \"\");\n    } else {\n      limpio = limpio.replace(\",\", \".\");\n    }\n  }\n\n  const n = Number(limpio);\n\n  if (!Number.isFinite(n)) return null;\n\n  return n > 0 ? n : null;\n}\n\nfunction normalizarBase(valor) {\n  const t = texto(valor);\n  if (!t) return null;\n\n  return t\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\")\n    .trim();\n}\n\nfunction normalizarTipoHabitacion(valor) {\n  const limpio = normalizarBase(valor);\n  if (!limpio) return null;\n\n  if (\n    limpio.includes(\"sencilla\") ||\n    limpio.includes(\"simple\") ||\n    limpio.includes(\"individual\")\n  ) {\n    return \"sencilla\";\n  }\n\n  if (\n    limpio.includes(\"doble\") ||\n    limpio.includes(\"pareja\") ||\n    limpio.includes(\"matrimonial\")\n  ) {\n    return \"doble\";\n  }\n\n  if (limpio.includes(\"triple\")) {\n    return \"triple\";\n  }\n\n  if (\n    limpio.includes(\"familiar\") ||\n    limpio.includes(\"familia\") ||\n    limpio.includes(\"grupo\")\n  ) {\n    return \"familiar\";\n  }\n\n  if (limpio.includes(\"suite\")) {\n    return \"suite\";\n  }\n\n  const permitidos = [\"sencilla\", \"doble\", \"triple\", \"familiar\", \"suite\"];\n  return permitidos.includes(limpio) ? limpio : null;\n}\n\nfunction tipoDesdeCodigoHabitacion(codigo) {\n  const c = texto(codigo);\n  if (!c) return null;\n\n  const normalizado = c.toUpperCase().trim();\n\n  if (normalizado.startsWith(\"S-\")) return \"sencilla\";\n  if (normalizado.startsWith(\"D-\")) return \"doble\";\n  if (normalizado.startsWith(\"T-\")) return \"triple\";\n  if (normalizado.startsWith(\"F-\")) return \"familiar\";\n  if (normalizado.startsWith(\"SU-\")) return \"suite\";\n\n  return null;\n}\n\nfunction extraerCodigoHabitacionDesdeTexto(...textos) {\n  const combinado = textos\n    .map((t) => texto(t))\n    .filter(Boolean)\n    .join(\" \");\n\n  if (!combinado) return null;\n\n  const match = combinado.match(/\\b([A-Za-z]{1,3})\\s*[-]\\s*(\\d{1,4})\\b/);\n\n  if (!match) return null;\n\n  const prefijo = match[1].toUpperCase();\n  const numero = match[2].padStart(3, \"0\");\n\n  return `${prefijo}-${numero}`;\n}\n\nfunction tipoHabitacionTexto(tipoDb, codigoHabitacion) {\n  if (tipoDb) {\n    if (tipoDb === \"suite\") return \"suite\";\n    return `habitación ${tipoDb}`;\n  }\n\n  if (codigoHabitacion) {\n    return `habitación ${codigoHabitacion}`;\n  }\n\n  return null;\n}\n\nfunction normalizarVista(valor) {\n  const limpio = normalizarBase(valor);\n  if (!limpio) return null;\n\n  if (limpio.includes(\"patio\") || limpio.includes(\"colonial\")) {\n    return \"patio colonial\";\n  }\n\n  if (limpio.includes(\"calle\")) {\n    return \"calle\";\n  }\n\n  if (limpio.includes(\"jardin\")) {\n    return \"jardín\";\n  }\n\n  if (limpio.includes(\"ciudad\")) {\n    return \"ciudad\";\n  }\n\n  if (limpio.includes(\"interior\")) {\n    return \"interior\";\n  }\n\n  return texto(valor);\n}\n\nreturn items.map((item) => {\n  const data = item.json;\n\n  const camposAplicadosMemoria = [];\n\n  const sessionId =\n    texto(data.session_id) ||\n    texto(data.sessionId) ||\n    \"demo-claustrosf\";\n\n  const preguntaUsuario =\n    texto(data.reserva_pregunta_usuario) ||\n    texto(data.pregunta_usuario) ||\n    texto(data.reserva_pregunta_original) ||\n    texto(data.pregunta_original) ||\n    \"\";\n\n  const preguntaOriginal =\n    texto(data.reserva_pregunta_original) ||\n    texto(data.pregunta_original) ||\n    preguntaUsuario;\n\n  const preguntaNormalizada =\n    texto(data.reserva_pregunta_normalizada) ||\n    texto(data.pregunta_normalizada) ||\n    normalizarBase(preguntaUsuario) ||\n    preguntaUsuario.toLowerCase();\n\n  const memoriaNombreUsuario = texto(\n    primerValorUtil(\n      data.memoria_nombre_usuario,\n      data.nombre_usuario\n    )\n  );\n\n  const memoriaAdultos = entero(\n    primerValorUtil(\n      data.memoria_numero_adultos,\n      data.numero_adultos_memoria\n    )\n  );\n\n  const memoriaNinos = entero(\n    primerValorUtil(\n      data.memoria_numero_ninos,\n      data.numero_ninos_memoria\n    )\n  );\n\n  const memoriaTipoHabitacion = normalizarTipoHabitacion(\n    primerValorUtil(\n      data.memoria_tipo_habitacion_preferida,\n      data.tipo_habitacion_preferida\n    )\n  );\n\n  const memoriaVista = normalizarVista(\n    primerValorUtil(\n      data.memoria_vista_preferida,\n      data.vista_preferida_memoria\n    )\n  );\n\n  const memoriaPresupuesto = numeroCOP(\n    primerValorUtil(\n      data.memoria_presupuesto_max_cop,\n      data.presupuesto_max_cop_memoria\n    )\n  );\n\n  const memoriaPreferenciasTexto = texto(\n    primerValorUtil(\n      data.memoria_preferencias_texto,\n      data.preferencias_texto\n    )\n  );\n\n  const memoriaEncontrada =\n    data.memoria_encontrada === true ||\n    Boolean(\n      memoriaNombreUsuario ||\n      memoriaAdultos ||\n      memoriaNinos ||\n      memoriaTipoHabitacion ||\n      memoriaVista ||\n      memoriaPresupuesto ||\n      memoriaPreferenciasTexto\n    );\n\n  const codigoHabitacionSolicitado =\n    texto(\n      primerValorUtil(\n        data.reserva_codigo_habitacion_solicitado,\n        data.codigo_habitacion_solicitado,\n        data.codigo_habitacion_pedida,\n        data.habitacion_solicitada_codigo\n      )\n    ) ||\n    extraerCodigoHabitacionDesdeTexto(\n      preguntaUsuario,\n      preguntaOriginal,\n      preguntaNormalizada\n    );\n\n  const tipoHabitacionInferidaCodigo =\n    normalizarTipoHabitacion(\n      primerValorUtil(\n        data.reserva_tipo_habitacion_inferida_codigo,\n        data.tipo_habitacion_inferida_codigo\n      )\n    ) ||\n    tipoDesdeCodigoHabitacion(codigoHabitacionSolicitado);\n\n  const tipoHabitacionActual = normalizarTipoHabitacion(\n    primerValorUtil(\n      data.reserva_tipo_habitacion_db,\n      data.reserva_tipo_habitacion,\n      data.reserva_tipo_habitacion_solicitada,\n      data.tipo_habitacion_solicitada,\n      data.tipo_habitacion_db,\n      data.tipo_habitacion\n    )\n  ) || tipoHabitacionInferidaCodigo;\n\n  let tipoHabitacionDb = tipoHabitacionActual;\n\n  /*\n    Corrección importante:\n    Si el usuario pidió una habitación exacta por código, NO se debe completar\n    el tipo desde memoria, porque el código tiene mayor prioridad.\n  */\n  if (!tipoHabitacionDb && !codigoHabitacionSolicitado && memoriaTipoHabitacion) {\n    tipoHabitacionDb = memoriaTipoHabitacion;\n    camposAplicadosMemoria.push(\"tipo_habitacion_preferida\");\n  }\n\n  const numeroPersonasActualDirecto = entero(\n    primerValorUtil(\n      data.reserva_numero_personas,\n      data.numero_personas,\n      data.personas,\n      data.cantidad_personas\n    )\n  );\n\n  const adultosActuales = entero(\n    primerValorUtil(\n      data.reserva_numero_adultos,\n      data.numero_adultos,\n      data.adultos\n    )\n  );\n\n  const ninosActuales = entero(\n    primerValorUtil(\n      data.reserva_numero_ninos,\n      data.numero_ninos,\n      data.ninos,\n      data.niños\n    )\n  );\n\n  const numeroPersonasDesdeActual =\n    numeroPersonasActualDirecto ||\n    ((adultosActuales || ninosActuales)\n      ? (adultosActuales || 0) + (ninosActuales || 0)\n      : null);\n\n  let numeroPersonas = numeroPersonasDesdeActual;\n\n  if (!numeroPersonas && (memoriaAdultos || memoriaNinos)) {\n    numeroPersonas = (memoriaAdultos || 0) + (memoriaNinos || 0);\n\n    if (numeroPersonas > 0) {\n      camposAplicadosMemoria.push(\"numero_personas_desde_adultos_ninos\");\n    }\n  }\n\n  const numeroNoches = entero(\n    primerValorUtil(\n      data.reserva_numero_noches,\n      data.numero_noches,\n      data.noches,\n      data.cantidad_noches\n    )\n  );\n\n  const fechaEntrada = texto(\n    primerValorUtil(\n      data.reserva_fecha_entrada,\n      data.fecha_entrada,\n      data.fecha_entrada_texto,\n      data.fecha\n    )\n  );\n\n  const vistaActual = normalizarVista(\n    primerValorUtil(\n      data.reserva_vista_preferida,\n      data.reserva_vista,\n      data.vista_preferida_actual,\n      data.vista_solicitada\n    )\n  );\n\n  let vistaPreferida = vistaActual;\n\n  if (!vistaPreferida && memoriaVista) {\n    vistaPreferida = memoriaVista;\n    camposAplicadosMemoria.push(\"vista_preferida\");\n  }\n\n  const presupuestoActual = numeroCOP(\n    primerValorUtil(\n      data.reserva_presupuesto_max_cop,\n      data.reserva_presupuesto_maximo_cop,\n      data.reserva_presupuesto,\n      data.presupuesto_reserva_max_cop,\n      data.presupuesto_solicitado_cop,\n      data.presupuesto_usuario_cop,\n      data.presupuesto_max_cop_actual,\n      data.presupuesto_max_cop,\n      data.presupuesto\n    )\n  );\n\n  let presupuestoMax = presupuestoActual;\n\n  if (!presupuestoMax && memoriaPresupuesto) {\n    presupuestoMax = memoriaPresupuesto;\n    camposAplicadosMemoria.push(\"presupuesto_max_cop\");\n  }\n\n  const datosFaltantes = [];\n\n  /*\n    Corrección importante:\n    Si hay código de habitación solicitado, no se exige tipo_habitacion.\n    El código ya permite buscar una habitación exacta.\n  */\n  const tieneCriterioHabitacion =\n    Boolean(tipoHabitacionDb) || Boolean(codigoHabitacionSolicitado);\n\n  if (!tieneCriterioHabitacion) {\n    datosFaltantes.push(\"tipo de habitación o código de habitación\");\n  }\n\n  if (!numeroPersonas) datosFaltantes.push(\"número de personas\");\n  if (!numeroNoches) datosFaltantes.push(\"número de noches\");\n  if (!fechaEntrada) datosFaltantes.push(\"fecha de entrada\");\n\n  const reservaCompleta = datosFaltantes.length === 0;\n\n  const tipoHabitacionSolicitada = tipoHabitacionTexto(\n    tipoHabitacionDb,\n    codigoHabitacionSolicitado\n  );\n\n  const memoriaAplicada = camposAplicadosMemoria.length > 0;\n\n  const resumenMemoriaAplicada = memoriaAplicada\n    ? `Se aplicó memoria del usuario: ${camposAplicadosMemoria.join(\", \")}.`\n    : memoriaEncontrada\n      ? \"Existe memoria del usuario, pero no fue necesario completar datos de la reserva.\"\n      : \"No existe memoria previa para esta sesión.\";\n\n  return {\n    json: {\n      pregunta_usuario: preguntaUsuario,\n      sessionId,\n      session_id: sessionId,\n\n      documento_url: texto(data.documento_url),\n      nombre_hotel: texto(data.nombre_hotel) || \"Hotel El Claustro de San Francisco\",\n      tipo_documento: texto(data.tipo_documento) || \"politicas_hotel\",\n\n      pregunta_original: preguntaOriginal,\n      pregunta_normalizada: preguntaNormalizada,\n      pregunta_valida: data.pregunta_valida !== false,\n      longitud_pregunta: Number(data.longitud_pregunta || preguntaUsuario.length || 0),\n\n      tipo_solicitud: texto(data.tipo_solicitud) || \"reserva_simulada\",\n      confianza_clasificacion: texto(data.confianza_clasificacion),\n      motivo_clasificacion: texto(data.motivo_clasificacion),\n\n      tipo_habitacion: tipoHabitacionDb,\n      tipo_habitacion_solicitada: tipoHabitacionSolicitada,\n      tipo_habitacion_db: tipoHabitacionDb,\n\n      codigo_habitacion_solicitado: codigoHabitacionSolicitado,\n      tipo_habitacion_inferida_codigo: tipoHabitacionInferidaCodigo,\n\n      numero_personas: numeroPersonas,\n      numero_adultos: adultosActuales || memoriaAdultos,\n      numero_ninos: ninosActuales || memoriaNinos,\n      numero_noches: numeroNoches,\n      fecha_entrada: fechaEntrada,\n\n      vista_preferida: vistaPreferida,\n      presupuesto_max_cop: presupuestoMax,\n\n      datos_faltantes: datosFaltantes,\n      reserva_completa: reservaCompleta,\n      estado_extraccion_reserva: reservaCompleta ? \"datos_completos\" : \"faltan_datos\",\n      estado_validacion_reserva: reservaCompleta ? \"reserva_completa\" : \"reserva_incompleta\",\n\n      memoria_encontrada: memoriaEncontrada,\n      memoria_aplicada: memoriaAplicada,\n      campos_aplicados_memoria: camposAplicadosMemoria,\n      resumen_memoria_aplicada: resumenMemoriaAplicada,\n\n      memoria_nombre_usuario: memoriaNombreUsuario,\n      memoria_numero_adultos: memoriaAdultos,\n      memoria_numero_ninos: memoriaNinos,\n      memoria_tipo_habitacion_preferida: memoriaTipoHabitacion,\n      memoria_vista_preferida: memoriaVista,\n      memoria_presupuesto_max_cop: memoriaPresupuesto,\n      memoria_preferencias_texto: memoriaPreferenciasTexto,\n\n      origen_tipo_habitacion: tipoHabitacionActual\n        ? \"pregunta_actual\"\n        : tipoHabitacionDb\n          ? \"memoria_usuario\"\n          : null,\n\n      origen_numero_personas: numeroPersonasDesdeActual\n        ? \"pregunta_actual\"\n        : numeroPersonas\n          ? \"memoria_usuario\"\n          : null,\n\n      origen_vista_preferida: vistaActual\n        ? \"pregunta_actual\"\n        : memoriaVista\n          ? \"memoria_usuario\"\n          : null,\n\n      origen_presupuesto_max_cop: presupuestoActual\n        ? \"pregunta_actual\"\n        : memoriaPresupuesto\n          ? \"memoria_usuario\"\n          : null,\n\n      sessionId_sql: sqlText(sessionId),\n      session_id_sql: sqlText(sessionId),\n      pregunta_usuario_sql: sqlText(preguntaUsuario),\n      tipo_habitacion_db_sql: sqlText(tipoHabitacionDb || \"\"),\n      codigo_habitacion_solicitado_sql: sqlText(codigoHabitacionSolicitado || \"\"),\n      fecha_entrada_sql: sqlText(fechaEntrada || \"\"),\n      vista_preferida_sql: sqlText(vistaPreferida || \"\"),\n      presupuesto_max_cop_sql: presupuestoMax === null ? \"\" : String(presupuestoMax)\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1408,
+        -32
+      ],
+      "id": "8dd81b87-31a1-4bfb-aabb-b2cf5b7011f9",
+      "name": "Code - Aplicar Memoria a Reserva"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4119f414-0b48-4426-bad0-c0838076e370",
+              "leftValue": "={{    $json.presupuesto_max_cop === null ||   $json.presupuesto_max_cop === undefined ||   String($json.presupuesto_max_cop).trim() === \"\" ||   String($json.presupuesto_max_cop).toLowerCase() === \"null\" ||   $json.cumple_presupuesto === true ||   String($json.cumple_presupuesto).toLowerCase() === \"true\" }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2672,
+        -224
+      ],
+      "id": "3a6478b0-2983-4ee7-b42a-ecfb7d66ac2a",
+      "name": "If - ¿Cumple presupuesto?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nfunction obtenerJsonNodo(nombreNodo) {\n  try {\n    const datos = $(nombreNodo).all();\n    if (Array.isArray(datos) && datos.length > 0 && datos[0].json) {\n      return datos[0].json;\n    }\n  } catch (error) {}\n\n  try {\n    const dato = $(nombreNodo).item.json;\n    if (dato) return dato;\n  } catch (error) {}\n\n  return {};\n}\n\nfunction tomar(...valores) {\n  for (const valor of valores) {\n    if (valor !== undefined && valor !== null && valor !== \"\") {\n      return valor;\n    }\n  }\n  return null;\n}\n\nfunction numero(valor) {\n  if (valor === undefined || valor === null || valor === \"\") return null;\n\n  if (typeof valor === \"number\") {\n    return Number.isFinite(valor) ? valor : null;\n  }\n\n  const limpio = String(valor)\n    .replace(/[^\\d.,-]/g, \"\")\n    .replace(/\\.(?=\\d{3}(\\D|$))/g, \"\")\n    .replace(\",\", \".\");\n\n  const n = Number(limpio);\n  return Number.isFinite(n) ? n : null;\n}\n\nfunction entero(valor) {\n  const n = numero(valor);\n  return n === null ? null : Math.trunc(n);\n}\n\nfunction dineroCOP(valor) {\n  const n = numero(valor);\n\n  if (n === null) {\n    return \"no disponible\";\n  }\n\n  return n.toLocaleString(\"es-CO\", {\n    style: \"currency\",\n    currency: \"COP\",\n    maximumFractionDigits: 0\n  });\n}\n\nfunction textoPersonas(cantidad) {\n  const n = entero(cantidad);\n  if (n === null) return null;\n  return n === 1 ? \"1 persona\" : `${n} personas`;\n}\n\nfunction textoNoches(cantidad) {\n  const n = entero(cantidad);\n  if (n === null) return null;\n  return n === 1 ? \"1 noche\" : `${n} noches`;\n}\n\nconst datosConsultaReserva = obtenerJsonNodo(\"Code - Preparar Consulta Reserva\");\nconst datosMemoriaReserva = obtenerJsonNodo(\"Code - Aplicar Memoria a Reserva\");\nconst datosExtraidosReserva = obtenerJsonNodo(\"Code - Extraer Datos Reserva\");\nconst datosClasificacion = obtenerJsonNodo(\"Code - Clasificar Intención\");\nconst datosNormalizacion = obtenerJsonNodo(\"Code - Normalizar Pregunta\");\nconst datosEntrada = obtenerJsonNodo(\"Edit Fields\");\n\nreturn items.map((item) => {\n  const disponibilidad = item.json || {};\n\n  const preguntaUsuario = tomar(\n    disponibilidad.pregunta_usuario,\n    datosMemoriaReserva.pregunta_usuario,\n    datosConsultaReserva.pregunta_usuario,\n    datosExtraidosReserva.pregunta_usuario,\n    datosClasificacion.pregunta_usuario,\n    datosNormalizacion.pregunta_usuario,\n    datosEntrada.pregunta_usuario,\n    disponibilidad.pregunta_original,\n    datosMemoriaReserva.pregunta_original,\n    datosConsultaReserva.pregunta_original,\n    datosEntrada.pregunta_original\n  );\n\n  const preguntaNormalizada = tomar(\n    disponibilidad.pregunta_normalizada,\n    datosMemoriaReserva.pregunta_normalizada,\n    datosConsultaReserva.pregunta_normalizada,\n    datosExtraidosReserva.pregunta_normalizada,\n    datosClasificacion.pregunta_normalizada,\n    datosNormalizacion.pregunta_normalizada\n  );\n\n  const sessionId = tomar(\n    disponibilidad.session_id,\n    disponibilidad.sessionId,\n    datosMemoriaReserva.session_id,\n    datosMemoriaReserva.sessionId,\n    datosConsultaReserva.session_id,\n    datosConsultaReserva.sessionId,\n    datosExtraidosReserva.session_id,\n    datosExtraidosReserva.sessionId,\n    datosEntrada.session_id,\n    datosEntrada.sessionId,\n    \"demo-claustrosf\"\n  );\n\n  const nombreHotel = tomar(\n    disponibilidad.nombre_hotel,\n    datosMemoriaReserva.nombre_hotel,\n    datosConsultaReserva.nombre_hotel,\n    datosExtraidosReserva.nombre_hotel,\n    datosEntrada.nombre_hotel,\n    \"Hotel El Claustro de San Francisco\"\n  );\n\n  const codigoHabitacion = tomar(\n    disponibilidad.codigo_habitacion,\n    disponibilidad.codigo_habitacion_db,\n    disponibilidad.codigo_habitacion_encontrado\n  );\n\n  const codigoHabitacionSolicitado = tomar(\n    disponibilidad.codigo_habitacion_solicitado,\n    datosMemoriaReserva.codigo_habitacion_solicitado,\n    datosConsultaReserva.codigo_habitacion_solicitado,\n    datosExtraidosReserva.codigo_habitacion_solicitado\n  );\n\n  const tipoHabitacion = tomar(\n    disponibilidad.tipo_habitacion,\n    disponibilidad.tipo_habitacion_db\n  );\n\n  const tipoHabitacionSolicitada = tomar(\n    disponibilidad.tipo_habitacion_solicitada,\n    datosMemoriaReserva.tipo_habitacion_solicitada,\n    datosMemoriaReserva.tipo_habitacion,\n    datosMemoriaReserva.tipo_habitacion_preferida,\n    datosConsultaReserva.tipo_habitacion_solicitada,\n    datosConsultaReserva.tipo_habitacion,\n    datosConsultaReserva.tipo_habitacion_preferida,\n    datosExtraidosReserva.tipo_habitacion_solicitada,\n    datosExtraidosReserva.tipo_habitacion\n  );\n\n  const vista = tomar(\n    disponibilidad.vista,\n    disponibilidad.vista_db\n  );\n\n  const vistaPreferida = tomar(\n    disponibilidad.vista_preferida,\n    datosMemoriaReserva.vista_preferida,\n    datosConsultaReserva.vista_preferida,\n    datosExtraidosReserva.vista_preferida\n  );\n\n  const capacidadTotal = entero(\n    tomar(\n      disponibilidad.capacidad_total,\n      disponibilidad.capacidad\n    )\n  );\n\n  const numeroPersonas = entero(\n    tomar(\n      disponibilidad.numero_personas,\n      datosMemoriaReserva.numero_personas,\n      datosConsultaReserva.numero_personas,\n      datosExtraidosReserva.numero_personas,\n      datosMemoriaReserva.total_personas,\n      datosConsultaReserva.total_personas\n    )\n  );\n\n  const numeroNoches = entero(\n    tomar(\n      disponibilidad.numero_noches,\n      datosMemoriaReserva.numero_noches,\n      datosConsultaReserva.numero_noches,\n      datosExtraidosReserva.numero_noches\n    )\n  );\n\n  const fechaEntrada = tomar(\n    disponibilidad.fecha_entrada,\n    disponibilidad.fecha_entrada_texto,\n    datosMemoriaReserva.fecha_entrada,\n    datosMemoriaReserva.fecha_entrada_texto,\n    datosConsultaReserva.fecha_entrada,\n    datosConsultaReserva.fecha_entrada_texto,\n    datosExtraidosReserva.fecha_entrada,\n    datosExtraidosReserva.fecha_entrada_texto\n  );\n\n  const precioNoche = numero(\n    tomar(\n      disponibilidad.precio_noche_cop,\n      disponibilidad.precio_cop,\n      disponibilidad.precio_noche\n    )\n  );\n\n  const presupuestoMax = numero(\n    tomar(\n      disponibilidad.presupuesto_max_cop,\n      datosMemoriaReserva.presupuesto_max_cop,\n      datosConsultaReserva.presupuesto_max_cop,\n      datosExtraidosReserva.presupuesto_max_cop\n    )\n  );\n\n  const diferenciaPresupuesto = precioNoche !== null && presupuestoMax !== null\n    ? Math.max(precioNoche - presupuestoMax, 0)\n    : null;\n\n  const totalEstimado = precioNoche !== null && numeroNoches !== null\n    ? precioNoche * numeroNoches\n    : null;\n\n  const diferenciaTotalEstimada = diferenciaPresupuesto !== null && numeroNoches !== null\n    ? diferenciaPresupuesto * numeroNoches\n    : null;\n\n  const habitacionesDisponibles = entero(\n    tomar(\n      disponibilidad.habitaciones_disponibles,\n      disponibilidad.total_habitaciones_disponibles,\n      codigoHabitacion ? 1 : 0\n    )\n  );\n\n  const partesSolicitud = [];\n\n  const personasTexto = textoPersonas(numeroPersonas);\n  const nochesTexto = textoNoches(numeroNoches);\n\n  if (tipoHabitacionSolicitada) {\n    partesSolicitud.push(`tipo ${tipoHabitacionSolicitada}`);\n  }\n\n  if (personasTexto) {\n    partesSolicitud.push(`para ${personasTexto}`);\n  }\n\n  if (nochesTexto) {\n    partesSolicitud.push(`por ${nochesTexto}`);\n  }\n\n  if (fechaEntrada) {\n    partesSolicitud.push(`con entrada ${fechaEntrada}`);\n  }\n\n  const resumenSolicitud = partesSolicitud.length > 0\n    ? partesSolicitud.join(\", \")\n    : \"según los datos solicitados\";\n\n  let respuestaFinal = \"\";\n\n  if (codigoHabitacion) {\n    respuestaFinal =\n      `Encontré una habitación disponible para tu solicitud (${resumenSolicitud}), pero no registré la reserva porque supera tu presupuesto máximo. ` +\n      `La habitación encontrada es ${codigoHabitacion}, tipo ${tipoHabitacion || \"no especificado\"}, con ${vista || \"vista no especificada\"}. ` +\n      `El precio por noche es ${dineroCOP(precioNoche)}, mientras que tu presupuesto máximo es ${dineroCOP(presupuestoMax)}.`;\n  } else {\n    respuestaFinal =\n      `No registré la reserva porque la opción encontrada supera tu presupuesto máximo. ` +\n      `El precio por noche es ${dineroCOP(precioNoche)}, mientras que tu presupuesto máximo es ${dineroCOP(presupuestoMax)}.`;\n  }\n\n  if (diferenciaPresupuesto !== null && diferenciaPresupuesto > 0) {\n    respuestaFinal += ` La diferencia es de ${dineroCOP(diferenciaPresupuesto)} por noche.`;\n  }\n\n  if (totalEstimado !== null && numeroNoches !== null) {\n    respuestaFinal += ` Para ${textoNoches(numeroNoches)}, el total estimado sería de ${dineroCOP(totalEstimado)}.`;\n  }\n\n  if (diferenciaTotalEstimada !== null && diferenciaTotalEstimada > 0 && numeroNoches !== null) {\n    respuestaFinal += ` La diferencia total estimada frente a tu presupuesto sería de ${dineroCOP(diferenciaTotalEstimada)}.`;\n  }\n\n  respuestaFinal += ` Puedes intentar con una habitación más económica, cambiar tus preferencias o aumentar el presupuesto.`;\n\n  return {\n    json: {\n      tipo_solicitud: \"reserva_simulada\",\n\n      pregunta_usuario: preguntaUsuario,\n      pregunta_normalizada: preguntaNormalizada,\n      session_id: sessionId,\n      sessionId: sessionId,\n      nombre_hotel: nombreHotel,\n\n      codigo_habitacion: codigoHabitacion,\n      codigo_habitacion_solicitado: codigoHabitacionSolicitado,\n\n      tipo_habitacion: tipoHabitacion,\n      tipo_habitacion_db: tipoHabitacion,\n      tipo_habitacion_solicitada: tipoHabitacionSolicitada,\n\n      capacidad_total: capacidadTotal,\n      vista: vista,\n      vista_preferida: vistaPreferida,\n\n      numero_personas: numeroPersonas,\n      numero_noches: numeroNoches,\n      fecha_entrada: fechaEntrada,\n\n      precio_noche_cop: precioNoche,\n      presupuesto_max_cop: presupuestoMax,\n      diferencia_presupuesto_cop: diferenciaPresupuesto,\n      diferencia_total_estimada_cop: diferenciaTotalEstimada,\n      total_estimado_cop: totalEstimado,\n\n      habitaciones_disponibles: habitacionesDisponibles,\n\n      coincide_vista_preferida: tomar(\n        disponibilidad.coincide_vista_preferida,\n        null\n      ),\n\n      cumple_presupuesto: false,\n\n      resultado_disponibilidad: tomar(\n        disponibilidad.resultado_disponibilidad,\n        \"disponible_fuera_de_presupuesto\"\n      ),\n\n      motivo_no_disponibilidad: tomar(\n        disponibilidad.motivo_no_disponibilidad,\n        \"La habitación está disponible, pero supera el presupuesto máximo del usuario.\"\n      ),\n\n      motivo_no_registro:\n        \"No se registró la reserva porque la habitación disponible supera el presupuesto máximo indicado por el usuario.\",\n\n      respuesta_final: respuestaFinal,\n\n      estado: \"reserva_pendiente_por_presupuesto\",\n      estado_reserva: \"no_registrada_por_presupuesto\",\n\n      recomendacion:\n        \"Intentar con una habitación más económica, ajustar preferencias o aumentar el presupuesto.\",\n\n      fuente: \"Code - Fuera de Presupuesto\",\n      timestamp: new Date().toISOString()\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        -128
+      ],
+      "id": "1d2233ea-dca0-48e1-8b59-1d96f0407579",
+      "name": "Code - Fuera de Presupuesto"
     }
   ],
   "pinData": {},
@@ -783,7 +996,7 @@
         ],
         [
           {
-            "node": "Code - Respuesta Segura",
+            "node": "AI Agent - Extraer Memoria Usuario JSON",
             "type": "main",
             "index": 0
           }
@@ -805,7 +1018,7 @@
       "main": [
         [
           {
-            "node": "If - ¿Reserva Completa?",
+            "node": "Postgres - Consultar Memoria Usuario Reserva",
             "type": "main",
             "index": 0
           }
@@ -854,7 +1067,7 @@
       "main": [
         [
           {
-            "node": "Code - Preparar Registro Reserva",
+            "node": "If - ¿Cumple presupuesto?",
             "type": "main",
             "index": 0
           }
@@ -929,6 +1142,108 @@
           }
         ]
       ]
+    },
+    "Ollama Chat Model - Extractor Memoria": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent - Extraer Memoria Usuario JSON",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent - Extraer Memoria Usuario JSON": {
+      "main": [
+        [
+          {
+            "node": "Code - Validar Memoria Usuario JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Validar Memoria Usuario JSON": {
+      "main": [
+        [
+          {
+            "node": "If - ¿Memoria Válida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If - ¿Memoria Válida?": {
+      "main": [
+        [
+          {
+            "node": "Postgres - Guardar Memoria Usuario",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Memoria No Guardada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres - Guardar Memoria Usuario": {
+      "main": [
+        [
+          {
+            "node": "Code - Confirmar Memoria Guardada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres - Consultar Memoria Usuario Reserva": {
+      "main": [
+        [
+          {
+            "node": "Code - Aplicar Memoria a Reserva",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Aplicar Memoria a Reserva": {
+      "main": [
+        [
+          {
+            "node": "If - ¿Reserva Completa?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If - ¿Cumple presupuesto?": {
+      "main": [
+        [
+          {
+            "node": "Code - Preparar Registro Reserva",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Fuera de Presupuesto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -937,7 +1252,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "a2f0cf18-7aaa-419e-852f-4a6fee81e904",
+  "versionId": "349253e5-8473-4633-b021-9dffdd3738ed",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "4c3ad71e0fa26083d20cc4a7c2184c4b827da0540a8ab0905fefbc39e27588b8"
