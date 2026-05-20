@@ -1,97 +1,172 @@
-# Memoria personalizada de usuario — Reception Agent ClaustroSF
+# Memoria personalizada de usuario
 
-## 1. Objetivo
+Proyecto:
 
-La memoria personalizada permite que el asistente recuerde información útil del usuario durante una sesión.
+```text
+Reception Agent ClaustroSF
+```
 
-Esta función busca que el asistente se comporte de forma más parecida a una recepción real, recordando preferencias y datos relevantes para futuras consultas o reservas.
+Hotel:
+
+```text
+Hotel El Claustro de San Francisco
+```
 
 ---
 
-## 2. Enfoque usado
+## 1. Objetivo
 
-La memoria se implementa con enfoque híbrido:
+El módulo de memoria personalizada permite guardar datos útiles del usuario para reutilizarlos en futuras reservas o interacciones dentro de la misma sesión.
+
+La memoria hace que el asistente no responda cada pregunta como si fuera aislada, sino que pueda recordar información relevante.
+
+---
+
+## 2. Enfoque del módulo
+
+La memoria se implementa con el siguiente enfoque:
 
 ```text
 IA interpreta → Code valida → PostgreSQL guarda
 ```
 
-La IA ayuda a interpretar lenguaje natural.
+Esto significa:
 
-El código valida que el JSON sea seguro y útil.
+- La IA interpreta el mensaje del usuario.
+- El nodo Code valida y limpia la salida.
+- PostgreSQL guarda solo los datos aceptados.
 
-PostgreSQL guarda la información persistente por sesión.
+La IA no guarda directamente en la base de datos.
 
 ---
 
-## 3. Ruta de memoria
+## 3. Ruta del módulo
 
 ```text
-Switch - Tipo de solicitud
-Output memoria_usuario
-→ AI Agent - Extraer Memoria Usuario JSON
+AI Agent - Extraer Memoria Usuario JSON
 → Code - Validar Memoria Usuario JSON
 → If - ¿Memoria Válida?
-   ├── false → Code - Memoria No Guardada
-   └── true
-       → Postgres - Guardar Memoria Usuario
-       → Code - Confirmar Memoria Guardada
+```
+
+Si la memoria no es válida:
+
+```text
+Code - Memoria No Guardada
+```
+
+Si la memoria es válida:
+
+```text
+Postgres - Guardar Memoria Usuario
+→ Code - Confirmar Memoria Guardada
 ```
 
 ---
 
-## 4. Tabla usada
+## 4. Datos que puede guardar
 
-```text
-memoria_usuario_demo
-```
-
-Campos principales:
+El sistema puede guardar:
 
 | Campo | Descripción |
 |---|---|
-| `session_id` | Identificador de sesión. |
-| `nombre_usuario` | Nombre del usuario. |
+| `nombre_usuario` | Nombre declarado por el usuario. |
 | `numero_adultos` | Cantidad de adultos. |
 | `numero_ninos` | Cantidad de niños. |
 | `tipo_habitacion_preferida` | Tipo de habitación preferido. |
 | `vista_preferida` | Vista preferida. |
 | `presupuesto_max_cop` | Presupuesto máximo por noche. |
-| `preferencias_texto` | Resumen de preferencias libres. |
-| `ultima_pregunta` | Última frase procesada. |
-| `created_at` | Fecha de creación. |
-| `updated_at` | Última actualización. |
+| `preferencias_texto` | Preferencias generales del usuario. |
 
 ---
 
-## 5. Datos que puede recordar
+## 5. Tabla usada
 
-El sistema puede recordar:
+La memoria se almacena en PostgreSQL en la tabla:
 
 ```text
-nombre del usuario
-número de adultos
-número de niños
-tipo de habitación preferida
-vista preferida
-presupuesto máximo por noche
-preferencias generales
+memoria_usuario_demo
 ```
 
-Ejemplos:
+La clave funcional es:
 
 ```text
-Me llamo Hector.
-Somos 2 adultos y 3 niños.
-Prefiero habitaciones tranquilas.
-Mi presupuesto es de 300000 por noche.
-Prefiero vista al patio colonial.
-Prefiero una habitación familiar cómoda.
+session_id
+```
+
+Esto permite que cada sesión mantenga su memoria propia.
+
+---
+
+## 6. Ejemplos de memoria válida
+
+### Nombre y preferencias
+
+Entrada:
+
+```text
+Me llamo Hector y prefiero habitaciones tranquilas
+```
+
+Datos esperados:
+
+```text
+nombre_usuario = Hector
+preferencias_texto = habitaciones tranquilas
 ```
 
 ---
 
-## 6. AI Agent de extracción de memoria
+### Grupo familiar
+
+Entrada:
+
+```text
+Somos 2 adultos y 3 niños
+```
+
+Datos esperados:
+
+```text
+numero_adultos = 2
+numero_ninos = 3
+```
+
+---
+
+### Presupuesto y vista
+
+Entrada:
+
+```text
+Mi presupuesto máximo es de 300000 por noche y prefiero vista al patio colonial
+```
+
+Datos esperados:
+
+```text
+presupuesto_max_cop = 300000
+vista_preferida = patio colonial
+```
+
+---
+
+### Tipo de habitación
+
+Entrada:
+
+```text
+Me gustaría que recuerdes que prefiero habitaciones dobles
+```
+
+Datos esperados:
+
+```text
+tipo_habitacion_preferida = doble
+```
+
+---
+
+## 7. AI Agent de memoria
 
 El nodo:
 
@@ -99,34 +174,60 @@ El nodo:
 AI Agent - Extraer Memoria Usuario JSON
 ```
 
-recibe la frase del usuario y devuelve un JSON con campos como:
+toma el mensaje del usuario y devuelve un JSON.
+
+Ejemplo esperado:
 
 ```json
 {
   "memoria_detectada": true,
   "nombre_usuario": "Hector",
-  "numero_adultos": 2,
-  "numero_ninos": 3,
-  "tipo_habitacion_preferida": "familiar",
-  "vista_preferida": "patio colonial",
-  "presupuesto_max_cop": 300000,
-  "preferencias_texto": "Prefiere habitaciones tranquilas",
-  "campos_detectados": [
-    "nombre_usuario",
-    "numero_adultos",
-    "numero_ninos",
-    "tipo_habitacion_preferida",
-    "vista_preferida",
-    "presupuesto_max_cop",
-    "preferencias_texto"
-  ],
+  "numero_adultos": null,
+  "numero_ninos": null,
+  "tipo_habitacion_preferida": null,
+  "vista_preferida": null,
+  "presupuesto_max_cop": null,
+  "preferencias_texto": "habitaciones tranquilas",
+  "campos_detectados": ["nombre_usuario", "preferencias_texto"],
   "confianza_extraccion": "alta"
 }
 ```
 
 ---
 
-## 7. Validación del JSON
+## 8. Problema controlado: la IA puede equivocarse
+
+El modelo puede interpretar mal algunas frases.
+
+Ejemplo:
+
+Entrada:
+
+```text
+Me llamo Hector y prefiero habitaciones tranquilas
+```
+
+La IA podría proponer incorrectamente:
+
+```json
+{
+  "tipo_habitacion_preferida": "sencilla",
+  "vista_preferida": "tranquilas"
+}
+```
+
+Esto es incorrecto porque:
+
+```text
+"habitaciones tranquilas" no significa habitación sencilla.
+"tranquilas" no es una vista.
+```
+
+Por eso existe el nodo de validación.
+
+---
+
+## 9. Nodo de validación
 
 El nodo:
 
@@ -134,29 +235,83 @@ El nodo:
 Code - Validar Memoria Usuario JSON
 ```
 
-se encarga de:
+cumple una función crítica.
 
-- Limpiar salida del agente.
-- Convertir texto a JSON.
-- Recuperar campos aunque el JSON venga escapado.
-- Validar tipos de datos.
+Se encarga de:
+
+- Leer la salida del agente.
+- Parsear el JSON.
 - Normalizar valores.
+- Validar campos permitidos.
+- Convertir números.
+- Limpiar presupuesto.
+- Validar tipos de habitación.
+- Validar vistas.
+- Descartar falsos positivos.
 - Preparar campos SQL.
-- Marcar si la memoria es válida.
 
-Campos importantes:
+---
+
+## 10. Campos descartados
+
+Cuando la IA propone información dudosa, el validador puede descartarla.
+
+Ejemplo:
+
+```json
+"campos_descartados_memoria": [
+  {
+    "campo": "tipo_habitacion_preferida",
+    "valor_original": "sencilla"
+  },
+  {
+    "campo": "vista_preferida",
+    "valor_original": "tranquilas"
+  }
+]
+```
+
+Esto demuestra que el sistema no confía ciegamente en la IA.
+
+---
+
+## 11. Memoria válida
+
+Una memoria se considera válida si:
+
+- El JSON pudo interpretarse.
+- Existe al menos un dato útil.
+- Los campos detectados son aceptables.
+- Los campos no son ambiguos o inventados.
+- La pregunta del usuario contiene señales reales de memoria.
+
+Campo principal:
 
 ```text
-memoria_json_valido
-memoria_valida
-memoria_detectada
-campos_detectados
-estado_validacion_memoria
+memoria_valida = true
 ```
 
 ---
 
-## 8. Guardado en PostgreSQL
+## 12. Memoria inválida
+
+La memoria se considera inválida cuando:
+
+- El JSON no se pudo parsear.
+- No hay datos útiles.
+- La IA inventó campos.
+- La solicitud no contiene información reutilizable.
+- Los campos detectados no pasan validación.
+
+En este caso el flujo va a:
+
+```text
+Code - Memoria No Guardada
+```
+
+---
+
+## 13. Guardado en PostgreSQL
 
 El nodo:
 
@@ -164,55 +319,67 @@ El nodo:
 Postgres - Guardar Memoria Usuario
 ```
 
-usa un `UPSERT` por:
+guarda o actualiza memoria en:
 
 ```text
-session_id
+memoria_usuario_demo
 ```
 
-Esto significa:
+La memoria funciona con actualización por `session_id`.
 
-```text
-si la sesión no existe → crea memoria
-si la sesión existe → actualiza datos nuevos
-```
-
-La memoria no se duplica por cada frase, sino que se actualiza.
-
----
-
-## 9. Confirmación al usuario
-
-El nodo:
-
-```text
-Code - Confirmar Memoria Guardada
-```
-
-devuelve una respuesta amigable.
+Esto permite que el usuario pueda agregar información progresivamente.
 
 Ejemplo:
 
+Primero:
+
 ```text
-Listo, guardé esta información en la memoria demo del asistente: tu nombre es Hector; Prefiere habitaciones tranquilas. La usaré como referencia en futuras consultas dentro de esta sesión académica.
+Me llamo Hector
 ```
+
+Después:
+
+```text
+Somos 2 adultos y 3 niños
+```
+
+Después:
+
+```text
+Mi presupuesto máximo es de 300000
+```
+
+El sistema puede ir completando la misma fila de memoria.
 
 ---
 
-## 10. Integración con reservas
+## 14. Limpieza de memoria de prueba
 
-La memoria se usa dentro de la rama de reservas mediante:
+Durante pruebas, si la memoria se contamina con datos antiguos, se puede limpiar con:
+
+```sql
+DELETE FROM memoria_usuario_demo
+WHERE session_id = 'demo-claustrosf';
+```
+
+Esto permite reiniciar la memoria demo de una sesión.
+
+---
+
+## 15. Uso de memoria en reservas
+
+La memoria se usa también en la rama de reservas.
+
+Ruta:
 
 ```text
-Postgres - Consultar Memoria Usuario Reserva
+Postgres - Consultar Memoria Usuario
 → Code - Aplicar Memoria a Reserva
 ```
 
-Esto permite completar reservas incompletas.
-
 Ejemplo:
 
-Memoria:
+Memoria guardada:
 
 ```text
 numero_adultos = 2
@@ -228,31 +395,25 @@ Pregunta:
 Quiero reservar para mañana por 2 noches
 ```
 
-Resultado:
+El sistema puede completar:
 
 ```text
-tipo_habitacion = familiar
 numero_personas = 5
-fecha_entrada = mañana
-numero_noches = 2
+tipo_habitacion = familiar
 vista_preferida = patio colonial
 presupuesto_max_cop = 300000
 ```
 
 ---
 
-## 11. Regla de prioridad
+## 16. Regla de prioridad
 
-La memoria solo completa datos faltantes.
-
-Si el usuario da información explícita en la pregunta actual, esa información gana.
+La memoria no debe reemplazar datos explícitos de la pregunta actual.
 
 Prioridad:
 
 ```text
-1. Pregunta actual
-2. Memoria guardada
-3. Dato faltante
+Pregunta actual > Memoria guardada > Dato faltante
 ```
 
 Ejemplo:
@@ -263,7 +424,7 @@ Memoria:
 tipo_habitacion_preferida = familiar
 ```
 
-Pregunta actual:
+Pregunta:
 
 ```text
 Quiero reservar una habitación doble para 2 personas por 2 noches mañana
@@ -277,43 +438,23 @@ tipo_habitacion = doble
 
 ---
 
-## 12. Manejo de habitación exacta
+## 17. Validación de presupuesto con memoria
 
-Si el usuario pide una habitación por código:
-
-```text
-Quiero reservar la habitación D-007 para 2 personas por 2 noches mañana
-```
-
-el sistema debe respetar el código.
-
-La memoria no debe cambiar el tipo de habitación a familiar aunque la preferencia guardada sea familiar.
-
-Regla:
+Si el usuario guardó:
 
 ```text
-código exacto de habitación > memoria de tipo de habitación
+presupuesto_max_cop = 300000
 ```
 
----
+y luego hace una reserva incompleta, el sistema puede usar ese presupuesto para validar si la habitación encontrada lo supera.
 
-## 13. Validación de presupuesto
-
-La memoria puede guardar:
-
-```text
-presupuesto_max_cop
-```
-
-Este valor se usa para evitar registrar automáticamente habitaciones que excedan el presupuesto.
-
-Si la habitación cuesta más que el presupuesto:
+Si supera presupuesto:
 
 ```text
 Code - Fuera de Presupuesto
 ```
 
-Si cumple:
+Si cumple presupuesto:
 
 ```text
 Postgres - Registrar Reserva Demo
@@ -321,95 +462,73 @@ Postgres - Registrar Reserva Demo
 
 ---
 
-## 14. Pruebas usadas
+## 18. Riesgos controlados
 
-### Guardar nombre
+Riesgos del módulo:
+
+- La IA puede inventar campos.
+- La IA puede interpretar preferencias como vistas.
+- La IA puede convertir frases genéricas en tipos de habitación.
+- La memoria puede acumular datos viejos si no se limpia en pruebas.
+- El `session_id` demo puede mezclar pruebas diferentes.
+
+Mitigaciones:
+
+- Validación con Code.
+- Campos descartados.
+- Limpieza de memoria por SQL.
+- Reglas de prioridad.
+- Confirmación de memoria guardada.
+
+---
+
+## 19. Pruebas realizadas
+
+Pruebas principales:
 
 ```text
 Me llamo Hector y prefiero habitaciones tranquilas
-```
-
-### Guardar grupo
-
-```text
 Somos 2 adultos y 3 niños
+Mi presupuesto máximo es de 300000 por noche y prefiero vista al patio colonial
+Me gustaría que recuerdes que prefiero habitaciones dobles
 ```
 
-### Guardar presupuesto y vista
+Resultado general:
 
 ```text
-Mi presupuesto es de 300000 por noche y prefiero vista al patio colonial
-```
-
-### Guardar tipo de habitación
-
-```text
-Prefiero una habitación familiar cómoda
-```
-
-### Usar memoria en reserva
-
-```text
-Quiero reservar para mañana por 2 noches
-```
-
-### Datos explícitos ganan
-
-```text
-Quiero reservar una habitación doble para 2 personas por 2 noches mañana
-```
-
-### Presupuesto explícito gana
-
-```text
-Quiero reservar una habitación familiar para mañana por 2 noches con presupuesto de 350000
-```
-
-### Habitación exacta
-
-```text
-Quiero reservar la habitación D-007 para 2 personas por 2 noches mañana
+El módulo funciona y descarta campos erróneos antes de guardar.
 ```
 
 ---
 
-## 15. Limitaciones de la memoria
+## 20. Estado actual
 
-- Funciona por `session_id`, no por autenticación real.
-- Si se reutiliza el mismo `session_id`, se reutiliza la misma memoria.
-- `preferencias_texto` puede crecer con muchas preferencias.
-- No existe aún un módulo para borrar preferencias desde conversación.
-- No hay expiración automática de memoria.
-- No hay perfiles de usuario reales.
-
----
-
-## 16. Mejoras futuras
-
-- Añadir comando para borrar memoria.
-- Separar preferencias en tabla relacional.
-- Crear historial de cambios de memoria.
-- Implementar memoria por usuario autenticado.
-- Compactar preferencias repetidas.
-- Usar memoria en consultoría hotelera avanzada.
-- Usar memoria con Telegram o frontend externo.
-
----
-
-## 17. Conclusión
-
-La memoria personalizada quedó funcional.
-
-El sistema puede:
+Estado del módulo:
 
 ```text
-interpretar preferencias con IA
-validar JSON
-guardar memoria en PostgreSQL
-actualizar memoria por sesión
-usar memoria para completar reservas
-respetar datos explícitos del usuario
-validar presupuesto y disponibilidad
+Funcional
 ```
 
-Esta fase mejora considerablemente el comportamiento del asistente, porque ya no responde solo a preguntas aisladas, sino que puede usar contexto guardado para actuar de forma más personalizada.
+Pendientes:
+
+- Mejorar aún más el prompt del agente si fuera necesario.
+- Permitir borrar memoria desde conversación.
+- Separar preferencias en una tabla más estructurada.
+- Crear memoria por usuario autenticado en vez de solo `session_id`.
+- Usar memoria en consultoría hotelera futura.
+
+---
+
+## 21. Conclusión
+
+La memoria personalizada quedó implementada de forma segura para un prototipo académico.
+
+El punto más importante es que la IA no tiene autoridad final sobre la base de datos.
+
+El sistema usa:
+
+```text
+AI Agent → Code de validación → PostgreSQL
+```
+
+Esto permite aprovechar interpretación de lenguaje natural sin perder control sobre los datos guardados.

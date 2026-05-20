@@ -1,202 +1,246 @@
-# Explicación para demo — Reception Agent ClaustroSF
+# Explicación para demo
 
-## 1. Presentación breve del proyecto
+Proyecto:
 
-Reception Agent ClaustroSF es un asistente hotelero académico desarrollado en n8n.
+```text
+Reception Agent ClaustroSF
+```
 
-El sistema simula una recepción inteligente para el Hotel El Claustro de San Francisco. Puede responder preguntas sobre el hotel, consultar datos históricos, revisar disponibilidad, recordar preferencias del usuario y registrar reservas demo en PostgreSQL.
+Hotel:
+
+```text
+Hotel El Claustro de San Francisco
+```
+
+---
+
+## 1. Introducción para presentar
+
+Este proyecto es un asistente hotelero académico construido en n8n.
+
+Su objetivo es simular una recepción inteligente capaz de responder preguntas, consultar datos, revisar disponibilidad, recordar preferencias del usuario y registrar reservas demo.
+
+El sistema integra:
+
+- n8n para automatización.
+- PostgreSQL para almacenamiento y consultas.
+- Ollama para IA local.
+- `llama3:latest` como modelo de lenguaje.
+- JavaScript para validaciones y lógica.
+- SQL para consultas y persistencia.
+- GitHub RAW para cargar el documento base del hotel.
 
 ---
 
 ## 2. Problema que aborda
 
-En un hotel, muchas tareas de recepción son repetitivas:
+En una recepción hotelera existen tareas repetitivas como:
 
-- Responder preguntas sobre políticas.
+- Responder políticas de cancelación.
+- Explicar servicios del hotel.
 - Consultar disponibilidad.
-- Revisar tipos de habitación.
-- Recordar preferencias del huésped.
-- Estimar costos.
+- Revisar precios o tipos de habitación.
 - Registrar reservas.
-- Rechazar solicitudes que no se pueden cumplir.
+- Recordar preferencias del huésped.
+- Atender solicitudes fuera de alcance de forma segura.
 
-Este proyecto automatiza parte de ese proceso mediante un flujo en n8n conectado a IA local y PostgreSQL.
-
----
-
-## 3. Valor agregado
-
-El sistema no solo responde texto. También:
-
-- Clasifica la intención del usuario.
-- Decide qué rama ejecutar.
-- Usa IA para interpretar preferencias.
-- Guarda memoria personalizada.
-- Consulta base de datos.
-- Valida reglas de negocio.
-- Registra reservas demo.
-- Rechaza casos inválidos de forma controlada.
+Este proyecto automatiza parte de esas tareas mediante un workflow modular.
 
 ---
 
-## 4. Arquitectura resumida
+## 3. Idea principal del sistema
 
-El workflow empieza con:
+El asistente recibe una pregunta del usuario y primero decide qué tipo de solicitud es.
+
+Luego el sistema la envía al módulo correcto:
 
 ```text
-Edit Fields
+documental
+analítica
+reserva
+disponibilidad
+memoria
+fuera de alcance
+consultoría pendiente
+```
+
+Esto evita que todas las preguntas pasen por IA y hace el sistema más eficiente.
+
+---
+
+## 4. Estructura visual del workflow
+
+El workflow está separado en siete zonas:
+
+```text
+Zona 1 — Entrada y clasificación
+Zona 2 — Consulta documental con IA
+Zona 3 — Analítica del dataset
+Zona 4 — Reserva demo inteligente
+Zona 5 — Respuesta segura / excepciones
+Zona 6 — Disponibilidad simple
+Zona 7 — Memoria personalizada
+```
+
+Esta organización permite explicar cada parte del sistema sin perderse en todo el flujo.
+
+---
+
+## 5. Zona 1 — Entrada y clasificación
+
+La primera zona recibe la pregunta y la clasifica.
+
+Ruta:
+
+```text
+When clicking Execute workflow
+→ Edit Fields
 → Code - Normalizar Pregunta
 → Code - Clasificar Intención
 → Switch - Tipo de solicitud
 ```
 
-Después, según la intención, puede ir a:
+Aquí se genera:
 
 ```text
-documental
-analítica
-disponibilidad
-memoria
-reserva
-respuesta segura
+tipo_solicitud
+confianza_clasificacion
+motivo_clasificacion
+score_clasificacion
+```
+
+El `Switch` decide a qué módulo enviar la solicitud.
+
+---
+
+## 6. Salidas del Switch
+
+| Output | Tipo de solicitud | Módulo |
+|---|---|---|
+| 0 | `documental` | Consulta documental con IA |
+| 1 | `analitica_dataset` | Analítica del dataset |
+| 2 | `reserva_simulada` | Reserva demo inteligente |
+| 3 | `fuera_alcance` | Respuesta segura |
+| 4 | `disponibilidad_habitaciones` | Disponibilidad simple |
+| 5 | `consultoria` | Respuesta segura temporal |
+| 6 | `memoria_usuario` | Memoria personalizada |
+
+---
+
+## 7. Demo recomendada: orden de presentación
+
+Para la demo, se recomienda mostrar el sistema en este orden:
+
+```text
+1. Consulta documental
+2. Analítica del dataset
+3. Disponibilidad simple
+4. Memoria personalizada
+5. Reserva demo
+6. Respuesta segura
+7. Consultoría como módulo pendiente
+```
+
+Este orden permite mostrar primero módulos simples y luego los más avanzados.
+
+---
+
+## 8. Prueba 1 — Consulta documental
+
+Entrada:
+
+```text
+¿Cuáles son las políticas de cancelación del hotel?
+```
+
+Qué demuestra:
+
+- Clasificación documental.
+- Lectura del documento base.
+- Preparación de contexto documental.
+- Respuesta con IA local.
+- Uso controlado del documento.
+
+Ruta:
+
+```text
+HTTP Request
+→ Code - Preparar Contexto Documental
+→ AI Agent
+→ Code - Formatear Salida Documental
+```
+
+Explicación sugerida:
+
+```text
+En esta prueba, el sistema identifica que la pregunta es documental. Luego obtiene el documento base del hotel desde GitHub RAW, selecciona las secciones relevantes y entrega ese contexto al agente IA. El agente responde únicamente con base en ese contexto.
 ```
 
 ---
 
-## 5. Explicación de la memoria personalizada
+## 9. Prueba 2 — Analítica del dataset
 
-La memoria personalizada permite que el sistema recuerde datos del usuario durante la sesión.
-
-Ejemplos:
+Entrada:
 
 ```text
-Me llamo Hector.
-Somos 2 adultos y 3 niños.
-Prefiero habitaciones tranquilas.
-Mi presupuesto es de 300000 por noche.
-Prefiero vista al patio colonial.
+Muéstrame métricas del dataset
 ```
 
-Estos datos se guardan en PostgreSQL, en la tabla:
+Qué demuestra:
+
+- Clasificación como analítica.
+- Consulta SQL en PostgreSQL.
+- Respuesta sin IA.
+- Cálculo de métricas.
+
+Ruta:
 
 ```text
-memoria_usuario_demo
+Postgres - Métricas Dataset
+→ Code - Formatear Salida Analítica
 ```
 
-La ruta es:
+Explicación sugerida:
 
 ```text
-AI Agent - Extraer Memoria Usuario JSON
-→ Code - Validar Memoria Usuario JSON
-→ Postgres - Guardar Memoria Usuario
-→ Code - Confirmar Memoria Guardada
-```
-
-La IA interpreta el texto, pero el código valida el JSON antes de guardar.
-
----
-
-## 6. Explicación de la reserva inteligente
-
-La reserva inteligente permite que el usuario no tenga que repetir toda la información.
-
-Si el usuario ya guardó memoria:
-
-```text
-2 adultos
-3 niños
-habitación familiar
-vista al patio colonial
-presupuesto máximo 300000
-```
-
-luego puede escribir:
-
-```text
-Quiero reservar para mañana por 2 noches.
-```
-
-El sistema completa los datos faltantes desde memoria.
-
----
-
-## 7. Regla importante: la pregunta actual manda
-
-La memoria no reemplaza lo que el usuario acaba de escribir.
-
-Si la memoria dice:
-
-```text
-habitación familiar
-```
-
-pero el usuario pregunta:
-
-```text
-Quiero reservar una habitación doble para 2 personas por 2 noches mañana
-```
-
-el sistema usa:
-
-```text
-habitación doble
-2 personas
-```
-
-Esto evita que la memoria cause errores.
-
----
-
-## 8. Validación de disponibilidad
-
-El sistema consulta la tabla:
-
-```text
-habitaciones_demo
-```
-
-Y revisa:
-
-```text
-tipo de habitación
-estado
-capacidad
-código de habitación
-```
-
-Si la habitación está disponible, continúa.
-
-Si no está disponible, responde con:
-
-```text
-Code - Sin Disponibilidad
+Este módulo no usa IA. El sistema consulta PostgreSQL directamente y devuelve métricas calculadas del dataset hotelero, como total de reservas, tasa de cancelación, ADR promedio y lead time promedio.
 ```
 
 ---
 
-## 9. Validación de presupuesto
+## 10. Prueba 3 — Disponibilidad simple
 
-Antes de registrar la reserva, el sistema revisa:
-
-```text
-precio_noche_cop <= presupuesto_max_cop
-```
-
-Si el precio cumple, registra.
-
-Si el precio supera el presupuesto, no registra automáticamente y responde con:
+Entrada:
 
 ```text
-Code - Fuera de Presupuesto
+¿Hay habitaciones familiares disponibles?
 ```
 
-Esto evita confirmar una reserva que excede el presupuesto del usuario.
+Qué demuestra:
+
+- Clasificación como disponibilidad.
+- Consulta directa a PostgreSQL.
+- Respuesta rápida sin IA.
+- Separación entre disponibilidad simple y reserva.
+
+Ruta:
+
+```text
+Postgres - Disponibilidad Habitaciones
+→ Code - Formatear Salida Disponibilidad
+```
+
+Explicación sugerida:
+
+```text
+Aquí el sistema no necesita IA. Solo consulta la tabla de habitaciones demo y devuelve un resumen de disponibilidad para el tipo solicitado.
+```
 
 ---
 
-## 10. Pruebas recomendadas para la presentación
+## 11. Prueba 4 — Memoria personalizada
 
-### Prueba 1 — Guardar nombre
+Entrada:
 
 ```text
 Me llamo Hector y prefiero habitaciones tranquilas
@@ -204,83 +248,39 @@ Me llamo Hector y prefiero habitaciones tranquilas
 
 Qué demuestra:
 
+- Detección de memoria de usuario.
+- Extracción con IA.
+- Validación con código.
+- Guardado en PostgreSQL.
+- Descarte de campos erróneos.
+
+Ruta:
+
 ```text
-La IA interpreta memoria y PostgreSQL la guarda.
+AI Agent - Extraer Memoria Usuario JSON
+→ Code - Validar Memoria Usuario JSON
+→ If - ¿Memoria Válida?
+→ Postgres - Guardar Memoria Usuario
+→ Code - Confirmar Memoria Guardada
+```
+
+Explicación sugerida:
+
+```text
+La IA interpreta la frase y propone un JSON. Luego un nodo Code valida que los datos sean confiables antes de guardarlos. Esto evita que una interpretación errónea de la IA llegue directamente a la base de datos.
+```
+
+Punto importante para explicar:
+
+```text
+La IA solo propone. El sistema valida antes de guardar.
 ```
 
 ---
 
-### Prueba 2 — Guardar grupo familiar
+## 12. Prueba 5 — Reserva demo
 
-```text
-Somos 2 adultos y 3 niños
-```
-
-Qué demuestra:
-
-```text
-El sistema recuerda cantidad de personas.
-```
-
----
-
-### Prueba 3 — Guardar presupuesto y vista
-
-```text
-Mi presupuesto es de 300000 por noche y prefiero vista al patio colonial
-```
-
-Qué demuestra:
-
-```text
-El sistema recuerda preferencias útiles para reservas.
-```
-
----
-
-### Prueba 4 — Guardar tipo de habitación
-
-```text
-Prefiero una habitación familiar cómoda
-```
-
-Qué demuestra:
-
-```text
-El sistema recuerda tipo de habitación preferida.
-```
-
----
-
-### Prueba 5 — Reserva incompleta usando memoria
-
-```text
-Quiero reservar para mañana por 2 noches
-```
-
-Qué demuestra:
-
-```text
-El sistema usa memoria para completar tipo de habitación y número de personas.
-```
-
----
-
-### Prueba 6 — Fuera de presupuesto
-
-```text
-Quiero reservar una habitación familiar para mañana por 2 noches con presupuesto de 300000
-```
-
-Qué demuestra:
-
-```text
-El sistema encuentra habitación, pero no la registra si supera el presupuesto.
-```
-
----
-
-### Prueba 7 — Reserva explícita
+Entrada:
 
 ```text
 Quiero reservar una habitación doble para 2 personas por 2 noches mañana
@@ -288,90 +288,216 @@ Quiero reservar una habitación doble para 2 personas por 2 noches mañana
 
 Qué demuestra:
 
+- Clasificación como reserva.
+- Extracción de datos de reserva.
+- Consulta de memoria.
+- Validación de datos.
+- Consulta de disponibilidad.
+- Validación de presupuesto.
+- Registro demo.
+
+Ruta resumida:
+
 ```text
-Los datos explícitos del usuario tienen prioridad sobre la memoria.
+Code - Extraer Datos Reserva
+→ Postgres - Consultar Memoria Usuario
+→ Code - Aplicar Memoria a Reserva
+→ If - ¿Reserva Completa?
+→ Postgres - Buscar Habitación Disponible
+→ If - ¿Hay disponibilidad?
+→ If - ¿Cumple presupuesto?
+→ Postgres - Registrar Reserva Demo
+→ Code - Confirmar Reserva Registrada
+```
+
+Explicación sugerida:
+
+```text
+En este caso, el sistema no usa IA para registrar la reserva. La lógica de negocio se maneja con Code y PostgreSQL. Esto permite validar datos, disponibilidad y presupuesto antes de registrar cualquier reserva demo.
 ```
 
 ---
 
-### Prueba 8 — Habitación exacta no disponible
+## 13. Prueba 6 — Respuesta segura
+
+Entrada:
 
 ```text
-Quiero reservar la habitación D-007 para 2 personas por 2 noches mañana
+Cuéntame un chiste
 ```
 
 Qué demuestra:
 
+- Detección de fuera de alcance.
+- Respuesta controlada.
+- Evita usar IA innecesariamente.
+
+Ruta:
+
 ```text
-El sistema respeta el código exacto y rechaza si no está disponible.
+Code - Respuesta Segura
+```
+
+Explicación sugerida:
+
+```text
+El sistema detecta que la pregunta no corresponde al dominio hotelero y responde de forma segura sin usar módulos innecesarios.
 ```
 
 ---
 
-### Prueba 9 — Consulta documental
+## 14. Prueba 7 — Consultoría pendiente
+
+Entrada:
 
 ```text
-¿Cuál es la política de cancelación?
+¿Qué habitación me recomiendas para viajar con mi familia?
 ```
 
 Qué demuestra:
 
+- La intención consultoría ya está clasificada.
+- El módulo especializado todavía está pendiente.
+- El sistema no falla, sino que responde de forma controlada.
+
+Estado actual:
+
 ```text
-Consulta documental con IA local y GitHub RAW.
+tipo_solicitud = consultoria
+```
+
+Ruta actual:
+
+```text
+Code - Respuesta Segura
+```
+
+Explicación sugerida:
+
+```text
+La consultoría hotelera ya se reconoce como intención, pero aún no tiene módulo propio. Por ahora se responde de manera segura y queda como mejora futura.
 ```
 
 ---
 
-### Prueba 10 — Analítica
+## 15. Puntos fuertes para destacar
 
-```text
-¿Cuál es la tasa de cancelación del dataset?
-```
+Durante la presentación conviene resaltar:
 
-Qué demuestra:
-
-```text
-Consulta SQL sobre dataset histórico.
-```
-
----
-
-## 11. Guion corto de explicación
-
-Este workflow funciona como un asistente hotelero inteligente. Primero recibe una pregunta del usuario, la normaliza y clasifica su intención. Según la intención, el sistema decide si debe consultar documentación, analizar datos, revisar disponibilidad, guardar memoria o procesar una reserva.
-
-La parte más importante de esta versión es la memoria personalizada. El asistente puede recordar datos como el nombre del usuario, número de adultos, número de niños, tipo de habitación preferida, vista preferida y presupuesto máximo. Esa memoria se guarda en PostgreSQL.
-
-Cuando el usuario hace una reserva incompleta, el sistema consulta esa memoria y completa los datos faltantes. Sin embargo, los datos explícitos de la pregunta actual siempre tienen prioridad sobre la memoria. Luego el sistema consulta disponibilidad, valida capacidad, revisa presupuesto y solo registra la reserva si cumple las condiciones.
+- El workflow está dividido por zonas.
+- No todo pasa por IA.
+- La clasificación se hace antes de llamar agentes.
+- Las consultas SQL no usan IA.
+- La reserva no la decide la IA.
+- La memoria se valida antes de guardarse.
+- El documento se reduce antes de enviarse al agente.
+- El sistema maneja errores con respuestas controladas.
+- El proyecto usa IA local con Ollama.
 
 ---
 
-## 12. Qué decir si algo tarda
+## 16. Cómo explicar la optimización de tokens
 
-Como el proyecto usa Ollama local, algunas respuestas con IA pueden tardar más que una llamada puramente SQL. Esto es normal porque el modelo se ejecuta en la máquina local.
-
-Se puede explicar así:
+Antes:
 
 ```text
-Las rutas que no usan IA, como disponibilidad o consulta SQL, responden más rápido. Las rutas donde el modelo interpreta memoria pueden tardar un poco más porque Ollama procesa el lenguaje natural localmente.
+El agente podía recibir mucho contexto documental.
 ```
 
----
-
-## 13. Qué decir si una habitación aparece no disponible
-
-Se puede explicar así:
+Ahora:
 
 ```text
-El sistema actualiza el estado de las habitaciones cuando registra una reserva. Por eso, si una habitación ya fue usada en una prueba anterior, puede aparecer como reservada o no disponible. Esto demuestra que la base de datos conserva el estado operacional.
+HTTP Request obtiene el documento.
+Code - Preparar Contexto Documental selecciona partes relevantes.
+AI Agent recibe solo el contexto necesario.
+```
+
+Explicación sencilla:
+
+```text
+Esto reduce la cantidad de texto enviada al modelo y mejora la precisión de la respuesta.
 ```
 
 ---
 
-## 14. Cierre de la demo
+## 17. Cómo explicar la memoria personalizada
 
-Para cerrar, se puede decir:
+La memoria personalizada sigue este enfoque:
 
 ```text
-Este prototipo demuestra cómo n8n puede orquestar IA local, PostgreSQL, memoria personalizada y reglas de negocio para simular una recepción hotelera inteligente. Aunque es un entorno académico, ya incluye lógica realista de disponibilidad, presupuesto, memoria y manejo de errores.
+IA interpreta → Code valida → PostgreSQL guarda
+```
+
+Ejemplo:
+
+```text
+Me llamo Hector y prefiero habitaciones tranquilas
+```
+
+El sistema guarda:
+
+```text
+nombre_usuario = Hector
+preferencias_texto = habitaciones tranquilas
+```
+
+Pero si la IA propone algo incorrecto, como:
+
+```text
+vista_preferida = tranquilas
+```
+
+el nodo de validación lo descarta.
+
+---
+
+## 18. Cómo explicar las reservas
+
+El módulo de reserva usa:
+
+```text
+Code
+PostgreSQL
+If
+Switch
+```
+
+No depende de IA para registrar.
+
+Validaciones:
+
+- Tipo de habitación.
+- Número de personas.
+- Número de noches.
+- Fecha de entrada.
+- Disponibilidad.
+- Capacidad.
+- Presupuesto.
+- Memoria aplicada si faltan datos.
+
+---
+
+## 19. Limitaciones que se deben mencionar
+
+El sistema actual no es productivo.
+
+Limitaciones:
+
+- No procesa pagos reales.
+- No tiene autenticación.
+- No tiene integración con PMS real.
+- La reserva es demo.
+- La consultoría avanzada está pendiente.
+- La disponibilidad no maneja calendario real por fechas.
+- No hay Telegram ni WhatsApp.
+- No hay RAG vectorial avanzado.
+
+---
+
+## 20. Cierre sugerido de la demo
+
+Frase sugerida:
+
+```text
+Este proyecto demuestra cómo n8n puede orquestar IA local, PostgreSQL y lógica de negocio para construir un asistente hotelero académico capaz de responder preguntas, consultar datos, recordar preferencias y registrar reservas demo de forma controlada.
 ```

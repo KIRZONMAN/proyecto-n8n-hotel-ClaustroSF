@@ -6,8 +6,8 @@
       "type": "n8n-nodes-base.manualTrigger",
       "typeVersion": 1,
       "position": [
-        0,
-        0
+        -16,
+        176
       ],
       "id": "c5b8b7e1-f605-48df-aeb6-7168f04014cc",
       "name": "When clicking ‘Execute workflow’"
@@ -19,7 +19,7 @@
             {
               "id": "d5208ae5-707d-4b7d-b379-8dbd4d4f03bb",
               "name": "pregunta_usuario",
-              "value": "Quiero reservar la habitación D-042 para 2 personas por 2 noches mañana",
+              "value": "= Me llamo Hector y prefiero habitaciones tranquilas",
               "type": "string"
             },
             {
@@ -53,8 +53,8 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        224,
-        0
+        208,
+        176
       ],
       "id": "34f42b9d-ed6c-4e48-8280-7a532e4e41db",
       "name": "Edit Fields"
@@ -62,14 +62,14 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=={{ `Eres un asistente virtual del Hotel El Claustro de San Francisco.\n\nTu función es responder preguntas relacionadas con políticas, servicios, horarios, habitaciones, normas generales y condiciones del hotel usando únicamente la documentación proporcionada.\n\nREGLAS OBLIGATORIAS:\n1. Responde siempre en español.\n2. Responde de forma clara, breve y amable.\n3. Usa únicamente la información contenida en el documento proporcionado.\n4. No inventes información.\n5. No inventes precios, contraseñas, cuentas bancarias, teléfonos, correos, datos privados ni servicios no mencionados.\n6. Si la respuesta no aparece en el documento, responde exactamente:\nNo tengo información suficiente en el documento del hotel para responder eso.\n7. No menciones que eres un modelo de IA.\n8. No digas que estás leyendo un Markdown, JSON, archivo técnico o workflow.\n9. No cierres con preguntas adicionales como “¿Tienes alguna otra pregunta?”.\n10. Responde únicamente lo solicitado.\n\nDOCUMENTO DEL HOTEL:\n${$json.documento_contenido || $json.data || \"\"}\n\nPREGUNTA DEL USUARIO:\n${$('Code - Normalizar Pregunta').item.json.pregunta_original || $('Edit Fields').item.json.pregunta_usuario || \"\"}\n\nRESPUESTA:` }}",
+        "text": "=={{\n`Eres un asistente documental del ${$json.nombre_hotel}.\n\nTu tarea es responder preguntas sobre el hotel usando únicamente el CONTEXTO DOCUMENTAL proporcionado.\n\nREGLAS:\n- Responde en español.\n- Sé claro, útil y directo.\n- Usa únicamente la información del contexto documental.\n- No inventes políticas, precios, horarios ni servicios.\n- Si la información no aparece en el contexto, responde que no tienes esa información en el documento disponible.\n- No menciones procesos internos, tokens, contexto reducido, nodos ni workflow.\n- No ejecutes reservas.\n- Si el usuario quiere reservar, indícale que puede decir tipo de habitación, número de personas, número de noches y fecha de entrada.\n\nPREGUNTA DEL USUARIO:\n${$json.pregunta_usuario}\n\nCONTEXTO DOCUMENTAL:\n${$json.contexto_documental}`\n}}",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        1120,
-        -704
+        1328,
+        -816
       ],
       "id": "10077cf1-623c-4697-acd5-93e084644318",
       "name": "AI Agent"
@@ -85,8 +85,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
       "typeVersion": 1,
       "position": [
-        976,
-        -464
+        1232,
+        -576
       ],
       "id": "16c6a0e8-4c03-4ea2-92a6-44d91722b77f",
       "name": "Ollama Chat Model",
@@ -113,7 +113,7 @@
       "typeVersion": 4.4,
       "position": [
         912,
-        -704
+        -816
       ],
       "id": "fd1f133c-c7ed-46f1-bcbd-55c86b812e61",
       "name": "HTTP Request"
@@ -126,8 +126,8 @@
       "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
       "typeVersion": 1.3,
       "position": [
-        1216,
-        -464
+        1392,
+        -576
       ],
       "id": "39f17b98-abf9-4eb3-853b-a46e64610907",
       "name": "Postgres Chat Memory1",
@@ -145,21 +145,21 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        432,
-        0
+        416,
+        176
       ],
       "id": "d143da04-f0a5-4510-b198-8bb3986fcdec",
       "name": "Code - Normalizar Pregunta"
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nfunction normalizarTexto(texto) {\n  return String(texto || \"\")\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\")\n    .trim();\n}\n\nfunction contieneAlguno(texto, patrones) {\n  return patrones.some((patron) => texto.includes(patron));\n}\n\nfunction coincideAlguno(texto, regexList) {\n  return regexList.some((regex) => regex.test(texto));\n}\n\nreturn items.map((item) => {\n  const data = item.json;\n\n  const preguntaOriginal =\n    data.pregunta_usuario ||\n    data.pregunta_original ||\n    \"\";\n\n  const preguntaNormalizada =\n    data.pregunta_normalizada ||\n    normalizarTexto(preguntaOriginal);\n\n  const pregunta = normalizarTexto(preguntaNormalizada);\n\n  const score = {\n    fuera_alcance: 0,\n    reserva_simulada: 0,\n    disponibilidad_habitaciones: 0,\n    consultoria: 0,\n    analitica_dataset: 0,\n    memoria_usuario: 0,\n    documental: 0\n  };\n\n  // =========================\n  // 1. Señales de reserva\n  // =========================\n\n  const patronesReserva = [\n    \"quiero reservar\",\n    \"deseo reservar\",\n    \"necesito reservar\",\n    \"me gustaria reservar\",\n    \"reservar una habitacion\",\n    \"reservar la habitacion\",\n    \"hacer una reserva\",\n    \"crear una reserva\",\n    \"registrar una reserva\",\n    \"separar una habitacion\",\n    \"apartar una habitacion\",\n    \"reservame\",\n    \"reserva una\",\n    \"reserva la\"\n  ];\n\n  const regexReserva = [\n    /\\breserv(ar|a|ame|acion|aciones)\\b/,\n    /\\b(apartar|separar)\\b.*\\bhabitacion\\b/,\n    /\\bquiero\\b.*\\bhabitacion\\b.*\\bpara\\b.*\\bpersona/,\n    /\\bhabitacion\\s+[a-z]-\\d{3}\\b.*\\bpara\\b.*\\bpersona/\n  ];\n\n  if (contieneAlguno(pregunta, patronesReserva)) score.reserva_simulada += 3;\n  if (coincideAlguno(pregunta, regexReserva)) score.reserva_simulada += 3;\n\n  // Si menciona noches/personas junto con intención de habitación, suma a reserva.\n  if (/\\b(\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\s+(noche|noches|dia|dias)\\b/.test(pregunta)) {\n    score.reserva_simulada += 1;\n  }\n\n  if (/\\bpara\\s+(\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\s+(persona|personas|huesped|huespedes|adulto|adultos)\\b/.test(pregunta)) {\n    score.reserva_simulada += 1;\n  }\n\n  // =========================\n  // 2. Señales de disponibilidad\n  // =========================\n\n  const patronesDisponibilidad = [\n    \"hay disponibilidad\",\n    \"tienen disponibilidad\",\n    \"habitaciones disponibles\",\n    \"habitacion disponible\",\n    \"cuantas habitaciones\",\n    \"que habitaciones hay\",\n    \"consultar disponibilidad\",\n    \"ver disponibilidad\",\n    \"disponibilidad de habitaciones\",\n    \"hay habitaciones\"\n  ];\n\n  if (contieneAlguno(pregunta, patronesDisponibilidad)) {\n    score.disponibilidad_habitaciones += 4;\n  }\n\n  if (/\\b(disponible|disponibles|disponibilidad)\\b/.test(pregunta)) {\n    score.disponibilidad_habitaciones += 2;\n  }\n\n  // =========================\n  // 3. Señales de memoria de usuario\n  // =========================\n\n  const patronesMemoria = [\n    \"me llamo\",\n    \"mi nombre es\",\n    \"soy \",\n    \"prefiero\",\n    \"me gusta\",\n    \"no me gusta\",\n    \"me encantan\",\n    \"me interesa\",\n    \"recuerda que\",\n    \"quiero que recuerdes\",\n    \"ten en cuenta\",\n    \"viajo con\",\n    \"viajamos\",\n    \"somos\",\n    \"mi presupuesto\",\n    \"presupuesto maximo\",\n    \"presupuesto es\",\n    \"tengo un presupuesto\",\n    \"habitaciones tranquilas\",\n    \"habitacion tranquila\",\n    \"vista al patio\",\n    \"vista al hotel\",\n    \"patio colonial\",\n    \"vista exterior\",\n    \"vista interior\"\n  ];\n\n  const regexMemoria = [\n    /\\bme llamo\\s+[a-zñ]+/i,\n    /\\bmi nombre es\\s+[a-zñ]+/i,\n    /\\bsoy\\s+[a-zñ]+/i,\n    /\\bprefiero\\b/,\n    /\\bpreferimos\\b/,\n    /\\bme gusta\\b/,\n    /\\bno me gusta\\b/,\n    /\\brecuerda que\\b/,\n    /\\bten en cuenta\\b/,\n    /\\bsomos\\s+\\d+\\s+(adultos|personas|huespedes)\\b/,\n    /\\b\\d+\\s+adultos?\\b/,\n    /\\b\\d+\\s+ninos?\\b/,\n    /\\b\\d+\\s+niños?\\b/,\n    /\\bpresupuesto\\b/,\n    /\\b\\d{5,9}\\s*(cop|pesos)?\\b.*\\b(noche|habitacion|presupuesto)\\b/,\n    /\\b(sencilla|doble|triple|familiar|suite)\\b.*\\b(comoda|tranquila|preferida|prefiero)\\b/,\n    /\\b(vista|patio colonial|hotel)\\b/\n  ];\n\n  if (contieneAlguno(pregunta, patronesMemoria)) score.memoria_usuario += 3;\n  if (coincideAlguno(pregunta, regexMemoria)) score.memoria_usuario += 3;\n\n  // Frases típicas de memoria sin intención de reservar.\n  if (pregunta.startsWith(\"prefiero\") || pregunta.startsWith(\"me llamo\") || pregunta.startsWith(\"mi presupuesto\") || pregunta.startsWith(\"somos\")) {\n    score.memoria_usuario += 3;\n  }\n\n  // =========================\n  // 4. Señales documentales\n  // =========================\n\n  const patronesDocumental = [\n    \"politicas\",\n    \"politica\",\n    \"check in\",\n    \"check-in\",\n    \"check out\",\n    \"check-out\",\n    \"hora de entrada\",\n    \"hora de salida\",\n    \"desayuno\",\n    \"mascotas\",\n    \"cancelacion\",\n    \"cancelar\",\n    \"normas\",\n    \"reglas\",\n    \"servicios del hotel\",\n    \"wifi\",\n    \"parqueadero\",\n    \"ubicacion\",\n    \"direccion\",\n    \"telefono\",\n    \"contacto\"\n  ];\n\n  if (contieneAlguno(pregunta, patronesDocumental)) {\n    score.documental += 3;\n  }\n\n  // =========================\n  // 5. Señales de analítica/dataset\n  // =========================\n\n  const patronesAnalitica = [\n    \"dataset\",\n    \"metricas\",\n    \"estadisticas\",\n    \"promedio\",\n    \"grafica\",\n    \"grafico\",\n    \"analisis\",\n    \"analitica\",\n    \"cuantas reservas\",\n    \"habitaciones mas reservadas\",\n    \"ocupacion\",\n    \"reporte\"\n  ];\n\n  if (contieneAlguno(pregunta, patronesAnalitica)) {\n    score.analitica_dataset += 4;\n  }\n\n  // =========================\n  // 6. Señales de consultoría\n  // =========================\n\n  const patronesConsultoria = [\n    \"que me recomiendas\",\n    \"cual me recomiendas\",\n    \"recomiendame\",\n    \"que habitacion es mejor\",\n    \"cual habitacion es mejor\",\n    \"que opcion es mejor\",\n    \"consejo\",\n    \"sugerencia\"\n  ];\n\n  if (contieneAlguno(pregunta, patronesConsultoria)) {\n    score.consultoria += 3;\n  }\n\n  // =========================\n  // 7. Fuera de alcance\n  // =========================\n\n  const senalesHotel =\n    score.reserva_simulada > 0 ||\n    score.disponibilidad_habitaciones > 0 ||\n    score.memoria_usuario > 0 ||\n    score.documental > 0 ||\n    score.analitica_dataset > 0 ||\n    score.consultoria > 0;\n\n  if (!senalesHotel) {\n    score.fuera_alcance += 2;\n  }\n\n  // =========================\n  // 8. Reglas de prioridad\n  // =========================\n\n  let tipoSolicitud = \"fuera_alcance\";\n  let motivoClasificacion = \"La pregunta no coincide con las funciones disponibles del asistente.\";\n  let confianzaClasificacion = \"baja\";\n\n  // Prioridad 1: reserva explícita.\n  // Si el usuario dice reservar/apartar/separar, se respeta como reserva aunque incluya preferencias.\n  if (score.reserva_simulada >= 4) {\n    tipoSolicitud = \"reserva_simulada\";\n    motivoClasificacion = \"La pregunta expresa una intención clara de registrar una reserva.\";\n    confianzaClasificacion = \"alta\";\n  }\n\n  // Prioridad 2: disponibilidad.\n  else if (score.disponibilidad_habitaciones >= 4) {\n    tipoSolicitud = \"disponibilidad_habitaciones\";\n    motivoClasificacion = \"La pregunta solicita consultar disponibilidad de habitaciones.\";\n    confianzaClasificacion = \"alta\";\n  }\n\n  // Prioridad 3: memoria de usuario.\n  else if (score.memoria_usuario >= 3) {\n    tipoSolicitud = \"memoria_usuario\";\n    motivoClasificacion = \"La pregunta contiene información personal, preferencias o datos útiles para recordar.\";\n    confianzaClasificacion = score.memoria_usuario >= 6 ? \"alta\" : \"media\";\n  }\n\n  // Prioridad 4: analítica.\n  else if (score.analitica_dataset >= 4) {\n    tipoSolicitud = \"analitica_dataset\";\n    motivoClasificacion = \"La pregunta solicita métricas, estadísticas o análisis del dataset.\";\n    confianzaClasificacion = \"alta\";\n  }\n\n  // Prioridad 5: documental.\n  else if (score.documental >= 3) {\n    tipoSolicitud = \"documental\";\n    motivoClasificacion = \"La pregunta solicita información documental o políticas del hotel.\";\n    confianzaClasificacion = \"media\";\n  }\n\n  // Prioridad 6: consultoría.\n  else if (score.consultoria >= 3) {\n    tipoSolicitud = \"consultoria\";\n    motivoClasificacion = \"La pregunta solicita recomendación o asesoría sobre opciones del hotel.\";\n    confianzaClasificacion = \"media\";\n  }\n\n  return {\n    json: {\n      ...data,\n      pregunta_original: data.pregunta_original || preguntaOriginal,\n      pregunta_normalizada: pregunta,\n      pregunta_valida: Boolean(data.pregunta_valida ?? true),\n      longitud_pregunta: preguntaOriginal.length,\n\n      tipo_solicitud: tipoSolicitud,\n      confianza_clasificacion: confianzaClasificacion,\n      motivo_clasificacion: motivoClasificacion,\n      score_clasificacion: score\n    }\n  };\n});"
+        "jsCode": "const items = $input.all();\n\nfunction normalizarTexto(texto) {\n  return String(texto || \"\")\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\")\n    .replace(/[¿?¡!.,;:()[\\]{}\"]/g, \" \")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction contieneAlguno(texto, patrones) {\n  return patrones.some((patron) => texto.includes(patron));\n}\n\nfunction coincideAlguno(texto, regexList) {\n  return regexList.some((regex) => regex.test(texto));\n}\n\nfunction maxCategoria(score) {\n  let mejorCategoria = \"fuera_alcance\";\n  let mejorScore = -1;\n\n  for (const [categoria, valor] of Object.entries(score)) {\n    if (valor > mejorScore) {\n      mejorCategoria = categoria;\n      mejorScore = valor;\n    }\n  }\n\n  return {\n    categoria: mejorCategoria,\n    score: mejorScore\n  };\n}\n\nfunction segundoMayor(score, categoriaGanadora) {\n  const valores = Object.entries(score)\n    .filter(([categoria]) => categoria !== categoriaGanadora)\n    .map(([, valor]) => valor);\n\n  return valores.length ? Math.max(...valores) : 0;\n}\n\nreturn items.map((item) => {\n  const data = item.json || {};\n\n  const preguntaOriginal =\n    data.pregunta_usuario ||\n    data.pregunta_original ||\n    \"\";\n\n  const preguntaNormalizada =\n    data.pregunta_normalizada ||\n    normalizarTexto(preguntaOriginal);\n\n  const pregunta = normalizarTexto(preguntaNormalizada);\n\n  const score = {\n    fuera_alcance: 0,\n    reserva_simulada: 0,\n    disponibilidad_habitaciones: 0,\n    consultoria: 0,\n    analitica_dataset: 0,\n    memoria_usuario: 0,\n    documental: 0\n  };\n\n  const motivos = [];\n\n  if (!pregunta) {\n    return {\n      json: {\n        ...data,\n        pregunta_original: data.pregunta_original || preguntaOriginal,\n        pregunta_normalizada: pregunta,\n        pregunta_valida: false,\n        longitud_pregunta: preguntaOriginal.length,\n        tipo_solicitud: \"fuera_alcance\",\n        confianza_clasificacion: \"alta\",\n        motivo_clasificacion: \"La pregunta está vacía o no es válida.\",\n        score_clasificacion: score\n      }\n    };\n  }\n\n  // =========================\n  // 1. Señales de reserva simulada\n  // =========================\n\n  const patronesReserva = [\n    \"quiero reservar\",\n    \"deseo reservar\",\n    \"necesito reservar\",\n    \"me gustaria reservar\",\n    \"quisiera reservar\",\n    \"reservar una habitacion\",\n    \"reservar la habitacion\",\n    \"hacer una reserva\",\n    \"crear una reserva\",\n    \"registrar una reserva\",\n    \"separar una habitacion\",\n    \"apartar una habitacion\",\n    \"reservame\",\n    \"reserva una\",\n    \"reserva la\"\n  ];\n\n  const regexReserva = [\n    /\\breserv(ar|a|ame|acion|aciones)\\b/,\n    /\\b(apartar|separar)\\b.*\\bhabitacion\\b/,\n    /\\bhabitacion\\s+[a-z]-\\d{3}\\b.*\\bpara\\b.*\\b(\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\s+(persona|personas|huesped|huespedes|adulto|adultos)\\b/,\n    /\\bquiero\\b.*\\bhabitacion\\b.*\\bpara\\b.*\\b(\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\s+(persona|personas|huesped|huespedes|adulto|adultos)\\b/,\n    /\\bquiero\\b.*\\bhabitacion\\b.*\\b(\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\s+(noche|noches|dia|dias)\\b/\n  ];\n\n  if (contieneAlguno(pregunta, patronesReserva)) {\n    score.reserva_simulada += 6;\n    motivos.push(\"La pregunta contiene una intención directa de reservar.\");\n  }\n\n  if (coincideAlguno(pregunta, regexReserva)) {\n    score.reserva_simulada += 5;\n    motivos.push(\"La pregunta tiene estructura típica de reserva.\");\n  }\n\n  if (/\\b(\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\s+(noche|noches|dia|dias)\\b/.test(pregunta)) {\n    score.reserva_simulada += 1;\n  }\n\n  if (/\\bpara\\s+(\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\s+(persona|personas|huesped|huespedes|adulto|adultos)\\b/.test(pregunta)) {\n    score.reserva_simulada += 1;\n  }\n\n  if (/\\b(sencilla|simple|individual|doble|triple|familiar|suite)\\b/.test(pregunta)) {\n    score.reserva_simulada += 1;\n  }\n\n  if (/\\b(manana|hoy|pasado manana|fecha|entrada|llegada)\\b/.test(pregunta)) {\n    score.reserva_simulada += 1;\n  }\n\n  // =========================\n  // 2. Señales de disponibilidad\n  // =========================\n\n  const patronesDisponibilidad = [\n    \"hay disponibilidad\",\n    \"tienen disponibilidad\",\n    \"habitaciones disponibles\",\n    \"habitacion disponible\",\n    \"cuantas habitaciones\",\n    \"que habitaciones hay\",\n    \"consultar disponibilidad\",\n    \"ver disponibilidad\",\n    \"disponibilidad de habitaciones\",\n    \"hay habitaciones\",\n    \"hay alguna habitacion\",\n    \"tienen habitaciones\",\n    \"habitaciones libres\",\n    \"habitacion libre\",\n    \"quedan habitaciones\",\n    \"quedan disponibles\"\n  ];\n\n  const regexDisponibilidad = [\n    /\\b(disponible|disponibles|disponibilidad|libre|libres)\\b/,\n    /\\b(hay|tienen|existen|quedan)\\b.*\\b(sencilla|simple|individual|doble|triple|familiar|suite|habitacion|habitaciones)\\b/,\n    /\\b(habitacion|habitaciones)\\b.*\\b(disponible|disponibles|libre|libres)\\b/,\n    /\\b[a-z]-\\d{3}\\b.*\\b(disponible|disponibilidad|libre)\\b/\n  ];\n\n  if (contieneAlguno(pregunta, patronesDisponibilidad)) {\n    score.disponibilidad_habitaciones += 6;\n    motivos.push(\"La pregunta solicita disponibilidad de habitaciones.\");\n  }\n\n  if (coincideAlguno(pregunta, regexDisponibilidad)) {\n    score.disponibilidad_habitaciones += 4;\n  }\n\n  // =========================\n  // 3. Señales de analítica/dataset\n  // =========================\n\n  const patronesAnalitica = [\n    \"dataset\",\n    \"metricas\",\n    \"estadisticas\",\n    \"promedio\",\n    \"promedios\",\n    \"grafica\",\n    \"grafico\",\n    \"graficas\",\n    \"graficos\",\n    \"analisis\",\n    \"analitica\",\n    \"cuantas reservas\",\n    \"habitaciones mas reservadas\",\n    \"ocupacion\",\n    \"reporte\",\n    \"reportes\",\n    \"indicadores\",\n    \"kpi\",\n    \"datos historicos\",\n    \"tabla de reservas\",\n    \"reservas registradas\"\n  ];\n\n  const regexAnalitica = [\n    /\\b(muestrame|mostrar|ver|dame|generar|consultar)\\b.*\\b(metricas|estadisticas|dataset|reporte|indicadores|kpi|analisis)\\b/,\n    /\\b(cuantas|cuantos|promedio|total|porcentaje)\\b.*\\b(reservas|habitaciones|ocupacion|dataset)\\b/\n  ];\n\n  if (contieneAlguno(pregunta, patronesAnalitica)) {\n    score.analitica_dataset += 6;\n    motivos.push(\"La pregunta solicita métricas, estadísticas o análisis del dataset.\");\n  }\n\n  if (coincideAlguno(pregunta, regexAnalitica)) {\n    score.analitica_dataset += 4;\n  }\n\n  // =========================\n  // 4. Señales documentales\n  // =========================\n\n  const patronesDocumental = [\n    \"politicas\",\n    \"politica\",\n    \"cancelacion\",\n    \"cancelar\",\n    \"reembolso\",\n    \"devolucion\",\n    \"check in\",\n    \"checkin\",\n    \"check out\",\n    \"checkout\",\n    \"hora de entrada\",\n    \"hora de salida\",\n    \"desayuno\",\n    \"mascotas\",\n    \"normas\",\n    \"reglas\",\n    \"servicios del hotel\",\n    \"servicios\",\n    \"wifi\",\n    \"internet\",\n    \"parqueadero\",\n    \"estacionamiento\",\n    \"ubicacion\",\n    \"direccion\",\n    \"telefono\",\n    \"contacto\",\n    \"restaurante\",\n    \"recepcion\",\n    \"horarios\",\n    \"tarifas\",\n    \"metodos de pago\",\n    \"medios de pago\",\n    \"precio\",\n    \"precios\",\n    \"costo\",\n    \"costos\",\n    \"cuanto cuesta\",\n    \"cuanto vale\"\n  ];\n\n  const regexDocumental = [\n    /\\b(cuales|cual|que|como|cuando|donde|cuanto|cuanta|cuantos|cuantas)\\b.*\\b(politica|politicas|cancelacion|check|desayuno|mascotas|wifi|parqueadero|ubicacion|direccion|telefono|contacto|servicios|normas|reglas|tarifas|precio|precios|costo|costos)\\b/,\n    /\\b(politica|politicas)\\b.*\\b(cancelacion|cancelar|reembolso|devolucion)\\b/,\n    /\\b(informacion|info|explicame|dime|cuentame)\\b.*\\b(hotel|habitaciones|servicios|politicas|tarifas)\\b/\n  ];\n\n  if (contieneAlguno(pregunta, patronesDocumental)) {\n    score.documental += 6;\n    motivos.push(\"La pregunta solicita información documental del hotel.\");\n  }\n\n  if (coincideAlguno(pregunta, regexDocumental)) {\n    score.documental += 4;\n  }\n\n  // =========================\n  // 5. Señales de memoria de usuario\n  // =========================\n  // Regla importante:\n  // No usar \"hotel\" como señal de memoria.\n  // No usar \"vista\" sola como señal fuerte.\n  // La memoria debe aparecer cuando el usuario da datos personales o preferencias para recordar.\n\n  const patronesMemoria = [\n    \"me llamo\",\n    \"mi nombre es\",\n    \"soy\",\n    \"recuerda que\",\n    \"recordar que\",\n    \"ten en cuenta que\",\n    \"guarda que\",\n    \"quiero que recuerdes\",\n    \"mis preferencias\",\n    \"mi preferencia\",\n    \"prefiero\",\n    \"preferimos\",\n    \"me gusta\",\n    \"nos gusta\",\n    \"suelo viajar\",\n    \"viajo con\",\n    \"viajamos con\",\n    \"somos\",\n    \"somos una familia\",\n    \"mi familia\",\n    \"mi presupuesto\",\n    \"presupuesto maximo\",\n    \"presupuesto de\"\n  ];\n\n  const regexMemoria = [\n    /\\bme\\s+llamo\\s+[a-z]+/i,\n    /\\bmi\\s+nombre\\s+es\\s+[a-z]+/i,\n    /\\brecuerda\\s+que\\b/,\n    /\\bquiero\\s+que\\s+recuerdes\\b/,\n    /\\bten\\s+en\\s+cuenta\\s+que\\b/,\n    /\\bguarda\\s+que\\b/,\n    /\\b(prefiero|preferimos|me\\s+gusta|nos\\s+gusta)\\b.*\\b(sencilla|simple|individual|doble|triple|familiar|suite|habitacion|vista|patio|calle|jardin|interior)\\b/,\n    /\\bsomos\\s+(\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\s+(adulto|adultos|persona|personas)\\b/,\n    /\\b(\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\s+(nino|ninos|niño|niños)\\b/,\n    /\\bpresupuesto\\b.*\\b(\\d{5,}|\\$|cop)\\b/\n  ];\n\n  if (contieneAlguno(pregunta, patronesMemoria)) {\n    score.memoria_usuario += 4;\n    motivos.push(\"La pregunta contiene datos personales o preferencias del usuario.\");\n  }\n\n  if (coincideAlguno(pregunta, regexMemoria)) {\n    score.memoria_usuario += 5;\n  }\n\n  // Refuerzo para memoria completa tipo:\n  // \"Me llamo Hector, somos 2 adultos y 3 niños, prefiero...\"\n  if (\n    /\\b(me llamo|mi nombre es)\\b/.test(pregunta) &&\n    /\\b(prefiero|preferimos|somos|presupuesto|adultos|ninos|niños)\\b/.test(pregunta)\n  ) {\n    score.memoria_usuario += 5;\n  }\n\n  // =========================\n  // 6. Señales de consultoría\n  // =========================\n\n  const patronesConsultoria = [\n    \"que me recomiendas\",\n    \"que nos recomiendas\",\n    \"cual me recomiendas\",\n    \"cual nos recomiendas\",\n    \"recomiendame\",\n    \"recomiendas\",\n    \"que habitacion es mejor\",\n    \"cual habitacion es mejor\",\n    \"que opcion es mejor\",\n    \"cual opcion es mejor\",\n    \"consejo\",\n    \"sugerencia\",\n    \"ayudame a elegir\",\n    \"ayudame a escoger\",\n    \"ayudame a decidir\",\n    \"cual deberia escoger\",\n    \"que me conviene\",\n    \"que nos conviene\",\n    \"cual me conviene\",\n    \"cual nos conviene\"\n  ];\n\n  const regexConsultoria = [\n    /\\bque\\s+(habitacion|opcion|tipo\\s+de\\s+habitacion)\\s+(me|nos)\\s+recomiendas\\b/,\n    /\\bcual\\s+(habitacion|opcion|tipo\\s+de\\s+habitacion)\\s+(me|nos)\\s+recomiendas\\b/,\n    /\\bque\\s+(habitacion|opcion|tipo\\s+de\\s+habitacion)\\s+(me|nos)\\s+conviene\\b/,\n    /\\bcual\\s+(habitacion|opcion|tipo\\s+de\\s+habitacion)\\s+(me|nos)\\s+conviene\\b/,\n    /\\b(me|nos)\\s+(recomiendas|aconsejas|sugieres)\\b/,\n    /\\b(recomiendame|aconsejame|sugiereme)\\b/,\n    /\\bayudame\\s+a\\s+(elegir|escoger|decidir)\\b/,\n    /\\bpara\\s+(viajar|ir|hospedarme|hospedarnos|quedarme|quedarnos)\\s+con\\s+(mi|la|nuestra)\\s+(familia|pareja|grupo)\\b/,\n    /\\bviajo\\s+con\\s+mi\\s+(familia|pareja|grupo)\\b/,\n    /\\bviajamos\\s+con\\s+(familia|ninos|adultos|grupo)\\b/\n  ];\n\n  if (contieneAlguno(pregunta, patronesConsultoria)) {\n    score.consultoria += 5;\n    motivos.push(\"La pregunta solicita recomendación o asesoría.\");\n  }\n\n  if (coincideAlguno(pregunta, regexConsultoria)) {\n    score.consultoria += 5;\n    motivos.push(\"La pregunta tiene estructura típica de recomendación hotelera.\");\n  }\n\n  if (\n    pregunta.includes(\"recomiendas\") &&\n    /\\b(habitacion|habitaciones|opcion|opciones|familia|pareja|grupo)\\b/.test(pregunta)\n  ) {\n    score.consultoria += 3;\n  }\n\n  // =========================\n  // 7. Señales de fuera de alcance\n  // =========================\n\n  const patronesFueraAlcance = [\n    \"chiste\",\n    \"cuentame un chiste\",\n    \"broma\",\n    \"poema\",\n    \"cancion\",\n    \"programame\",\n    \"codigo de\",\n    \"python\",\n    \"java\",\n    \"javascript\",\n    \"videojuego\",\n    \"anime\",\n    \"futbol\",\n    \"politica del pais\",\n    \"presidente\",\n    \"matematicas\",\n    \"derivada\",\n    \"integral\"\n  ];\n\n  if (contieneAlguno(pregunta, patronesFueraAlcance)) {\n    score.fuera_alcance += 5;\n    motivos.push(\"La pregunta está fuera del alcance del asistente hotelero.\");\n  }\n\n  // =========================\n  // 8. Ajustes de seguridad / desempate\n  // =========================\n\n  // Si es una reserva explícita, no dejar que memoria robe la clasificación.\n  const reservaExplicita =\n    score.reserva_simulada >= 5 &&\n    /\\b(reserv|apartar|separar|quiero)\\b/.test(pregunta) &&\n    /\\b(habitacion|reserva)\\b/.test(pregunta);\n\n  // Si pregunta disponibilidad explícita, debe ir al módulo simple de disponibilidad.\n  const disponibilidadExplicita =\n    score.disponibilidad_habitaciones >= 5 &&\n    /\\b(disponible|disponibles|disponibilidad|libre|libres|hay|tienen|quedan)\\b/.test(pregunta);\n\n  // Si pide guardar/recordar preferencias, debe ir al módulo de memoria.\n  const memoriaExplicita =\n    score.memoria_usuario >= 5 &&\n    /\\b(me llamo|mi nombre es|recuerda|recordar|guarda|prefiero|preferimos|somos|presupuesto|viajo con|viajamos con)\\b/.test(pregunta);\n\n  const ganador = maxCategoria(score);\n  const segundoScore = segundoMayor(score, ganador.categoria);\n\n  let tipoSolicitud = \"fuera_alcance\";\n  let motivoClasificacion = \"La pregunta no coincide con las funciones disponibles del asistente.\";\n  let confianzaClasificacion = \"baja\";\n\n  // Prioridad 1: reserva explícita.\n  if (reservaExplicita) {\n    tipoSolicitud = \"reserva_simulada\";\n    motivoClasificacion = \"La pregunta expresa una intención clara de registrar una reserva.\";\n    confianzaClasificacion = \"alta\";\n  }\n\n  // Prioridad 2: disponibilidad explícita.\n  else if (disponibilidadExplicita) {\n    tipoSolicitud = \"disponibilidad_habitaciones\";\n    motivoClasificacion = \"La pregunta solicita consultar disponibilidad de habitaciones.\";\n    confianzaClasificacion = \"alta\";\n  }\n\n  // Prioridad 3: analítica/dataset.\n  else if (score.analitica_dataset >= 5) {\n    tipoSolicitud = \"analitica_dataset\";\n    motivoClasificacion = \"La pregunta solicita métricas, estadísticas o análisis del dataset.\";\n    confianzaClasificacion = \"alta\";\n  }\n\n  // Prioridad 4: documental.\n  else if (score.documental >= 5) {\n    tipoSolicitud = \"documental\";\n    motivoClasificacion = \"La pregunta solicita información documental o políticas del hotel.\";\n    confianzaClasificacion = score.documental - segundoScore >= 3 ? \"alta\" : \"media\";\n  }\n\n  // Prioridad 5: memoria del usuario.\n  else if (memoriaExplicita) {\n    tipoSolicitud = \"memoria_usuario\";\n    motivoClasificacion = \"La pregunta contiene información personal, preferencias o datos útiles para recordar.\";\n    confianzaClasificacion = score.memoria_usuario >= 8 ? \"alta\" : \"media\";\n  }\n\n  // Prioridad 6: consultoría.\n  else if (score.consultoria >= 4) {\n    tipoSolicitud = \"consultoria\";\n    motivoClasificacion = \"La pregunta solicita recomendación o asesoría sobre opciones del hotel.\";\n    confianzaClasificacion = score.consultoria >= 8 ? \"alta\" : \"media\";\n  }\n\n  // Prioridad 7: fuera de alcance explícito.\n  else if (score.fuera_alcance >= 4) {\n    tipoSolicitud = \"fuera_alcance\";\n    motivoClasificacion = \"La pregunta está fuera del alcance del asistente hotelero.\";\n    confianzaClasificacion = \"alta\";\n  }\n\n  // Respaldo por score ganador.\n  else if (ganador.score >= 4) {\n    tipoSolicitud = ganador.categoria;\n    motivoClasificacion =\n      motivos[0] ||\n      `La pregunta coincide principalmente con la categoría ${ganador.categoria}.`;\n    confianzaClasificacion = ganador.score - segundoScore >= 3 ? \"media\" : \"baja\";\n  }\n\n  return {\n    json: {\n      ...data,\n\n      pregunta_original: data.pregunta_original || preguntaOriginal,\n      pregunta_normalizada: pregunta,\n      pregunta_valida: Boolean(data.pregunta_valida ?? true),\n      longitud_pregunta: preguntaOriginal.length,\n\n      tipo_solicitud: tipoSolicitud,\n      confianza_clasificacion: confianzaClasificacion,\n      motivo_clasificacion: motivoClasificacion,\n\n      score_clasificacion: score,\n      categoria_ganadora_por_score: ganador.categoria,\n      score_categoria_ganadora: ganador.score,\n      score_segunda_categoria: segundoScore\n    }\n  };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        640,
-        0
+        624,
+        176
       ],
       "id": "33912076-ff81-4943-a881-6582da4cdec3",
       "name": "Code - Clasificar Intención"
@@ -348,8 +348,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1472,
-        -704
+        1680,
+        -816
       ],
       "id": "c2063cd3-f28c-49cd-a7a3-3e0fb9b14336",
       "name": "Code - Formatear Salida Documental"
@@ -361,8 +361,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1056,
-        160
+        1120,
+        544
       ],
       "id": "0463ddd8-2b87-449c-b83e-9037601df05f",
       "name": "Code - Respuesta Segura"
@@ -374,8 +374,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1024,
-        -32
+        1088,
+        144
       ],
       "id": "48da7b6a-a454-4aa2-a6a3-8aea78a407e3",
       "name": "Code - Extraer Datos Reserva"
@@ -387,32 +387,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1856,
-        96
+        1920,
+        272
       ],
       "id": "143da9dd-6d0e-42f4-a0b6-54788b1287cc",
       "name": "Code - Pedir Datos Faltantes"
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "WITH clean AS (\n    SELECT\n        hotel,\n        NULLIF(is_canceled, '')::numeric AS is_canceled,\n        NULLIF(lead_time, '')::numeric AS lead_time,\n        arrival_date_month,\n        market_segment,\n        NULLIF(adr, '')::numeric AS adr\n    FROM hotel_bookings_raw\n)\nSELECT\n    COUNT(*) AS total_reservas,\n    ROUND(AVG(is_canceled) * 100, 2) AS tasa_cancelacion_porcentaje,\n    ROUND(AVG(adr), 2) AS adr_promedio,\n    ROUND(AVG(lead_time), 2) AS lead_time_promedio,\n    SUM(CASE WHEN hotel = 'City Hotel' THEN 1 ELSE 0 END) AS reservas_city_hotel,\n    SUM(CASE WHEN hotel = 'Resort Hotel' THEN 1 ELSE 0 END) AS reservas_resort_hotel,\n    ROUND(AVG(CASE WHEN hotel = 'City Hotel' THEN is_canceled END) * 100, 2) AS cancelacion_city_hotel,\n    ROUND(AVG(CASE WHEN hotel = 'Resort Hotel' THEN is_canceled END) * 100, 2) AS cancelacion_resort_hotel,\n    (\n        SELECT arrival_date_month\n        FROM clean\n        GROUP BY arrival_date_month\n        ORDER BY COUNT(*) DESC\n        LIMIT 1\n    ) AS mes_mas_reservas,\n    (\n        SELECT market_segment\n        FROM clean\n        GROUP BY market_segment\n        ORDER BY COUNT(*) DESC\n        LIMIT 1\n    ) AS segmento_mas_frecuente\nFROM clean;",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.6,
-      "position": [
-        960,
-        -320
-      ],
-      "id": "93a495f2-4900-4640-bcd6-ed4bd9090d95",
-      "name": "Postgres - Métricas Dataset",
-      "credentials": {
-        "postgres": {
-          "id": "6xTnLqFrdacW0fxr",
-          "name": "Postgres account"
-        }
-      }
     },
     {
       "parameters": {
@@ -421,8 +400,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1168,
-        -320
+        1232,
+        -336
       ],
       "id": "d9b0ee5d-a0fb-4f1d-8467-17b89ddfc6f2",
       "name": "Code - Formatear Salida Analitica"
@@ -436,8 +415,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1040,
-        320
+        1120,
+        816
       ],
       "id": "59a6205d-723f-45d2-aa06-72f1896a5c38",
       "name": "Postgres - Disponibilidad Habitaciones",
@@ -455,8 +434,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1248,
-        320
+        1328,
+        816
       ],
       "id": "05cbae86-f9f6-4f43-86f3-354a62c21cdc",
       "name": "Code - Formatear Salida Disponibilidad"
@@ -468,8 +447,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2048,
-        -128
+        2112,
+        48
       ],
       "id": "29352495-50b2-46b2-8e28-9acf4e7556f1",
       "name": "Code - Preparar Consulta Reserva"
@@ -511,8 +490,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2464,
-        -128
+        2528,
+        48
       ],
       "id": "3dac49b4-a053-4b0a-8651-7279b93746aa",
       "name": "If - ¿Hay disponibilidad?"
@@ -524,8 +503,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2672,
-        16
+        2736,
+        192
       ],
       "id": "fa27cf17-569c-4014-b004-86059fe79e9f",
       "name": "Code - Sin Disponibilidad"
@@ -557,8 +536,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1616,
-        -32
+        1680,
+        144
       ],
       "id": "b80494ad-c0e3-460a-9b62-8d5b9cc251d3",
       "name": "If - ¿Reserva Completa?"
@@ -572,8 +551,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        2256,
-        -128
+        2320,
+        48
       ],
       "id": "e43726fa-98a4-4b4e-9cc3-cc7e37d6c80a",
       "name": "Postgres - Buscar Habitación Disponible",
@@ -591,8 +570,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1840,
-        -128
+        1904,
+        48
       ],
       "id": "1072f563-00ab-4b74-b9d8-c6937b380dfd",
       "name": "Code - Validar Reserva Completa"
@@ -604,8 +583,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2912,
-        -304
+        2976,
+        -128
       ],
       "id": "79e7b595-5317-4202-893b-4b0870eee6ab",
       "name": "Code - Preparar Registro Reserva"
@@ -619,8 +598,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        3120,
-        -304
+        3184,
+        -128
       ],
       "id": "c3f4f981-1ee7-484c-af44-8d6e4cbddbbd",
       "name": "Postgres - Registrar Reserva Demo",
@@ -638,36 +617,23 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3328,
-        -304
+        3392,
+        -128
       ],
       "id": "c5e60b2a-2c8e-4b83-a449-e72d7db2aa68",
       "name": "Code - Confirmar Reserva Registrada"
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nconst numerosTexto = {\n  \"una\": 1,\n  \"un\": 1,\n  \"uno\": 1,\n  \"dos\": 2,\n  \"tres\": 3,\n  \"cuatro\": 4,\n  \"cinco\": 5,\n  \"seis\": 6,\n  \"siete\": 7,\n  \"ocho\": 8,\n  \"nueve\": 9,\n  \"diez\": 10\n};\n\nfunction quitarTildes(texto) {\n  return String(texto ?? \"\")\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\");\n}\n\nfunction normalizarTexto(texto) {\n  return quitarTildes(texto)\n    .toLowerCase()\n    .replace(/[¿?¡!]/g, \"\")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction sqlText(valor) {\n  return String(valor ?? \"\")\n    .replace(/'/g, \"''\")\n    .trim();\n}\n\nfunction convertirNumero(valor) {\n  if (valor === null || valor === undefined) return null;\n\n  const limpio = normalizarTexto(valor);\n\n  if (!Number.isNaN(Number(limpio))) {\n    return Number(limpio);\n  }\n\n  return numerosTexto[limpio] ?? null;\n}\n\nfunction capitalizarNombre(nombre) {\n  if (!nombre) return null;\n\n  return nombre\n    .split(\" \")\n    .filter(Boolean)\n    .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())\n    .join(\" \");\n}\n\nfunction extraerNombre(pregunta) {\n  const patrones = [\n    /\\bme llamo\\s+([a-zñáéíóú]+(?:\\s+[a-zñáéíóú]+){0,3})(?=\\s+(?:y|prefiero|quiero|busco|viajo|somos|tengo|mi|con)|[.,;]|$)/i,\n    /\\bmi nombre es\\s+([a-zñáéíóú]+(?:\\s+[a-zñáéíóú]+){0,3})(?=\\s+(?:y|prefiero|quiero|busco|viajo|somos|tengo|mi|con)|[.,;]|$)/i,\n    /\\bsoy\\s+([a-zñáéíóú]+(?:\\s+[a-zñáéíóú]+){0,2})(?=\\s+(?:y|prefiero|quiero|busco|viajo|somos|tengo|mi|con)|[.,;]|$)/i\n  ];\n\n  for (const patron of patrones) {\n    const match = pregunta.match(patron);\n    if (match && match[1]) {\n      const nombre = match[1].trim();\n\n      const descartados = [\n        \"adulto\",\n        \"adultos\",\n        \"nino\",\n        \"ninos\",\n        \"niño\",\n        \"niños\",\n        \"persona\",\n        \"personas\",\n        \"huesped\",\n        \"huespedes\",\n        \"huésped\",\n        \"huéspedes\"\n      ];\n\n      if (!descartados.includes(normalizarTexto(nombre))) {\n        return capitalizarNombre(nombre);\n      }\n    }\n  }\n\n  return null;\n}\n\nfunction extraerCantidadAntesDePalabra(pregunta, palabras) {\n  const grupoPalabras = palabras.join(\"|\");\n  const patron = new RegExp(\n    `\\\\b(\\\\d+|una|un|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez)\\\\s+(${grupoPalabras})\\\\b`,\n    \"i\"\n  );\n\n  const match = pregunta.match(patron);\n\n  if (!match) return null;\n\n  return convertirNumero(match[1]);\n}\n\nfunction extraerPresupuesto(preguntaOriginal, preguntaNormalizada) {\n  let texto = preguntaOriginal || \"\";\n  let textoNorm = preguntaNormalizada || normalizarTexto(texto);\n\n  const patrones = [\n    /(?:presupuesto|maximo|maxima|máximo|máxima|hasta|tope|pagar|menos de)[^\\d]{0,25}(\\$?\\s*\\d[\\d.\\s]*)/i,\n    /(\\$?\\s*\\d[\\d.\\s]*)\\s*(?:cop|pesos)?\\s*(?:por noche|la noche|noche)/i\n  ];\n\n  for (const patron of patrones) {\n    const match = texto.match(patron);\n    if (match && match[1]) {\n      const limpio = match[1]\n        .replace(/\\$/g, \"\")\n        .replace(/\\./g, \"\")\n        .replace(/\\s/g, \"\")\n        .trim();\n\n      const numero = Number(limpio);\n      if (!Number.isNaN(numero) && numero > 0) {\n        return numero;\n      }\n    }\n  }\n\n  const matchMil = textoNorm.match(/(?:presupuesto|hasta|maximo|tope|pagar|menos de)[^\\d]{0,25}(\\d+)\\s*mil/);\n  if (matchMil && matchMil[1]) {\n    return Number(matchMil[1]) * 1000;\n  }\n\n  return null;\n}\n\nfunction extraerTipoHabitacionPreferida(pregunta) {\n  if (pregunta.includes(\"suite\")) return \"suite\";\n  if (pregunta.includes(\"familiar\")) return \"familiar\";\n  if (pregunta.includes(\"triple\")) return \"triple\";\n  if (pregunta.includes(\"doble\")) return \"doble\";\n  if (pregunta.includes(\"sencilla\") || pregunta.includes(\"simple\") || pregunta.includes(\"individual\")) return \"sencilla\";\n\n  return null;\n}\n\nfunction extraerVistaPreferida(pregunta) {\n  if (pregunta.includes(\"patio colonial\")) return \"patio colonial\";\n  if (pregunta.includes(\"vista al hotel\")) return \"vista al hotel\";\n  if (pregunta.includes(\"vista premium\")) return \"vista premium al hotel\";\n  if (pregunta.includes(\"vista al mar\")) return \"vista al mar\";\n  if (pregunta.includes(\"vista exterior\")) return \"vista exterior\";\n  if (pregunta.includes(\"vista interior\")) return \"vista interior\";\n\n  const matchVista = pregunta.match(/\\bvista\\s+(?:a|al|hacia|para)?\\s*([a-zñáéíóú\\s]{3,40})(?=,|\\.|;|\\sy\\s|\\scon\\s|$)/i);\n  if (matchVista && matchVista[1]) {\n    return matchVista[1].trim();\n  }\n\n  return null;\n}\n\nfunction extraerPreferenciasTexto(preguntaOriginal, preguntaNormalizada) {\n  const preferencias = [];\n\n  if (\n    preguntaNormalizada.includes(\"tranquila\") ||\n    preguntaNormalizada.includes(\"tranquilo\") ||\n    preguntaNormalizada.includes(\"silenciosa\") ||\n    preguntaNormalizada.includes(\"silencioso\") ||\n    preguntaNormalizada.includes(\"sin ruido\")\n  ) {\n    preferencias.push(\"Prefiere habitaciones tranquilas o silenciosas\");\n  }\n\n  if (\n    preguntaNormalizada.includes(\"barata\") ||\n    preguntaNormalizada.includes(\"barato\") ||\n    preguntaNormalizada.includes(\"economica\") ||\n    preguntaNormalizada.includes(\"economico\") ||\n    preguntaNormalizada.includes(\"económica\") ||\n    preguntaNormalizada.includes(\"económico\")\n  ) {\n    preferencias.push(\"Prefiere opciones económicas\");\n  }\n\n  if (\n    preguntaNormalizada.includes(\"lujo\") ||\n    preguntaNormalizada.includes(\"premium\") ||\n    preguntaNormalizada.includes(\"comoda\") ||\n    preguntaNormalizada.includes(\"comodo\") ||\n    preguntaNormalizada.includes(\"cómoda\") ||\n    preguntaNormalizada.includes(\"cómodo\")\n  ) {\n    preferencias.push(\"Prefiere opciones cómodas o premium\");\n  }\n\n  if (\n    preguntaNormalizada.includes(\"familia\") ||\n    preguntaNormalizada.includes(\"familiar\") ||\n    preguntaNormalizada.includes(\"ninos\") ||\n    preguntaNormalizada.includes(\"niños\")\n  ) {\n    preferencias.push(\"Viaja o se interesa por opciones familiares\");\n  }\n\n  if (preguntaNormalizada.includes(\"patio colonial\")) {\n    preferencias.push(\"Prefiere vista al patio colonial\");\n  }\n\n  if (preguntaNormalizada.includes(\"vista al hotel\")) {\n    preferencias.push(\"Prefiere vista al hotel\");\n  }\n\n  if (preferencias.length > 0) {\n    return preferencias.join(\"; \");\n  }\n\n  if (\n    preguntaNormalizada.includes(\"prefiero\") ||\n    preguntaNormalizada.includes(\"me gusta\") ||\n    preguntaNormalizada.includes(\"busco\") ||\n    preguntaNormalizada.includes(\"quiero recordar\") ||\n    preguntaNormalizada.includes(\"ten en cuenta\")\n  ) {\n    return preguntaOriginal;\n  }\n\n  return null;\n}\n\nreturn items.map((item) => {\n  const data = item.json;\n\n  const preguntaOriginal =\n    data.pregunta_usuario ||\n    data.pregunta_original ||\n    \"\";\n\n  const preguntaNormalizada =\n    data.pregunta_normalizada ||\n    normalizarTexto(preguntaOriginal);\n\n  const pregunta = normalizarTexto(preguntaOriginal || preguntaNormalizada);\n\n  const sessionId = data.sessionId || data.session_id || \"demo-claustrosf\";\n\n  const nombreUsuario = extraerNombre(preguntaOriginal) || extraerNombre(pregunta);\n\n  const numeroAdultos = extraerCantidadAntesDePalabra(pregunta, [\n    \"adulto\",\n    \"adultos\"\n  ]);\n\n  const numeroNinos = extraerCantidadAntesDePalabra(pregunta, [\n    \"nino\",\n    \"ninos\",\n    \"niño\",\n    \"niños\",\n    \"menor\",\n    \"menores\"\n  ]);\n\n  const tipoHabitacionPreferida = extraerTipoHabitacionPreferida(pregunta);\n  const vistaPreferida = extraerVistaPreferida(pregunta);\n  const presupuestoMaxCop = extraerPresupuesto(preguntaOriginal, pregunta);\n  const preferenciasTexto = extraerPreferenciasTexto(preguntaOriginal, pregunta);\n\n  const camposDetectados = [];\n\n  if (nombreUsuario) camposDetectados.push(\"nombre_usuario\");\n  if (numeroAdultos !== null) camposDetectados.push(\"numero_adultos\");\n  if (numeroNinos !== null) camposDetectados.push(\"numero_ninos\");\n  if (tipoHabitacionPreferida) camposDetectados.push(\"tipo_habitacion_preferida\");\n  if (vistaPreferida) camposDetectados.push(\"vista_preferida\");\n  if (presupuestoMaxCop !== null) camposDetectados.push(\"presupuesto_max_cop\");\n  if (preferenciasTexto) camposDetectados.push(\"preferencias_texto\");\n\n  const memoriaDetectada = camposDetectados.length > 0;\n\n  return {\n    json: {\n      ...data,\n\n      session_id: sessionId,\n\n      nombre_usuario: nombreUsuario,\n      numero_adultos: numeroAdultos,\n      numero_ninos: numeroNinos,\n      tipo_habitacion_preferida: tipoHabitacionPreferida,\n      vista_preferida: vistaPreferida,\n      presupuesto_max_cop: presupuestoMaxCop,\n      preferencias_texto: preferenciasTexto,\n      ultima_pregunta: preguntaOriginal,\n\n      memoria_detectada: memoriaDetectada,\n      campos_memoria_detectados: camposDetectados,\n      estado_extraccion_memoria: memoriaDetectada\n        ? \"memoria_detectada\"\n        : \"sin_memoria_detectada\",\n\n      session_id_sql: sqlText(sessionId),\n      nombre_usuario_sql: sqlText(nombreUsuario || \"\"),\n      tipo_habitacion_preferida_sql: sqlText(tipoHabitacionPreferida || \"\"),\n      vista_preferida_sql: sqlText(vistaPreferida || \"\"),\n      preferencias_texto_sql: sqlText(preferenciasTexto || \"\"),\n      ultima_pregunta_sql: sqlText(preguntaOriginal || \"\")\n    }\n  };\n});"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2288,
-        752
-      ],
-      "id": "9b302c6e-f2da-4d07-8faf-84847b27013e",
-      "name": "Code - Extraer Memoria Usuario"
-    },
-    {
-      "parameters": {
         "promptType": "define",
-        "text": "=={{ \n`Eres un extractor de memoria personalizada para un asistente hotelero académico.\n\nTu única tarea es leer el mensaje del usuario y convertirlo en un JSON válido.\n\nNO respondas en lenguaje natural.\nNO uses Markdown.\nNO uses bloques de código.\nNO inventes información.\nNO agregues explicaciones.\nDevuelve únicamente un objeto JSON válido.\n\nCampos permitidos:\n\n{\n  \"memoria_detectada\": true,\n  \"nombre_usuario\": null,\n  \"numero_adultos\": null,\n  \"numero_ninos\": null,\n  \"tipo_habitacion_preferida\": null,\n  \"vista_preferida\": null,\n  \"presupuesto_max_cop\": null,\n  \"preferencias_texto\": null,\n  \"campos_detectados\": [],\n  \"confianza_extraccion\": \"media\"\n}\n\nReglas:\n\n1. \"memoria_detectada\" debe ser true si el usuario entrega datos personales, preferencias, presupuesto, número de personas o información útil para recordar.\n2. \"nombre_usuario\" debe contener solo el nombre de la persona si el usuario dice frases como \"me llamo\", \"mi nombre es\" o \"soy\".\n3. \"numero_adultos\" debe ser número entero o null.\n4. \"numero_ninos\" debe ser número entero o null.\n5. \"tipo_habitacion_preferida\" solo puede ser uno de estos valores:\n   \"sencilla\", \"doble\", \"triple\", \"familiar\", \"suite\" o null.\n6. \"vista_preferida\" puede ser una preferencia como:\n   \"patio colonial\", \"vista al hotel\", \"vista premium al hotel\", \"vista exterior\", \"vista interior\" o null.\n7. \"presupuesto_max_cop\" debe ser un número en pesos colombianos o null.\n8. \"preferencias_texto\" debe resumir preferencias libres del usuario en una frase corta.\n9. \"campos_detectados\" debe listar los nombres de los campos que sí fueron detectados.\n10. \"confianza_extraccion\" solo puede ser \"alta\", \"media\" o \"baja\".\n11. Si no detectas información útil para memoria, devuelve \"memoria_detectada\": false y todos los demás campos en null o [].\n\nEjemplos:\n\nUsuario: \"Me llamo Hector y prefiero habitaciones tranquilas\"\nJSON:\n{\n  \"memoria_detectada\": true,\n  \"nombre_usuario\": \"Hector\",\n  \"numero_adultos\": null,\n  \"numero_ninos\": null,\n  \"tipo_habitacion_preferida\": null,\n  \"vista_preferida\": null,\n  \"presupuesto_max_cop\": null,\n  \"preferencias_texto\": \"Prefiere habitaciones tranquilas\",\n  \"campos_detectados\": [\"nombre_usuario\", \"preferencias_texto\"],\n  \"confianza_extraccion\": \"alta\"\n}\n\nUsuario: \"Somos 2 adultos y 3 niños\"\nJSON:\n{\n  \"memoria_detectada\": true,\n  \"nombre_usuario\": null,\n  \"numero_adultos\": 2,\n  \"numero_ninos\": 3,\n  \"tipo_habitacion_preferida\": null,\n  \"vista_preferida\": null,\n  \"presupuesto_max_cop\": null,\n  \"preferencias_texto\": \"Viaja con 2 adultos y 3 niños\",\n  \"campos_detectados\": [\"numero_adultos\", \"numero_ninos\", \"preferencias_texto\"],\n  \"confianza_extraccion\": \"alta\"\n}\n\nUsuario: \"Mi presupuesto es de 300000 por noche y prefiero vista al patio colonial\"\nJSON:\n{\n  \"memoria_detectada\": true,\n  \"nombre_usuario\": null,\n  \"numero_adultos\": null,\n  \"numero_ninos\": null,\n  \"tipo_habitacion_preferida\": null,\n  \"vista_preferida\": \"patio colonial\",\n  \"presupuesto_max_cop\": 300000,\n  \"preferencias_texto\": \"Prefiere vista al patio colonial y presupuesto máximo de 300000 COP por noche\",\n  \"campos_detectados\": [\"vista_preferida\", \"presupuesto_max_cop\", \"preferencias_texto\"],\n  \"confianza_extraccion\": \"alta\"\n}\n\nUsuario: \"Prefiero una habitación familiar cómoda\"\nJSON:\n{\n  \"memoria_detectada\": true,\n  \"nombre_usuario\": null,\n  \"numero_adultos\": null,\n  \"numero_ninos\": null,\n  \"tipo_habitacion_preferida\": \"familiar\",\n  \"vista_preferida\": null,\n  \"presupuesto_max_cop\": null,\n  \"preferencias_texto\": \"Prefiere una habitación familiar cómoda\",\n  \"campos_detectados\": [\"tipo_habitacion_preferida\", \"preferencias_texto\"],\n  \"confianza_extraccion\": \"alta\"\n}\n\nDatos reales a analizar:\n\nMensaje original del usuario:\n\"${$json.pregunta_usuario || $json.pregunta_original || \"\"}\"\n\nMensaje normalizado:\n\"${$json.pregunta_normalizada || \"\"}\"\n\nSession ID:\n\"${$json.sessionId || $json.session_id || \"demo-claustrosf\"}\"\n\nDevuelve únicamente el JSON final.`\n}}",
+        "text": "=={{\n`Eres un extractor de memoria personalizada para un asistente hotelero académico.\n\nTu única tarea es leer el mensaje del usuario y devolver SOLO un objeto JSON válido.\n\nExtrae memoria únicamente cuando el usuario entregue datos personales, preferencias o información reutilizable para futuras reservas.\n\nNO guardes como memoria:\n- preguntas sobre políticas del hotel\n- preguntas sobre cancelación, horarios, normas o servicios\n- consultas de disponibilidad\n- solicitudes directas de reserva\n- preguntas sobre métricas o dataset\n- saludos simples\n- preguntas fuera del hotel\n\nDevuelve exactamente estos campos:\n\n{\n  \"memoria_detectada\": false,\n  \"nombre_usuario\": null,\n  \"numero_adultos\": null,\n  \"numero_ninos\": null,\n  \"tipo_habitacion_preferida\": null,\n  \"vista_preferida\": null,\n  \"presupuesto_max_cop\": null,\n  \"preferencias_texto\": null,\n  \"campos_detectados\": [],\n  \"confianza_extraccion\": \"baja\"\n}\n\nValores permitidos:\n- tipo_habitacion_preferida: \"sencilla\", \"doble\", \"triple\", \"familiar\", \"suite\" o null.\n- vista_preferida: \"patio colonial\", \"calle\", \"jardín\", \"ciudad\", \"interior\" o null.\n- confianza_extraccion: \"alta\", \"media\" o \"baja\".\n\nReglas:\n1. No inventes datos.\n2. No respondas en lenguaje natural.\n3. No uses Markdown.\n4. No uses bloques de código.\n5. Si no hay memoria clara, usa \"memoria_detectada\": false.\n6. Si el usuario dice su nombre, extrae solo el nombre.\n7. Si el usuario dice adultos y niños, extrae ambos como números.\n8. Si el usuario dice un presupuesto, devuélvelo como número sin puntos, comas, símbolos ni texto.\n9. \"preferencias_texto\" debe ser una frase corta y útil.\n10. \"campos_detectados\" debe listar solo los campos realmente detectados.\n\nMensaje original:\n\"${$json.pregunta_usuario || $json.pregunta_original || \"\"}\"\n\nMensaje normalizado:\n\"${$json.pregunta_normalizada || \"\"}\"\n\nDevuelve únicamente el JSON final.`\n}}",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
         912,
-        1040
+        1168
       ],
       "id": "21a9612a-d127-40f1-8d99-eda9815fbdfd",
       "name": "AI Agent - Extraer Memoria Usuario JSON"
@@ -683,8 +649,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
       "typeVersion": 1,
       "position": [
-        784,
-        1248
+        912,
+        1344
       ],
       "id": "4854bb98-d1f8-48bd-8e6a-87df6ac47f8a",
       "name": "Ollama Chat Model - Extractor Memoria",
@@ -697,50 +663,16 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nfunction obtenerOrigen(index) {\n  try {\n    return $(\"Switch - Tipo de solicitud\").item.json || {};\n  } catch (error) {\n    try {\n      return $items(\"Switch - Tipo de solicitud\")[index]?.json || {};\n    } catch (error2) {\n      return {};\n    }\n  }\n}\n\nfunction extraerTextoModelo(itemJson) {\n  if (typeof itemJson.output === \"string\") return itemJson.output;\n  if (typeof itemJson.text === \"string\") return itemJson.text;\n  if (typeof itemJson.response === \"string\") return itemJson.response;\n\n  if (\n    itemJson.response &&\n    itemJson.response.generations &&\n    itemJson.response.generations[0] &&\n    itemJson.response.generations[0][0] &&\n    typeof itemJson.response.generations[0][0].text === \"string\"\n  ) {\n    return itemJson.response.generations[0][0].text;\n  }\n\n  return JSON.stringify(itemJson);\n}\n\nfunction normalizarSalidaCruda(texto) {\n  let salida = String(texto ?? \"\").trim();\n\n  salida = salida\n    .replace(/```json/gi, \"\")\n    .replace(/```/g, \"\")\n    .trim();\n\n  // Intento de decodificación si viene como string JSON.\n  for (let i = 0; i < 3; i++) {\n    if (\n      (salida.startsWith('\"') && salida.endsWith('\"')) ||\n      (salida.startsWith(\"'\") && salida.endsWith(\"'\"))\n    ) {\n      try {\n        salida = JSON.parse(salida);\n      } catch (error) {\n        salida = salida.slice(1, -1);\n      }\n    }\n  }\n\n  salida = salida\n    .replace(/\\\\n/g, \"\\n\")\n    .replace(/\\\\r/g, \"\")\n    .replace(/\\\\\"/g, '\"')\n    .replace(/\\\\\\\\/g, \"\\\\\")\n    .trim();\n\n  return salida;\n}\n\nfunction extraerBloqueJson(texto) {\n  const limpio = normalizarSalidaCruda(texto);\n  const inicio = limpio.indexOf(\"{\");\n  const fin = limpio.lastIndexOf(\"}\");\n\n  if (inicio !== -1 && fin !== -1 && fin > inicio) {\n    return limpio.slice(inicio, fin + 1).trim();\n  }\n\n  return limpio;\n}\n\nfunction parsearJsonEstricto(texto) {\n  const bloque = extraerBloqueJson(texto);\n\n  try {\n    return {\n      ok: true,\n      data: JSON.parse(bloque),\n      texto_limpio: bloque,\n      metodo: \"json_parse\",\n      error: null\n    };\n  } catch (error) {\n    return {\n      ok: false,\n      data: {},\n      texto_limpio: bloque,\n      metodo: \"json_parse_fallido\",\n      error: error.message\n    };\n  }\n}\n\nfunction extraerStringPorClave(texto, clave) {\n  const regex = new RegExp(`\"${clave}\"\\\\s*:\\\\s*(null|\"((?:\\\\\\\\.|[^\"\\\\\\\\])*)\")`, \"i\");\n  const match = texto.match(regex);\n\n  if (!match) return null;\n  if (match[1] === \"null\") return null;\n\n  return String(match[2] ?? \"\")\n    .replace(/\\\\\"/g, '\"')\n    .replace(/\\\\n/g, \"\\n\")\n    .trim();\n}\n\nfunction extraerNumeroPorClave(texto, clave) {\n  const regex = new RegExp(`\"${clave}\"\\\\s*:\\\\s*(null|-?\\\\d+(?:\\\\.\\\\d+)?)`, \"i\");\n  const match = texto.match(regex);\n\n  if (!match) return null;\n  if (match[1] === \"null\") return null;\n\n  const numero = Number(match[1]);\n  return Number.isFinite(numero) ? numero : null;\n}\n\nfunction extraerBooleanPorClave(texto, clave) {\n  const regex = new RegExp(`\"${clave}\"\\\\s*:\\\\s*(true|false|\"true\"|\"false\")`, \"i\");\n  const match = texto.match(regex);\n\n  if (!match) return false;\n\n  return String(match[1]).replace(/\"/g, \"\").toLowerCase() === \"true\";\n}\n\nfunction extraerArrayStringsPorClave(texto, clave) {\n  const regex = new RegExp(`\"${clave}\"\\\\s*:\\\\s*\\\\[([\\\\s\\\\S]*?)\\\\]`, \"i\");\n  const match = texto.match(regex);\n\n  if (!match) return [];\n\n  const contenido = match[1];\n  const valores = [...contenido.matchAll(/\"([^\"]+)\"/g)].map((m) => m[1].trim());\n\n  return valores.filter(Boolean);\n}\n\nfunction parsearJsonConRespaldo(texto) {\n  const estricto = parsearJsonEstricto(texto);\n\n  if (estricto.ok) return estricto;\n\n  const limpio = extraerBloqueJson(texto);\n\n  const data = {\n    memoria_detectada: extraerBooleanPorClave(limpio, \"memoria_detectada\"),\n    nombre_usuario: extraerStringPorClave(limpio, \"nombre_usuario\"),\n    numero_adultos: extraerNumeroPorClave(limpio, \"numero_adultos\"),\n    numero_ninos: extraerNumeroPorClave(limpio, \"numero_ninos\"),\n    tipo_habitacion_preferida: extraerStringPorClave(limpio, \"tipo_habitacion_preferida\"),\n    vista_preferida: extraerStringPorClave(limpio, \"vista_preferida\"),\n    presupuesto_max_cop: extraerNumeroPorClave(limpio, \"presupuesto_max_cop\"),\n    preferencias_texto: extraerStringPorClave(limpio, \"preferencias_texto\"),\n    campos_detectados: extraerArrayStringsPorClave(limpio, \"campos_detectados\"),\n    confianza_extraccion: extraerStringPorClave(limpio, \"confianza_extraccion\")\n  };\n\n  const hayAlgo =\n    data.memoria_detectada ||\n    data.nombre_usuario ||\n    data.numero_adultos !== null ||\n    data.numero_ninos !== null ||\n    data.tipo_habitacion_preferida ||\n    data.vista_preferida ||\n    data.presupuesto_max_cop !== null ||\n    data.preferencias_texto ||\n    data.campos_detectados.length > 0;\n\n  return {\n    ok: hayAlgo,\n    data,\n    texto_limpio: limpio,\n    metodo: hayAlgo ? \"regex_fallback\" : \"fallo_total\",\n    error: estricto.error\n  };\n}\n\nfunction normalizarTexto(valor) {\n  return String(valor ?? \"\")\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\")\n    .trim();\n}\n\nfunction sqlText(valor) {\n  return String(valor ?? \"\")\n    .replace(/'/g, \"''\")\n    .trim();\n}\n\nfunction enteroONull(valor) {\n  if (valor === null || valor === undefined || valor === \"\") return null;\n\n  const numero = Number(valor);\n  if (!Number.isFinite(numero)) return null;\n\n  return Math.trunc(numero);\n}\n\nfunction dineroONull(valor) {\n  if (valor === null || valor === undefined || valor === \"\") return null;\n\n  if (typeof valor === \"number\") {\n    return Number.isFinite(valor) ? valor : null;\n  }\n\n  const limpio = String(valor)\n    .replace(/\\s/g, \"\")\n    .replace(/COP/gi, \"\")\n    .replace(/\\$/g, \"\")\n    .replace(/\\./g, \"\")\n    .replace(/,/g, \"\")\n    .replace(/[^\\d]/g, \"\");\n\n  if (!limpio) return null;\n\n  const numero = Number(limpio);\n  return Number.isFinite(numero) ? numero : null;\n}\n\nfunction normalizarTipoHabitacion(valor) {\n  if (!valor) return null;\n\n  const texto = normalizarTexto(valor);\n\n  if (texto.includes(\"sencilla\") || texto.includes(\"individual\")) return \"sencilla\";\n  if (texto.includes(\"doble\")) return \"doble\";\n  if (texto.includes(\"triple\")) return \"triple\";\n  if (texto.includes(\"familiar\")) return \"familiar\";\n  if (texto.includes(\"suite\")) return \"suite\";\n\n  return null;\n}\n\nfunction normalizarVista(valor) {\n  if (!valor) return null;\n\n  const texto = normalizarTexto(valor);\n\n  if (texto.includes(\"patio\")) return \"patio colonial\";\n  if (texto.includes(\"premium\")) return \"vista premium al hotel\";\n  if (texto.includes(\"hotel\")) return \"vista al hotel\";\n  if (texto.includes(\"exterior\")) return \"vista exterior\";\n  if (texto.includes(\"interior\")) return \"vista interior\";\n\n  return String(valor).trim();\n}\n\nfunction normalizarConfianza(valor) {\n  const texto = normalizarTexto(valor);\n\n  if (texto === \"alta\") return \"alta\";\n  if (texto === \"media\") return \"media\";\n  if (texto === \"baja\") return \"baja\";\n\n  return \"media\";\n}\n\nfunction limpiarCamposDetectados(campos) {\n  const permitidos = [\n    \"nombre_usuario\",\n    \"numero_adultos\",\n    \"numero_ninos\",\n    \"tipo_habitacion_preferida\",\n    \"vista_preferida\",\n    \"presupuesto_max_cop\",\n    \"preferencias_texto\"\n  ];\n\n  if (!Array.isArray(campos)) return [];\n\n  return [...new Set(\n    campos\n      .map((campo) => String(campo ?? \"\").trim())\n      .filter((campo) => permitidos.includes(campo))\n  )];\n}\n\nfunction inferirCamposDetectados(memoriaNormalizada) {\n  const campos = [];\n\n  if (memoriaNormalizada.nombre_usuario) campos.push(\"nombre_usuario\");\n  if (memoriaNormalizada.numero_adultos !== null) campos.push(\"numero_adultos\");\n  if (memoriaNormalizada.numero_ninos !== null) campos.push(\"numero_ninos\");\n  if (memoriaNormalizada.tipo_habitacion_preferida) campos.push(\"tipo_habitacion_preferida\");\n  if (memoriaNormalizada.vista_preferida) campos.push(\"vista_preferida\");\n  if (memoriaNormalizada.presupuesto_max_cop !== null) campos.push(\"presupuesto_max_cop\");\n  if (memoriaNormalizada.preferencias_texto) campos.push(\"preferencias_texto\");\n\n  return campos;\n}\n\nreturn items.map((item, index) => {\n  const origen = obtenerOrigen(index);\n\n  const salidaCruda = extraerTextoModelo(item.json);\n  const resultadoParse = parsearJsonConRespaldo(salidaCruda);\n\n  const memoria = resultadoParse.data;\n\n  const nombreUsuario =\n    typeof memoria.nombre_usuario === \"string\" && memoria.nombre_usuario.trim()\n      ? memoria.nombre_usuario.trim()\n      : null;\n\n  const numeroAdultos = enteroONull(memoria.numero_adultos);\n  const numeroNinos = enteroONull(memoria.numero_ninos);\n\n  const tipoHabitacionPreferida = normalizarTipoHabitacion(memoria.tipo_habitacion_preferida);\n  const vistaPreferida = normalizarVista(memoria.vista_preferida);\n  const presupuestoMaxCop = dineroONull(memoria.presupuesto_max_cop);\n\n  const preferenciasTexto =\n    typeof memoria.preferencias_texto === \"string\" && memoria.preferencias_texto.trim()\n      ? memoria.preferencias_texto.trim()\n      : null;\n\n  let camposDetectados = limpiarCamposDetectados(memoria.campos_detectados);\n\n  const memoriaNormalizada = {\n    nombre_usuario: nombreUsuario,\n    numero_adultos: numeroAdultos,\n    numero_ninos: numeroNinos,\n    tipo_habitacion_preferida: tipoHabitacionPreferida,\n    vista_preferida: vistaPreferida,\n    presupuesto_max_cop: presupuestoMaxCop,\n    preferencias_texto: preferenciasTexto\n  };\n\n  if (camposDetectados.length === 0) {\n    camposDetectados = inferirCamposDetectados(memoriaNormalizada);\n  }\n\n  const memoriaDetectada =\n    memoria.memoria_detectada === true ||\n    memoria.memoria_detectada === \"true\" ||\n    camposDetectados.length > 0;\n\n  const memoriaValida =\n    resultadoParse.ok === true &&\n    memoriaDetectada === true &&\n    camposDetectados.length > 0;\n\n  const sessionId =\n    origen.sessionId ||\n    origen.session_id ||\n    item.json.sessionId ||\n    item.json.session_id ||\n    \"demo-claustrosf\";\n\n  return {\n    json: {\n      ...origen,\n\n      memoria_json_valido: resultadoParse.ok,\n      memoria_valida: memoriaValida,\n      memoria_parse_metodo: resultadoParse.metodo,\n      memoria_error_parse: resultadoParse.error,\n\n      memoria_detectada: memoriaDetectada,\n\n      nombre_usuario: nombreUsuario,\n      numero_adultos: numeroAdultos,\n      numero_ninos: numeroNinos,\n      tipo_habitacion_preferida: tipoHabitacionPreferida,\n      vista_preferida: vistaPreferida,\n      presupuesto_max_cop: presupuestoMaxCop,\n      preferencias_texto: preferenciasTexto,\n\n      campos_detectados: camposDetectados,\n      confianza_extraccion: normalizarConfianza(memoria.confianza_extraccion),\n\n      session_id_memoria: sessionId,\n\n      session_id_memoria_sql: sqlText(sessionId),\n      nombre_usuario_sql: sqlText(nombreUsuario || \"\"),\n      tipo_habitacion_preferida_sql: sqlText(tipoHabitacionPreferida || \"\"),\n      vista_preferida_sql: sqlText(vistaPreferida || \"\"),\n      preferencias_texto_sql: sqlText(preferenciasTexto || \"\"),\n      ultima_pregunta_sql: sqlText(\n        origen.pregunta_usuario ||\n        origen.pregunta_original ||\n        item.json.pregunta_usuario ||\n        item.json.pregunta_original ||\n        \"\"\n      ),\n\n      memoria_output_crudo: salidaCruda,\n      memoria_output_limpio: resultadoParse.texto_limpio,\n\n      estado_validacion_memoria: memoriaValida\n        ? \"memoria_json_valida\"\n        : resultadoParse.ok\n          ? \"json_valido_sin_memoria_util\"\n          : \"json_invalido\"\n    }\n  };\n});"
+        "jsCode": "const items = $input.all();\n\nfunction obtenerOrigen(index) {\n  try {\n    return $(\"Switch - Tipo de solicitud\").item.json || {};\n  } catch (error) {\n    try {\n      return $items(\"Switch - Tipo de solicitud\")[index]?.json || {};\n    } catch (error2) {\n      return {};\n    }\n  }\n}\n\nfunction texto(valor) {\n  if (valor === null || valor === undefined) return null;\n\n  const limpio = String(valor).trim();\n\n  if (!limpio) return null;\n\n  const normalizado = limpio.toLowerCase();\n\n  if (\n    normalizado === \"null\" ||\n    normalizado === \"undefined\" ||\n    normalizado === \"nan\" ||\n    normalizado === \"none\"\n  ) {\n    return null;\n  }\n\n  return limpio;\n}\n\nfunction sqlText(valor) {\n  return String(valor ?? \"\")\n    .replace(/'/g, \"''\")\n    .trim();\n}\n\nfunction normalizarBase(valor) {\n  const t = texto(valor);\n  if (!t) return \"\";\n\n  return t\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\")\n    .replace(/[¿?¡!.,;:()]/g, \" \")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction extraerTextoModelo(itemJson) {\n  if (typeof itemJson.output === \"string\") return itemJson.output;\n  if (typeof itemJson.text === \"string\") return itemJson.text;\n  if (typeof itemJson.response === \"string\") return itemJson.response;\n\n  if (\n    itemJson.response &&\n    itemJson.response.generations &&\n    itemJson.response.generations[0] &&\n    itemJson.response.generations[0][0] &&\n    typeof itemJson.response.generations[0][0].text === \"string\"\n  ) {\n    return itemJson.response.generations[0][0].text;\n  }\n\n  return JSON.stringify(itemJson);\n}\n\nfunction normalizarSalidaCruda(valor) {\n  let salida = String(valor ?? \"\").trim();\n\n  salida = salida\n    .replace(/```json/gi, \"\")\n    .replace(/```/g, \"\")\n    .trim();\n\n  for (let i = 0; i < 3; i++) {\n    if (\n      (salida.startsWith('\"') && salida.endsWith('\"')) ||\n      (salida.startsWith(\"'\") && salida.endsWith(\"'\"))\n    ) {\n      try {\n        salida = JSON.parse(salida);\n      } catch (error) {\n        salida = salida.slice(1, -1);\n      }\n    }\n  }\n\n  salida = String(salida)\n    .replace(/\\\\n/g, \"\\n\")\n    .replace(/\\\\r/g, \"\")\n    .replace(/\\\\\"/g, '\"')\n    .replace(/\\\\\\\\/g, \"\\\\\")\n    .trim();\n\n  return salida;\n}\n\nfunction extraerBloqueJson(textoCrudo) {\n  const limpio = normalizarSalidaCruda(textoCrudo);\n\n  const inicio = limpio.indexOf(\"{\");\n  const fin = limpio.lastIndexOf(\"}\");\n\n  if (inicio !== -1 && fin !== -1 && fin > inicio) {\n    return limpio.slice(inicio, fin + 1).trim();\n  }\n\n  return limpio;\n}\n\nfunction extraerStringPorClave(textoJson, clave) {\n  const regex = new RegExp(`\"${clave}\"\\\\s*:\\\\s*(null|\"((?:\\\\\\\\.|[^\"\\\\\\\\])*)\")`, \"i\");\n  const match = textoJson.match(regex);\n\n  if (!match) return null;\n  if (match[1] === \"null\") return null;\n\n  return String(match[2] ?? \"\")\n    .replace(/\\\\\"/g, '\"')\n    .replace(/\\\\n/g, \"\\n\")\n    .trim();\n}\n\nfunction extraerNumeroPorClave(textoJson, clave) {\n  const regex = new RegExp(`\"${clave}\"\\\\s*:\\\\s*(null|-?\\\\d+(?:\\\\.\\\\d+)?)`, \"i\");\n  const match = textoJson.match(regex);\n\n  if (!match) return null;\n  if (match[1] === \"null\") return null;\n\n  const numero = Number(match[1]);\n  return Number.isFinite(numero) ? numero : null;\n}\n\nfunction extraerBooleanPorClave(textoJson, clave) {\n  const regex = new RegExp(`\"${clave}\"\\\\s*:\\\\s*(true|false|\"true\"|\"false\")`, \"i\");\n  const match = textoJson.match(regex);\n\n  if (!match) return null;\n\n  const valor = String(match[1]).replace(/\"/g, \"\").toLowerCase();\n  return valor === \"true\";\n}\n\nfunction extraerArrayPorClave(textoJson, clave) {\n  const regex = new RegExp(`\"${clave}\"\\\\s*:\\\\s*\\\\[([^\\\\]]*)\\\\]`, \"i\");\n  const match = textoJson.match(regex);\n\n  if (!match) return [];\n\n  return match[1]\n    .split(\",\")\n    .map((v) => v.replace(/\"/g, \"\").trim())\n    .filter(Boolean);\n}\n\nfunction parsearJsonMemoria(textoCrudo) {\n  const bloque = extraerBloqueJson(textoCrudo);\n\n  try {\n    return {\n      ok: true,\n      data: JSON.parse(bloque),\n      texto_limpio: bloque,\n      metodo: \"json_parse\",\n      error: null\n    };\n  } catch (error) {\n    const memoriaFallback = {\n      memoria_detectada: extraerBooleanPorClave(bloque, \"memoria_detectada\"),\n      nombre_usuario: extraerStringPorClave(bloque, \"nombre_usuario\"),\n      numero_adultos: extraerNumeroPorClave(bloque, \"numero_adultos\"),\n      numero_ninos: extraerNumeroPorClave(bloque, \"numero_ninos\"),\n      tipo_habitacion_preferida: extraerStringPorClave(bloque, \"tipo_habitacion_preferida\"),\n      vista_preferida: extraerStringPorClave(bloque, \"vista_preferida\"),\n      presupuesto_max_cop: extraerNumeroPorClave(bloque, \"presupuesto_max_cop\"),\n      preferencias_texto: extraerStringPorClave(bloque, \"preferencias_texto\"),\n      campos_detectados: extraerArrayPorClave(bloque, \"campos_detectados\"),\n      confianza_extraccion: extraerStringPorClave(bloque, \"confianza_extraccion\")\n    };\n\n    const tieneAlgo = Object.values(memoriaFallback).some((valor) => {\n      if (Array.isArray(valor)) return valor.length > 0;\n      return valor !== null && valor !== undefined && valor !== \"\";\n    });\n\n    return {\n      ok: tieneAlgo,\n      data: memoriaFallback,\n      texto_limpio: bloque,\n      metodo: tieneAlgo ? \"regex_fallback\" : \"json_parse_fallido\",\n      error: tieneAlgo ? null : error.message\n    };\n  }\n}\n\nfunction enteroPositivoONull(valor) {\n  const t = texto(valor);\n  if (!t) return null;\n\n  const limpio = String(t).replace(/[^\\d.-]/g, \"\");\n  const numero = Number(limpio);\n\n  if (!Number.isFinite(numero)) return null;\n\n  const entero = Math.trunc(numero);\n  return entero > 0 ? entero : null;\n}\n\nfunction enteroNoNegativoONull(valor) {\n  const t = texto(valor);\n  if (!t && valor !== 0) return null;\n\n  const limpio = String(valor).replace(/[^\\d.-]/g, \"\");\n  const numero = Number(limpio);\n\n  if (!Number.isFinite(numero)) return null;\n\n  const entero = Math.trunc(numero);\n  return entero >= 0 ? entero : null;\n}\n\nfunction dineroONull(valor) {\n  const t = texto(valor);\n  if (!t && valor !== 0) return null;\n\n  if (typeof valor === \"number\") {\n    return Number.isFinite(valor) && valor > 0 ? valor : null;\n  }\n\n  let limpio = String(t)\n    .toLowerCase()\n    .replace(/cop/g, \"\")\n    .replace(/\\$/g, \"\")\n    .replace(/\\s+/g, \"\")\n    .replace(/[^\\d.,-]/g, \"\");\n\n  if (!limpio) return null;\n\n  const tieneComa = limpio.includes(\",\");\n  const tienePunto = limpio.includes(\".\");\n\n  if (tieneComa && tienePunto) {\n    const ultimaComa = limpio.lastIndexOf(\",\");\n    const ultimoPunto = limpio.lastIndexOf(\".\");\n\n    if (ultimaComa > ultimoPunto) {\n      limpio = limpio.replace(/\\./g, \"\").replace(\",\", \".\");\n    } else {\n      limpio = limpio.replace(/,/g, \"\");\n    }\n  } else if (tienePunto && !tieneComa) {\n    const partes = limpio.split(\".\");\n\n    if (partes.length > 2 || partes[partes.length - 1].length === 3) {\n      limpio = limpio.replace(/\\./g, \"\");\n    }\n  } else if (tieneComa && !tienePunto) {\n    const partes = limpio.split(\",\");\n\n    if (partes.length > 2 || partes[partes.length - 1].length === 3) {\n      limpio = limpio.replace(/,/g, \"\");\n    } else {\n      limpio = limpio.replace(\",\", \".\");\n    }\n  }\n\n  const numero = Number(limpio);\n\n  if (!Number.isFinite(numero)) return null;\n\n  return numero > 0 ? Math.trunc(numero) : null;\n}\n\nfunction normalizarNombre(valor) {\n  const t = texto(valor);\n  if (!t) return null;\n\n  const limpio = t\n    .replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\\s'-]/g, \" \")\n    .replace(/\\s+/g, \" \")\n    .trim();\n\n  if (!limpio) return null;\n\n  const palabras = limpio.split(\" \").filter(Boolean);\n\n  if (palabras.length > 4) return null;\n  if (limpio.length < 2 || limpio.length > 60) return null;\n\n  return palabras\n    .map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase())\n    .join(\" \");\n}\n\nfunction extraerNombreDesdePregunta(pregunta) {\n  const normal = String(pregunta || \"\").trim();\n\n  const patrones = [\n    /\\bme llamo\\s+([a-zA-ZáéíóúÁÉÍÓÚñÑüÜ'-]{2,}(?:\\s+[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ'-]{2,}){0,3})/i,\n    /\\bmi nombre es\\s+([a-zA-ZáéíóúÁÉÍÓÚñÑüÜ'-]{2,}(?:\\s+[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ'-]{2,}){0,3})/i,\n    /\\bsoy\\s+([a-zA-ZáéíóúÁÉÍÓÚñÑüÜ'-]{2,}(?:\\s+[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ'-]{2,}){0,3})/i\n  ];\n\n  for (const regex of patrones) {\n    const match = normal.match(regex);\n    if (match && match[1]) {\n      const posibleNombre = match[1]\n        .replace(/\\b(y|pero|tambien|también|prefiero|viajo|somos|con)\\b.*$/i, \"\")\n        .trim();\n\n      const nombre = normalizarNombre(posibleNombre);\n      if (nombre) return nombre;\n    }\n  }\n\n  return null;\n}\n\nfunction preguntaContieneTipo(preguntaNormalizada, tipo) {\n  if (!tipo) return false;\n\n  const patronesPorTipo = {\n    sencilla: /\\b(sencilla|simple|individual)\\b/,\n    doble: /\\b(doble|dobles|pareja|matrimonial)\\b/,\n    triple: /\\b(triple|triples)\\b/,\n    familiar: /\\b(familiar|familia|familiares|grupo|grupal)\\b/,\n    suite: /\\b(suite|suites)\\b/\n  };\n\n  return patronesPorTipo[tipo]?.test(preguntaNormalizada) || false;\n}\n\nfunction normalizarTipoHabitacion(valor, preguntaOriginal, camposDescartados) {\n  const limpio = normalizarBase(valor);\n  const pregunta = normalizarBase(preguntaOriginal);\n\n  if (!limpio) return null;\n\n  let tipo = null;\n\n  if (/\\b(sencilla|simple|individual)\\b/.test(limpio)) {\n    tipo = \"sencilla\";\n  } else if (/\\b(doble|dobles|pareja|matrimonial)\\b/.test(limpio)) {\n    tipo = \"doble\";\n  } else if (/\\b(triple|triples)\\b/.test(limpio)) {\n    tipo = \"triple\";\n  } else if (/\\b(familiar|familia|familiares|grupo|grupal)\\b/.test(limpio)) {\n    tipo = \"familiar\";\n  } else if (/\\b(suite|suites)\\b/.test(limpio)) {\n    tipo = \"suite\";\n  }\n\n  if (!tipo) return null;\n\n  if (!preguntaContieneTipo(pregunta, tipo)) {\n    camposDescartados.push({\n      campo: \"tipo_habitacion_preferida\",\n      valor_original: valor,\n      motivo: \"La IA propuso un tipo de habitación que no aparece explícitamente en el mensaje del usuario.\"\n    });\n\n    return null;\n  }\n\n  return tipo;\n}\n\nfunction inferirTipoDesdePregunta(preguntaOriginal) {\n  const pregunta = normalizarBase(preguntaOriginal);\n\n  if (/\\b(sencilla|simple|individual)\\b/.test(pregunta)) return \"sencilla\";\n  if (/\\b(doble|dobles|pareja|matrimonial)\\b/.test(pregunta)) return \"doble\";\n  if (/\\b(triple|triples)\\b/.test(pregunta)) return \"triple\";\n  if (/\\b(suite|suites)\\b/.test(pregunta)) return \"suite\";\n\n  if (\n    /\\bhabitacion\\b/.test(pregunta) &&\n    /\\b(familiar|familiares)\\b/.test(pregunta)\n  ) {\n    return \"familiar\";\n  }\n\n  return null;\n}\n\nfunction valorVistaEsSospechoso(valor) {\n  const limpio = normalizarBase(valor);\n\n  if (!limpio) return false;\n\n  const sospechosos = [\n    \"tranquila\",\n    \"tranquilas\",\n    \"tranquilo\",\n    \"tranquilos\",\n    \"comoda\",\n    \"comodas\",\n    \"comodo\",\n    \"comodos\",\n    \"silenciosa\",\n    \"silenciosas\",\n    \"silencioso\",\n    \"silenciosos\",\n    \"bonita\",\n    \"bonitas\",\n    \"bonito\",\n    \"bonitos\",\n    \"amplia\",\n    \"amplias\",\n    \"amplio\",\n    \"amplios\",\n    \"economica\",\n    \"economicas\",\n    \"economico\",\n    \"economicos\",\n    \"barata\",\n    \"baratas\",\n    \"barato\",\n    \"baratos\",\n    \"familiar\",\n    \"doble\",\n    \"sencilla\",\n    \"triple\",\n    \"suite\"\n  ];\n\n  return sospechosos.includes(limpio);\n}\n\nfunction normalizarVista(valor, preguntaOriginal, camposDescartados) {\n  const limpio = normalizarBase(valor);\n  const pregunta = normalizarBase(preguntaOriginal);\n\n  if (!limpio) return null;\n\n  if (valorVistaEsSospechoso(limpio)) {\n    camposDescartados.push({\n      campo: \"vista_preferida\",\n      valor_original: valor,\n      motivo: \"La IA confundió una preferencia general con una vista de habitación.\"\n    });\n\n    return null;\n  }\n\n  let vista = null;\n\n  if (limpio.includes(\"patio\") || limpio.includes(\"colonial\")) {\n    vista = \"patio colonial\";\n  } else if (limpio.includes(\"jardin\")) {\n    vista = \"jardín\";\n  } else if (limpio.includes(\"calle\")) {\n    vista = \"calle\";\n  } else if (limpio.includes(\"ciudad\")) {\n    vista = \"ciudad\";\n  } else if (limpio.includes(\"interior\")) {\n    vista = \"interior\";\n  } else if (limpio.includes(\"exterior\")) {\n    vista = \"exterior\";\n  } else if (limpio.includes(\"hotel\")) {\n    vista = \"hotel\";\n  }\n\n  if (!vista) return null;\n\n  const haySenalVistaEnPregunta =\n    /\\b(vista|patio|colonial|jardin|calle|ciudad|interior|exterior|hotel)\\b/.test(pregunta);\n\n  if (!haySenalVistaEnPregunta) {\n    camposDescartados.push({\n      campo: \"vista_preferida\",\n      valor_original: valor,\n      motivo: \"La vista no aparece explícitamente en el mensaje del usuario.\"\n    });\n\n    return null;\n  }\n\n  return vista;\n}\n\nfunction inferirVistaDesdePregunta(preguntaOriginal) {\n  const pregunta = normalizarBase(preguntaOriginal);\n\n  if (!/\\b(vista|patio|colonial|jardin|calle|ciudad|interior|exterior|hotel)\\b/.test(pregunta)) {\n    return null;\n  }\n\n  if (pregunta.includes(\"patio\") || pregunta.includes(\"colonial\")) return \"patio colonial\";\n  if (pregunta.includes(\"jardin\")) return \"jardín\";\n  if (pregunta.includes(\"calle\")) return \"calle\";\n  if (pregunta.includes(\"ciudad\")) return \"ciudad\";\n  if (pregunta.includes(\"interior\")) return \"interior\";\n  if (pregunta.includes(\"exterior\")) return \"exterior\";\n  if (pregunta.includes(\"hotel\")) return \"hotel\";\n\n  return null;\n}\n\nfunction limpiarPreferenciasTexto(valor, preguntaOriginal) {\n  const t = texto(valor);\n\n  if (!t) {\n    const pregunta = texto(preguntaOriginal);\n\n    if (!pregunta) return null;\n\n    const preguntaNorm = normalizarBase(pregunta);\n\n    const tienePreferencia =\n      /\\b(prefiero|preferimos|me gusta|nos gusta|no me gusta|recuerda que|quiero que recuerdes|ten en cuenta|habitaciones tranquilas|habitacion tranquila|habitaciones comodas|habitacion comoda)\\b/.test(preguntaNorm);\n\n    if (!tienePreferencia) return null;\n\n    return pregunta.length <= 250 ? pregunta : pregunta.slice(0, 250).trim();\n  }\n\n  let limpio = t\n    .replace(/\\s+/g, \" \")\n    .replace(/^[\"']|[\"']$/g, \"\")\n    .trim();\n\n  if (limpio.length < 3) return null;\n  if (limpio.length > 300) limpio = limpio.slice(0, 300).trim();\n\n  return limpio;\n}\n\nfunction normalizarConfianza(valor) {\n  const limpio = normalizarBase(valor);\n\n  if ([\"alta\", \"media\", \"baja\"].includes(limpio)) {\n    return limpio;\n  }\n\n  return \"media\";\n}\n\nfunction limpiarCamposDetectados(campos) {\n  if (!Array.isArray(campos)) return [];\n\n  const permitidos = [\n    \"nombre_usuario\",\n    \"numero_adultos\",\n    \"numero_ninos\",\n    \"tipo_habitacion_preferida\",\n    \"vista_preferida\",\n    \"presupuesto_max_cop\",\n    \"preferencias_texto\"\n  ];\n\n  return [...new Set(\n    campos\n      .map((campo) => String(campo || \"\").trim())\n      .filter((campo) => permitidos.includes(campo))\n  )];\n}\n\nfunction inferirCamposDetectados(memoria) {\n  const campos = [];\n\n  if (memoria.nombre_usuario) campos.push(\"nombre_usuario\");\n  if (memoria.numero_adultos !== null && memoria.numero_adultos !== undefined) campos.push(\"numero_adultos\");\n  if (memoria.numero_ninos !== null && memoria.numero_ninos !== undefined) campos.push(\"numero_ninos\");\n  if (memoria.tipo_habitacion_preferida) campos.push(\"tipo_habitacion_preferida\");\n  if (memoria.vista_preferida) campos.push(\"vista_preferida\");\n  if (memoria.presupuesto_max_cop !== null && memoria.presupuesto_max_cop !== undefined) campos.push(\"presupuesto_max_cop\");\n  if (memoria.preferencias_texto) campos.push(\"preferencias_texto\");\n\n  return campos;\n}\n\nfunction preguntaContieneMemoriaUtil(preguntaOriginal) {\n  const pregunta = normalizarBase(preguntaOriginal);\n\n  return (\n    /\\b(me llamo|mi nombre es|soy|recuerda que|quiero que recuerdes|guarda que|ten en cuenta que)\\b/.test(pregunta) ||\n    /\\b(prefiero|preferimos|me gusta|nos gusta|no me gusta)\\b/.test(pregunta) ||\n    /\\b(somos|viajo con|viajamos)\\b/.test(pregunta) ||\n    /\\b\\d+\\s+adultos?\\b/.test(pregunta) ||\n    /\\b\\d+\\s+ninos?\\b/.test(pregunta) ||\n    /\\bmi presupuesto|presupuesto maximo|tengo un presupuesto\\b/.test(pregunta)\n  );\n}\n\nreturn items.map((item, index) => {\n  const origen = obtenerOrigen(index);\n  const salidaCruda = extraerTextoModelo(item.json);\n  const resultadoParse = parsearJsonMemoria(salidaCruda);\n  const memoria = resultadoParse.data || {};\n\n  const preguntaUsuario =\n    origen.pregunta_usuario ||\n    origen.pregunta_original ||\n    item.json.pregunta_usuario ||\n    item.json.pregunta_original ||\n    \"\";\n\n  const preguntaNormalizada =\n    origen.pregunta_normalizada ||\n    item.json.pregunta_normalizada ||\n    normalizarBase(preguntaUsuario);\n\n  const camposDescartados = [];\n\n  let nombreUsuario =\n    normalizarNombre(memoria.nombre_usuario) ||\n    extraerNombreDesdePregunta(preguntaUsuario);\n\n  const numeroAdultos = enteroPositivoONull(memoria.numero_adultos);\n  const numeroNinos = enteroNoNegativoONull(memoria.numero_ninos);\n\n  let tipoHabitacionPreferida =\n    normalizarTipoHabitacion(\n      memoria.tipo_habitacion_preferida,\n      preguntaUsuario,\n      camposDescartados\n    );\n\n  if (!tipoHabitacionPreferida) {\n    tipoHabitacionPreferida = inferirTipoDesdePregunta(preguntaUsuario);\n  }\n\n  let vistaPreferida =\n    normalizarVista(\n      memoria.vista_preferida,\n      preguntaUsuario,\n      camposDescartados\n    );\n\n  if (!vistaPreferida) {\n    vistaPreferida = inferirVistaDesdePregunta(preguntaUsuario);\n  }\n\n  const presupuestoMaxCop = dineroONull(memoria.presupuesto_max_cop);\n\n  const preferenciasTexto = limpiarPreferenciasTexto(\n    memoria.preferencias_texto,\n    preguntaUsuario\n  );\n\n  const memoriaNormalizada = {\n    nombre_usuario: nombreUsuario,\n    numero_adultos: numeroAdultos,\n    numero_ninos: numeroNinos,\n    tipo_habitacion_preferida: tipoHabitacionPreferida,\n    vista_preferida: vistaPreferida,\n    presupuesto_max_cop: presupuestoMaxCop,\n    preferencias_texto: preferenciasTexto\n  };\n\n  const camposDetectadosOriginales = limpiarCamposDetectados(memoria.campos_detectados);\n  const camposDetectados = inferirCamposDetectados(memoriaNormalizada);\n\n  const memoriaDetectadaIA =\n    memoria.memoria_detectada === true ||\n    memoria.memoria_detectada === \"true\";\n\n  const hayMemoriaUtilEnPregunta = preguntaContieneMemoriaUtil(preguntaUsuario);\n\n  const memoriaDetectada =\n    camposDetectados.length > 0 && (memoriaDetectadaIA || hayMemoriaUtilEnPregunta);\n\n  const memoriaValida =\n    resultadoParse.ok === true &&\n    memoriaDetectada === true &&\n    camposDetectados.length > 0;\n\n  const sessionId =\n    origen.sessionId ||\n    origen.session_id ||\n    item.json.sessionId ||\n    item.json.session_id ||\n    \"demo-claustrosf\";\n\n  const motivoValidacion = memoriaValida\n    ? \"Memoria válida después de normalizar y descartar falsos positivos.\"\n    : resultadoParse.ok\n      ? \"El JSON fue leído, pero no contiene memoria útil válida después de la validación.\"\n      : \"No se pudo parsear correctamente el JSON generado por la IA.\";\n\n  return {\n    json: {\n      ...origen,\n\n      pregunta_usuario: preguntaUsuario,\n      pregunta_original: origen.pregunta_original || preguntaUsuario,\n      pregunta_normalizada: preguntaNormalizada,\n      pregunta_valida: origen.pregunta_valida !== false,\n      longitud_pregunta: Number(origen.longitud_pregunta || preguntaUsuario.length || 0),\n\n      tipo_solicitud: origen.tipo_solicitud || \"memoria_usuario\",\n      confianza_clasificacion: origen.confianza_clasificacion || null,\n      motivo_clasificacion: origen.motivo_clasificacion || null,\n      score_clasificacion: origen.score_clasificacion || {},\n\n      documento_url: origen.documento_url || item.json.documento_url || null,\n      nombre_hotel: origen.nombre_hotel || item.json.nombre_hotel || \"Hotel El Claustro de San Francisco\",\n      tipo_documento: origen.tipo_documento || item.json.tipo_documento || \"politicas_hotel\",\n\n      memoria_json_valido: resultadoParse.ok,\n      memoria_valida: memoriaValida,\n      memoria_parse_metodo: resultadoParse.metodo,\n      memoria_error_parse: resultadoParse.error,\n\n      memoria_detectada_ia: memoriaDetectadaIA,\n      memoria_detectada: memoriaDetectada,\n\n      nombre_usuario: nombreUsuario,\n      numero_adultos: numeroAdultos,\n      numero_ninos: numeroNinos,\n      tipo_habitacion_preferida: tipoHabitacionPreferida,\n      vista_preferida: vistaPreferida,\n      presupuesto_max_cop: presupuestoMaxCop,\n      preferencias_texto: preferenciasTexto,\n\n      campos_detectados_originales: camposDetectadosOriginales,\n      campos_detectados: camposDetectados,\n      campos_descartados_memoria: camposDescartados,\n\n      confianza_extraccion: normalizarConfianza(memoria.confianza_extraccion),\n      motivo_validacion_memoria: motivoValidacion,\n\n      session_id_memoria: sessionId,\n\n      session_id_memoria_sql: sqlText(sessionId),\n      nombre_usuario_sql: sqlText(nombreUsuario || \"\"),\n      tipo_habitacion_preferida_sql: sqlText(tipoHabitacionPreferida || \"\"),\n      vista_preferida_sql: sqlText(vistaPreferida || \"\"),\n      preferencias_texto_sql: sqlText(preferenciasTexto || \"\"),\n      ultima_pregunta_sql: sqlText(preguntaUsuario),\n\n      numero_adultos_sql:\n        numeroAdultos === null || numeroAdultos === undefined\n          ? \"\"\n          : String(numeroAdultos),\n\n      numero_ninos_sql:\n        numeroNinos === null || numeroNinos === undefined\n          ? \"\"\n          : String(numeroNinos),\n\n      presupuesto_max_cop_sql:\n        presupuestoMaxCop === null || presupuestoMaxCop === undefined\n          ? \"\"\n          : String(presupuestoMaxCop),\n\n      memoria_output_crudo: salidaCruda,\n      memoria_output_limpio: resultadoParse.texto_limpio,\n\n      estado_validacion_memoria: memoriaValida\n        ? \"memoria_json_valida\"\n        : resultadoParse.ok\n          ? \"json_valido_sin_memoria_util\"\n          : \"json_invalido\",\n\n      timestamp_validacion_memoria: new Date().toISOString()\n    }\n  };\n});"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         1248,
-        1040
+        1168
       ],
       "id": "6a86e76d-d7ba-4db6-ab49-290a52bbfb12",
       "name": "Code - Validar Memoria Usuario JSON"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "0742c5cb-2f2f-43e2-9695-7abe5b606a8e",
-              "leftValue": "={{ $json.memoria_valida === true }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        1456,
-        1040
-      ],
-      "id": "fe06472e-a746-4374-aee2-41ab663516e2",
-      "name": "If - ¿Memoria Válida?"
     },
     {
       "parameters": {
@@ -752,7 +684,7 @@
       "typeVersion": 2.6,
       "position": [
         1648,
-        912
+        1040
       ],
       "id": "c6de511f-16b2-438d-943a-ddd80020f5d2",
       "name": "Postgres - Guardar Memoria Usuario",
@@ -771,7 +703,7 @@
       "typeVersion": 2,
       "position": [
         1824,
-        912
+        1040
       ],
       "id": "fd552566-82fc-4243-ab93-d976e23f1b9f",
       "name": "Code - Confirmar Memoria Guardada"
@@ -784,7 +716,7 @@
       "typeVersion": 2,
       "position": [
         1664,
-        1136
+        1264
       ],
       "id": "679f5bd6-2a02-4e4b-99ab-e933b2cc7568",
       "name": "Code - Memoria No Guardada"
@@ -798,8 +730,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        1200,
-        -32
+        1264,
+        144
       ],
       "id": "ca764c7d-5f97-4eb7-a50d-6931c94c945b",
       "name": "Postgres - Consultar Memoria Usuario Reserva",
@@ -817,8 +749,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1408,
-        -32
+        1472,
+        144
       ],
       "id": "8dd81b87-31a1-4bfb-aabb-b2cf5b7011f9",
       "name": "Code - Aplicar Memoria a Reserva"
@@ -851,8 +783,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        2672,
-        -224
+        2736,
+        -48
       ],
       "id": "3a6478b0-2983-4ee7-b42a-ecfb7d66ac2a",
       "name": "If - ¿Cumple presupuesto?"
@@ -864,11 +796,190 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2880,
-        -128
+        2944,
+        48
       ],
       "id": "1d2233ea-dca0-48e1-8b59-1d96f0407579",
       "name": "Code - Fuera de Presupuesto"
+    },
+    {
+      "parameters": {
+        "content": "## ZONA 1\n## ENTRADA Y CLASIFICACION",
+        "height": 336,
+        "width": 992
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        64
+      ],
+      "id": "73247552-a4e5-41eb-8458-7951c1daa7ad",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## ZONA 2\n## MODULO DE CONSULTA DOCUMENTAL CON IA",
+        "height": 464,
+        "width": 996,
+        "color": "#3A3636"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        880,
+        -912
+      ],
+      "id": "87976cdb-31d4-43f7-8a5c-d6656caebe1e",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## ZONA 3\n## MODULO DE ANALITICA DEL DATASET",
+        "height": 272,
+        "width": 528,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        960,
+        -432
+      ],
+      "id": "70b4e8e3-8f1f-4cb6-a49b-8a728af0b6bd",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## ZONA 4\n## MODULO DE RESERVA",
+        "height": 560,
+        "width": 2560,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        -144
+      ],
+      "id": "8573c1c7-33fe-4107-8e78-91103d839215",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH clean AS (\n    SELECT\n        hotel,\n        NULLIF(is_canceled, '')::numeric AS is_canceled,\n        NULLIF(lead_time, '')::numeric AS lead_time,\n        arrival_date_month,\n        market_segment,\n        NULLIF(adr, '')::numeric AS adr\n    FROM hotel_bookings_raw\n)\nSELECT\n    COUNT(*) AS total_reservas,\n    ROUND(AVG(is_canceled) * 100, 2) AS tasa_cancelacion_porcentaje,\n    ROUND(AVG(adr), 2) AS adr_promedio,\n    ROUND(AVG(lead_time), 2) AS lead_time_promedio,\n    SUM(CASE WHEN hotel = 'City Hotel' THEN 1 ELSE 0 END) AS reservas_city_hotel,\n    SUM(CASE WHEN hotel = 'Resort Hotel' THEN 1 ELSE 0 END) AS reservas_resort_hotel,\n    ROUND(AVG(CASE WHEN hotel = 'City Hotel' THEN is_canceled END) * 100, 2) AS cancelacion_city_hotel,\n    ROUND(AVG(CASE WHEN hotel = 'Resort Hotel' THEN is_canceled END) * 100, 2) AS cancelacion_resort_hotel,\n    (\n        SELECT arrival_date_month\n        FROM clean\n        GROUP BY arrival_date_month\n        ORDER BY COUNT(*) DESC\n        LIMIT 1\n    ) AS mes_mas_reservas,\n    (\n        SELECT market_segment\n        FROM clean\n        GROUP BY market_segment\n        ORDER BY COUNT(*) DESC\n        LIMIT 1\n    ) AS segmento_mas_frecuente\nFROM clean;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1024,
+        -336
+      ],
+      "id": "93a495f2-4900-4640-bcd6-ed4bd9090d95",
+      "name": "Postgres - Métricas Dataset",
+      "credentials": {
+        "postgres": {
+          "id": "6xTnLqFrdacW0fxr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## ZONA 5\n## RESPUESTA SEGURA (EXCEPCIÓN)",
+        "height": 256,
+        "width": 448,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        448
+      ],
+      "id": "e48775af-20f2-436d-9f09-fbc5a7e76ff7",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## ZONA 6\n## MODULO DE DISPONIBILIDAD SIMPLE",
+        "height": 272,
+        "width": 480,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        720
+      ],
+      "id": "96373839-8dc0-4e13-b368-48b97ce7d34a",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "content": "## ZONA 7\n## MODULO DE MEMORIA PERSONALIZADA",
+        "height": 448,
+        "width": 1136,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        864,
+        1024
+      ],
+      "id": "9bf45301-4376-4afb-9870-bb75c3773716",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0742c5cb-2f2f-43e2-9695-7abe5b606a8e",
+              "leftValue": "={{ $json.memoria_valida === true }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1456,
+        1168
+      ],
+      "id": "fe06472e-a746-4374-aee2-41ab663516e2",
+      "name": "If - ¿Memoria Válida?"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nconst MAX_CHARS_CONTEXTO = 7000;\nconst MAX_SECCIONES = 6;\n\nfunction texto(valor) {\n  if (valor === null || valor === undefined) return null;\n\n  const limpio = String(valor).trim();\n  if (!limpio) return null;\n\n  const normalizado = limpio.toLowerCase();\n\n  if (\n    normalizado === \"null\" ||\n    normalizado === \"undefined\" ||\n    normalizado === \"nan\" ||\n    normalizado === \"none\"\n  ) {\n    return null;\n  }\n\n  return limpio;\n}\n\nfunction normalizarTexto(valor) {\n  return String(valor || \"\")\n    .toLowerCase()\n    .normalize(\"NFD\")\n    .replace(/[\\u0300-\\u036f]/g, \"\")\n    .replace(/[^\\w\\s.,;:¿?¡!$%/-]/gi, \" \")\n    .replace(/\\s+/g, \" \")\n    .trim();\n}\n\nfunction obtenerDatosClasificacion() {\n  try {\n    return $(\"Code - Clasificar Intención\").item.json || {};\n  } catch (error) {\n    return {};\n  }\n}\n\nfunction desescaparSaltos(textoEntrada) {\n  return String(textoEntrada || \"\")\n    .replace(/\\\\n/g, \"\\n\")\n    .replace(/\\\\r/g, \"\")\n    .replace(/\\\\\"/g, '\"')\n    .trim();\n}\n\nfunction extraerDocumentoDesdeHttp(json) {\n  if (typeof json === \"string\" && json.trim().length > 50) {\n    return desescaparSaltos(json);\n  }\n\n  const candidatos = [\n    json.documento_contenido,\n    json.documentoContenido,\n    json.contenido_documento,\n    json.contenido,\n    json.markdown,\n    json.text,\n    json.data,\n    json.body,\n    json.content,\n    json.documento,\n    json.response,\n    json.output,\n  ];\n\n  for (const candidato of candidatos) {\n    if (typeof candidato === \"string\" && candidato.trim().length > 50) {\n      return desescaparSaltos(candidato);\n    }\n  }\n\n  if (json.data && typeof json.data === \"object\") {\n    const candidatosData = [\n      json.data.documento_contenido,\n      json.data.documentoContenido,\n      json.data.contenido_documento,\n      json.data.contenido,\n      json.data.markdown,\n      json.data.text,\n      json.data.body,\n      json.data.content,\n    ];\n\n    for (const candidato of candidatosData) {\n      if (typeof candidato === \"string\" && candidato.trim().length > 50) {\n        return desescaparSaltos(candidato);\n      }\n    }\n  }\n\n  return desescaparSaltos(JSON.stringify(json, null, 2));\n}\n\nfunction limpiarMarkdown(markdown) {\n  return String(markdown || \"\")\n    .replace(/\\r\\n/g, \"\\n\")\n    .replace(/\\n{3,}/g, \"\\n\\n\")\n    .replace(/[ \\t]+$/gm, \"\")\n    .trim();\n}\n\nfunction dividirEnSecciones(markdown) {\n  const lineas = markdown.split(\"\\n\");\n\n  const secciones = [];\n  let actual = {\n    titulo: \"Inicio del documento\",\n    nivel: 0,\n    contenido: \"\",\n  };\n\n  for (const linea of lineas) {\n    const match = linea.match(/^(#{1,6})\\s+(.+)$/);\n\n    if (match) {\n      if (actual.contenido.trim()) {\n        secciones.push({\n          titulo: actual.titulo,\n          nivel: actual.nivel,\n          contenido: actual.contenido.trim(),\n        });\n      }\n\n      actual = {\n        titulo: match[2].trim(),\n        nivel: match[1].length,\n        contenido: `${linea}\\n`,\n      };\n    } else {\n      actual.contenido += `${linea}\\n`;\n    }\n  }\n\n  if (actual.contenido.trim()) {\n    secciones.push({\n      titulo: actual.titulo,\n      nivel: actual.nivel,\n      contenido: actual.contenido.trim(),\n    });\n  }\n\n  if (secciones.length === 0) {\n    return [\n      {\n        titulo: \"Documento completo\",\n        nivel: 0,\n        contenido: markdown,\n      },\n    ];\n  }\n\n  return secciones;\n}\n\nfunction palabrasPregunta(preguntaNormalizada) {\n  const stopwords = new Set([\n    \"que\",\n    \"cual\",\n    \"cuales\",\n    \"como\",\n    \"cuando\",\n    \"donde\",\n    \"quien\",\n    \"quienes\",\n    \"para\",\n    \"por\",\n    \"con\",\n    \"del\",\n    \"los\",\n    \"las\",\n    \"una\",\n    \"uno\",\n    \"unos\",\n    \"unas\",\n    \"hay\",\n    \"tiene\",\n    \"tienen\",\n    \"hotel\",\n    \"habitacion\",\n    \"habitaciones\",\n    \"sobre\",\n    \"info\",\n    \"informacion\",\n    \"dime\",\n    \"cuentame\",\n    \"muestrame\",\n    \"saber\",\n    \"quiero\",\n    \"puedo\",\n    \"pueden\",\n    \"debo\",\n    \"deben\",\n  ]);\n\n  return preguntaNormalizada\n    .split(/\\s+/)\n    .map((p) => p.trim())\n    .filter((p) => p.length >= 4 && !stopwords.has(p));\n}\n\nfunction construirKeywords(preguntaNormalizada) {\n  const keywords = new Set(palabrasPregunta(preguntaNormalizada));\n\n  const grupos = [\n    {\n      detectores: [\"cancel\", \"anular\", \"devolver\", \"reembolso\", \"no show\", \"noshow\"],\n      agregar: [\"cancelacion\", \"cancelar\", \"penalizacion\", \"penalidad\", \"no show\", \"reserva\"],\n    },\n    {\n      detectores: [\"politica\", \"politicas\", \"norma\", \"normas\", \"condicion\", \"condiciones\"],\n      agregar: [\"politicas\", \"normas\", \"condiciones\", \"reserva\", \"hotel\"],\n    },\n    {\n      detectores: [\"check in\", \"check-in\", \"entrada\", \"llegada\", \"ingreso\"],\n      agregar: [\"check in\", \"entrada\", \"llegada\", \"hora\", \"registro\"],\n    },\n    {\n      detectores: [\"check out\", \"check-out\", \"salida\"],\n      agregar: [\"check out\", \"salida\", \"hora\", \"entrega\"],\n    },\n    {\n      detectores: [\"precio\", \"tarifa\", \"costo\", \"vale\", \"cuesta\", \"valor\", \"cop\"],\n      agregar: [\"precio\", \"tarifa\", \"costo\", \"valor\", \"cop\", \"habitacion\"],\n    },\n    {\n      detectores: [\"wifi\", \"internet\"],\n      agregar: [\"wifi\", \"internet\", \"conexion\"],\n    },\n    {\n      detectores: [\"mascota\", \"perro\", \"gato\", \"animal\"],\n      agregar: [\"mascotas\", \"perros\", \"gatos\", \"animales\"],\n    },\n    {\n      detectores: [\"parqueadero\", \"parking\", \"carro\", \"vehiculo\"],\n      agregar: [\"parqueadero\", \"parking\", \"vehiculo\", \"estacionamiento\"],\n    },\n    {\n      detectores: [\"desayuno\", \"comida\", \"restaurante\", \"alimentacion\"],\n      agregar: [\"desayuno\", \"comida\", \"restaurante\", \"alimentacion\"],\n    },\n    {\n      detectores: [\"pago\", \"pagar\", \"tarjeta\", \"efectivo\", \"transferencia\"],\n      agregar: [\"pago\", \"tarjeta\", \"efectivo\", \"transferencia\", \"metodos\"],\n    },\n    {\n      detectores: [\"familiar\", \"familia\", \"ninos\", \"niños\"],\n      agregar: [\"familiar\", \"familia\", \"ninos\", \"niños\", \"capacidad\"],\n    },\n    {\n      detectores: [\"doble\", \"pareja\", \"matrimonial\"],\n      agregar: [\"doble\", \"pareja\", \"matrimonial\", \"capacidad\"],\n    },\n    {\n      detectores: [\"sencilla\", \"simple\", \"individual\"],\n      agregar: [\"sencilla\", \"simple\", \"individual\", \"capacidad\"],\n    },\n    {\n      detectores: [\"suite\"],\n      agregar: [\"suite\", \"premium\", \"capacidad\"],\n    },\n    {\n      detectores: [\"reserva\", \"reservar\", \"reservacion\"],\n      agregar: [\"reserva\", \"reservar\", \"reservacion\", \"politicas\"],\n    },\n  ];\n\n  for (const grupo of grupos) {\n    const detectado = grupo.detectores.some((d) => preguntaNormalizada.includes(normalizarTexto(d)));\n\n    if (detectado) {\n      for (const palabra of grupo.agregar) {\n        keywords.add(normalizarTexto(palabra));\n      }\n    }\n  }\n\n  return [...keywords].filter(Boolean);\n}\n\nfunction contarOcurrencias(textoNormalizado, keyword) {\n  if (!keyword) return 0;\n\n  const escaped = keyword.replace(/[.*+?^${}()|[\\]\\\\]/g, \"\\\\$&\");\n  const regex = new RegExp(`\\\\b${escaped}\\\\b`, \"g\");\n\n  return (textoNormalizado.match(regex) || []).length;\n}\n\nfunction puntuarSeccion(seccion, keywords, preguntaNormalizada) {\n  const tituloNormalizado = normalizarTexto(seccion.titulo);\n  const contenidoNormalizado = normalizarTexto(seccion.contenido);\n\n  let score = 0;\n\n  for (const keyword of keywords) {\n    if (tituloNormalizado.includes(keyword)) {\n      score += 10;\n    }\n\n    const ocurrencias = contarOcurrencias(contenidoNormalizado, keyword);\n    score += Math.min(ocurrencias, 8);\n  }\n\n  if (\n    preguntaNormalizada.includes(\"cancelacion\") &&\n    (tituloNormalizado.includes(\"cancelacion\") || contenidoNormalizado.includes(\"cancelacion\"))\n  ) {\n    score += 20;\n  }\n\n  if (\n    preguntaNormalizada.includes(\"politica\") &&\n    (tituloNormalizado.includes(\"politica\") || contenidoNormalizado.includes(\"politica\"))\n  ) {\n    score += 10;\n  }\n\n  if (\n    preguntaNormalizada.includes(\"reserva\") &&\n    (tituloNormalizado.includes(\"reserva\") || contenidoNormalizado.includes(\"reserva\"))\n  ) {\n    score += 8;\n  }\n\n  if (\n    preguntaNormalizada.includes(\"habitacion\") &&\n    (tituloNormalizado.includes(\"habitacion\") || contenidoNormalizado.includes(\"habitacion\"))\n  ) {\n    score += 5;\n  }\n\n  return score;\n}\n\nfunction seleccionarContexto(markdown, preguntaUsuario) {\n  const documentoLimpio = limpiarMarkdown(markdown);\n  const preguntaNormalizada = normalizarTexto(preguntaUsuario);\n\n  const secciones = dividirEnSecciones(documentoLimpio);\n  const keywords = construirKeywords(preguntaNormalizada);\n\n  const puntuadas = secciones.map((seccion, index) => ({\n    ...seccion,\n    index,\n    score: puntuarSeccion(seccion, keywords, preguntaNormalizada),\n  }));\n\n  let seleccionadas = puntuadas\n    .filter((s) => s.score > 0)\n    .sort((a, b) => b.score - a.score)\n    .slice(0, MAX_SECCIONES);\n\n  if (seleccionadas.length === 0) {\n    seleccionadas = puntuadas.slice(0, Math.min(4, puntuadas.length));\n  }\n\n  seleccionadas = seleccionadas.sort((a, b) => a.index - b.index);\n\n  const partes = [];\n  let totalChars = 0;\n\n  for (const seccion of seleccionadas) {\n    const bloque = `## ${seccion.titulo}\\n${seccion.contenido}`.trim();\n\n    if (totalChars + bloque.length > MAX_CHARS_CONTEXTO) {\n      const restante = MAX_CHARS_CONTEXTO - totalChars;\n\n      if (restante > 500) {\n        partes.push(bloque.slice(0, restante).trim());\n      }\n\n      break;\n    }\n\n    partes.push(bloque);\n    totalChars += bloque.length;\n  }\n\n  return {\n    contexto: partes.join(\"\\n\\n---\\n\\n\").trim(),\n    secciones_usadas: seleccionadas.map((s) => ({\n      titulo: s.titulo,\n      score: s.score,\n      chars: s.contenido.length,\n    })),\n    keywords_usadas: keywords,\n    total_secciones_documento: secciones.length,\n  };\n}\n\nreturn items.map((item) => {\n  const httpData = item.json || {};\n  const datosClasificacion = obtenerDatosClasificacion();\n\n  const preguntaUsuario =\n    texto(datosClasificacion.pregunta_usuario) ||\n    texto(datosClasificacion.pregunta_original) ||\n    texto(httpData.pregunta_usuario) ||\n    texto(httpData.pregunta_original) ||\n    \"\";\n\n  const preguntaNormalizada =\n    texto(datosClasificacion.pregunta_normalizada) ||\n    texto(httpData.pregunta_normalizada) ||\n    normalizarTexto(preguntaUsuario);\n\n  const documentoCompleto = extraerDocumentoDesdeHttp(httpData);\n  const resultadoContexto = seleccionarContexto(documentoCompleto, preguntaUsuario);\n\n  return {\n    json: {\n      pregunta_usuario: preguntaUsuario,\n      pregunta_original:\n        texto(datosClasificacion.pregunta_original) ||\n        texto(httpData.pregunta_original) ||\n        preguntaUsuario,\n\n      pregunta_normalizada: preguntaNormalizada,\n\n      sessionId:\n        texto(datosClasificacion.sessionId) ||\n        texto(datosClasificacion.session_id) ||\n        texto(httpData.sessionId) ||\n        texto(httpData.session_id) ||\n        \"demo-claustrosf\",\n\n      session_id:\n        texto(datosClasificacion.session_id) ||\n        texto(datosClasificacion.sessionId) ||\n        texto(httpData.session_id) ||\n        texto(httpData.sessionId) ||\n        \"demo-claustrosf\",\n\n      documento_url:\n        texto(datosClasificacion.documento_url) ||\n        texto(httpData.documento_url),\n\n      nombre_hotel:\n        texto(datosClasificacion.nombre_hotel) ||\n        texto(httpData.nombre_hotel) ||\n        \"Hotel El Claustro de San Francisco\",\n\n      tipo_documento:\n        texto(datosClasificacion.tipo_documento) ||\n        texto(httpData.tipo_documento) ||\n        \"politicas_hotel\",\n\n      tipo_solicitud:\n        texto(datosClasificacion.tipo_solicitud) ||\n        \"documental\",\n\n      confianza_clasificacion:\n        texto(datosClasificacion.confianza_clasificacion),\n\n      motivo_clasificacion:\n        texto(datosClasificacion.motivo_clasificacion),\n\n      contexto_documental: resultadoContexto.contexto,\n      secciones_documentales_usadas: resultadoContexto.secciones_usadas,\n      keywords_documentales_usadas: resultadoContexto.keywords_usadas,\n\n      documento_crudo_chars: documentoCompleto.length,\n      contexto_documental_chars: resultadoContexto.contexto.length,\n      total_secciones_documento: resultadoContexto.total_secciones_documento,\n      max_chars_contexto: MAX_CHARS_CONTEXTO,\n\n      optimizacion_documental_activa: true,\n      fuente: \"Documento_Base_Hotel.md desde GitHub RAW\",\n      timestamp: new Date().toISOString(),\n    },\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        -816
+      ],
+      "id": "388e855b-c1db-498e-af5a-1e0fa9bd5d2c",
+      "name": "Code - Preparar Contexto Documental"
     }
   ],
   "pinData": {},
@@ -910,7 +1021,7 @@
       "main": [
         [
           {
-            "node": "AI Agent",
+            "node": "Code - Preparar Contexto Documental",
             "type": "main",
             "index": 0
           }
@@ -919,13 +1030,7 @@
     },
     "Postgres Chat Memory1": {
       "ai_memory": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Code - Normalizar Pregunta": {
@@ -1028,17 +1133,6 @@
     "Code - Pedir Datos Faltantes": {
       "main": [
         []
-      ]
-    },
-    "Postgres - Métricas Dataset": {
-      "main": [
-        [
-          {
-            "node": "Code - Formatear Salida Analitica",
-            "type": "main",
-            "index": 0
-          }
-        ]
       ]
     },
     "Postgres - Disponibilidad Habitaciones": {
@@ -1176,24 +1270,6 @@
         ]
       ]
     },
-    "If - ¿Memoria Válida?": {
-      "main": [
-        [
-          {
-            "node": "Postgres - Guardar Memoria Usuario",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Code - Memoria No Guardada",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Postgres - Guardar Memoria Usuario": {
       "main": [
         [
@@ -1244,6 +1320,46 @@
           }
         ]
       ]
+    },
+    "Postgres - Métricas Dataset": {
+      "main": [
+        [
+          {
+            "node": "Code - Formatear Salida Analitica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If - ¿Memoria Válida?": {
+      "main": [
+        [
+          {
+            "node": "Postgres - Guardar Memoria Usuario",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code - Memoria No Guardada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code - Preparar Contexto Documental": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -1252,7 +1368,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "349253e5-8473-4633-b021-9dffdd3738ed",
+  "versionId": "30198b1f-8e15-4246-9e1a-68ed5892a2a0",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "4c3ad71e0fa26083d20cc4a7c2184c4b827da0540a8ab0905fefbc39e27588b8"

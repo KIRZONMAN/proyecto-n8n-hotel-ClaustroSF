@@ -1,45 +1,200 @@
-# Riesgos y limitaciones — Reception Agent ClaustroSF
+# Riesgos y limitaciones
 
-## 1. Descripción general
+Proyecto:
 
-Este documento identifica riesgos, limitaciones y mejoras pendientes del proyecto **Reception Agent ClaustroSF**.
+```text
+Reception Agent ClaustroSF
+```
 
-El sistema es un prototipo académico construido con n8n, PostgreSQL y Ollama. Aunque tiene una lógica funcional avanzada, no debe interpretarse como un sistema productivo listo para operar en un hotel real.
+Hotel:
+
+```text
+Hotel El Claustro de San Francisco
+```
 
 ---
 
-## 2. Limitaciones funcionales
+## 1. Propósito del documento
 
-### 2.1 Reserva demo
+Este documento registra los riesgos, limitaciones y pendientes del sistema actual.
 
-Las reservas son simuladas.
-
-Aunque el sistema registra datos en PostgreSQL, no existe una operación real con:
-
-- Pagos.
-- Confirmación legal.
-- Contratos.
-- Facturación.
-- Validación documental.
-- Identidad real del huésped.
+El proyecto es un prototipo académico. No debe presentarse como un sistema listo para producción real en un hotel.
 
 ---
 
-### 2.2 Disponibilidad por estado general
+## 2. Alcance real del sistema
 
-La disponibilidad se basa en el campo:
+El sistema actual sí permite:
+
+- Clasificar preguntas.
+- Consultar documentación del hotel.
+- Consultar métricas del dataset.
+- Consultar disponibilidad simple.
+- Guardar memoria personalizada.
+- Usar memoria en reservas.
+- Registrar reservas demo.
+- Validar disponibilidad.
+- Validar presupuesto.
+- Responder de forma segura ante solicitudes fuera de alcance.
+
+El sistema actual no permite:
+
+- Procesar pagos reales.
+- Confirmar reservas reales ante un PMS hotelero.
+- Autenticar usuarios reales.
+- Enviar correos reales de confirmación.
+- Integrarse con WhatsApp o Telegram.
+- Operar en producción.
+- Garantizar disponibilidad real por fechas.
+- Recomendar habitaciones con consultoría avanzada completa.
+
+---
+
+## 3. Riesgo: interpretación incorrecta de IA
+
+### Descripción
+
+La IA puede interpretar mal frases ambiguas del usuario.
+
+Ejemplo:
 
 ```text
-estado
+Me llamo Hector y prefiero habitaciones tranquilas
 ```
 
-de la tabla:
+La IA podría proponer erróneamente:
 
 ```text
-habitaciones_demo
+tipo_habitacion_preferida = sencilla
+vista_preferida = tranquilas
 ```
 
-Esto permite saber si una habitación está:
+### Mitigación
+
+Existe el nodo:
+
+```text
+Code - Validar Memoria Usuario JSON
+```
+
+Este nodo descarta campos dudosos antes de guardar en PostgreSQL.
+
+El sistema sigue el enfoque:
+
+```text
+IA interpreta → Code valida → PostgreSQL guarda
+```
+
+---
+
+## 4. Riesgo: guardar memoria contaminada
+
+### Descripción
+
+Como la memoria funciona por `session_id`, una sesión de prueba puede acumular datos anteriores.
+
+Ejemplo:
+
+```text
+session_id = demo-claustrosf
+```
+
+puede contener memoria vieja de pruebas anteriores.
+
+### Mitigación
+
+Se puede limpiar la memoria demo con:
+
+```sql
+DELETE FROM memoria_usuario_demo
+WHERE session_id = 'demo-claustrosf';
+```
+
+Además, el sistema confirma qué memoria queda guardada.
+
+---
+
+## 5. Riesgo: uso excesivo de IA
+
+### Descripción
+
+Si todo el workflow pasara por IA, aumentaría el costo computacional, el tiempo de respuesta y la posibilidad de errores.
+
+### Mitigación
+
+El workflow clasifica antes de llamar IA.
+
+Solo se usa IA principalmente en:
+
+```text
+consulta documental
+extracción de memoria personalizada
+```
+
+No se usa IA para:
+
+```text
+analítica
+disponibilidad simple
+reserva demo
+validación de presupuesto
+registro en base de datos
+respuesta segura
+```
+
+---
+
+## 6. Riesgo: contexto documental excesivo
+
+### Descripción
+
+Enviar todo el documento base al agente puede aumentar tokens y reducir precisión.
+
+### Mitigación
+
+Se agregó:
+
+```text
+Code - Preparar Contexto Documental
+```
+
+Este nodo selecciona secciones relevantes antes de llamar al agente documental.
+
+---
+
+## 7. Riesgo: respuesta documental incompleta
+
+### Descripción
+
+Si el selector de contexto no selecciona una sección relevante, el agente puede responder que no tiene información suficiente.
+
+### Mitigación
+
+El nodo de preparación documental usa palabras clave y puntuación de secciones.
+
+Aun así, es una limitación actual. En el futuro podría mejorarse con RAG vectorial o `pgvector`.
+
+---
+
+## 8. Riesgo: reserva demo confundida con reserva real
+
+### Descripción
+
+El usuario podría interpretar que una reserva demo es una reserva real.
+
+### Mitigación
+
+Las respuestas deben indicar que es un entorno académico/demo.
+
+El sistema no maneja pagos, usuarios reales ni confirmación externa.
+
+---
+
+## 9. Riesgo: disponibilidad no basada en calendario
+
+### Descripción
+
+La disponibilidad actual se basa en el estado general de una habitación:
 
 ```text
 disponible
@@ -48,400 +203,281 @@ ocupada
 mantenimiento
 ```
 
-Pero todavía no maneja disponibilidad por fecha real.
+No se valida un rango real de fechas.
 
-Ejemplo de limitación:
+### Limitación
 
-```text
-Una habitación puede estar reservada para mañana, pero disponible la próxima semana.
-```
+Una habitación marcada como `reservada` se considera no disponible de forma general, aunque en un sistema real podría estar disponible en otras fechas.
 
-El sistema actual no calcula ese calendario.
+### Mejora futura
 
----
-
-### 2.3 Fechas relativas
-
-El sistema puede manejar expresiones como:
+Implementar una tabla de calendario o intervalos de reserva:
 
 ```text
-mañana
-hoy
-```
-
-pero todavía puede conservarlas como texto.
-
-No existe aún una conversión completa a fecha real tipo:
-
-```text
-YYYY-MM-DD
+habitacion_id
+fecha_inicio
+fecha_fin
+estado
 ```
 
 ---
 
-### 2.4 Memoria por sesión
+## 10. Riesgo: concurrencia en reservas
 
-La memoria se guarda por:
+### Descripción
 
-```text
-session_id
-```
+En un sistema real, dos usuarios podrían intentar reservar la misma habitación al mismo tiempo.
 
-No hay autenticación real de usuarios.
+### Estado actual
 
-Esto significa que si varias personas usan el mismo `session_id`, podrían compartir memoria.
+El proyecto es demo y no está diseñado para alta concurrencia.
+
+### Mitigación parcial
+
+El SQL de registro valida el estado de la habitación antes de actualizarla.
+
+### Mejora futura
+
+Usar transacciones más estrictas, bloqueos o control de concurrencia.
 
 ---
 
-### 2.5 Preferencias acumuladas
+## 11. Riesgo: credenciales en repositorio
 
-El campo:
+### Descripción
+
+Un workflow exportado podría contener referencias a credenciales.
+
+### Mitigación
+
+Antes de subir a GitHub:
+
+- Revisar el JSON exportado.
+- No subir `.env` real.
+- No subir credenciales de n8n.
+- Usar `.env.example`.
+- Usar `.gitignore`.
+
+---
+
+## 12. Riesgo: módulo de consultoría incompleto
+
+### Descripción
+
+El sistema ya clasifica preguntas de recomendación como:
 
 ```text
-preferencias_texto
+consultoria
 ```
-
-puede crecer si el usuario guarda muchas preferencias.
 
 Ejemplo:
 
 ```text
-Prefiere habitaciones tranquilas | Prefiere habitación familiar cómoda | Prefiere vista al patio colonial
+¿Qué habitación me recomiendas para viajar con mi familia?
 ```
 
-Esto es funcional para demo, pero en producción debería normalizarse mejor.
+Pero todavía no tiene un módulo especializado de recomendación.
 
----
+### Estado actual
 
-### 2.6 Consultoría avanzada pendiente
-
-El módulo de consultoría hotelera todavía no está completamente desarrollado.
-
-Actualmente el sistema puede guardar preferencias y usarlas en reservas, pero falta una rama más completa para responder preguntas como:
-
-```text
-Somos 2 adultos y 3 niños, ¿qué habitación nos recomiendas?
-```
-
-con razonamiento más elaborado.
-
----
-
-## 3. Limitaciones técnicas
-
-### 3.1 Rendimiento de Ollama
-
-El uso de Ollama local puede tardar dependiendo de:
-
-- Modelo usado.
-- Capacidad de CPU/GPU.
-- Memoria disponible.
-- Tamaño del prompt.
-- Carga del equipo.
-
-Las rutas con IA son más lentas que las rutas puramente SQL o Code.
-
----
-
-### 3.2 Dependencia del formato JSON de la IA
-
-El extractor de memoria depende de que el modelo devuelva un JSON interpretable.
-
-Para reducir el riesgo, se implementó:
-
-```text
-Code - Validar Memoria Usuario JSON
-```
-
-Este nodo limpia, valida y normaliza la salida antes de guardar.
-
----
-
-### 3.3 n8n como prototipo
-
-n8n es útil para prototipos y automatización, pero un sistema productivo requeriría considerar:
-
-- Control de versiones más estricto.
-- Separación de ambientes.
-- Monitoreo.
-- Manejo de errores avanzado.
-- Seguridad de credenciales.
-- Pruebas automatizadas.
-- Logs persistentes.
-
----
-
-### 3.4 SQL embebido en nodos
-
-Actualmente varias consultas SQL están dentro de nodos de n8n.
-
-Esto funciona para la demo, pero a futuro podría ser mejor separar:
-
-```text
-scripts SQL
-vistas
-funciones almacenadas
-procedimientos
-```
-
-para mejorar mantenibilidad.
-
----
-
-### 3.5 Falta de pruebas automatizadas
-
-Las pruebas se han ejecutado manualmente desde n8n.
-
-Falta implementar pruebas automatizadas para verificar:
-
-- Clasificación de intención.
-- Memoria guardada.
-- Reservas registradas.
-- Casos fuera de presupuesto.
-- Casos sin disponibilidad.
-- No duplicidad de reservas.
-
----
-
-## 4. Riesgos de seguridad
-
-### 4.1 Información sensible
-
-El asistente debe rechazar solicitudes relacionadas con:
-
-- Contraseñas.
-- Tokens.
-- Credenciales.
-- Cuentas bancarias internas.
-- Información privada.
-- Accesos administrativos.
-
-Para esto existe la ruta:
-
-```text
-fuera_alcance
-```
-
-y el nodo:
+La consultoría se enruta a:
 
 ```text
 Code - Respuesta Segura
 ```
 
----
+### Mejora futura
 
-### 4.2 Inyección en texto
-
-Como el sistema recibe texto libre del usuario, existe riesgo de entradas maliciosas.
-
-Se mitiga parcialmente mediante:
+Crear una rama propia:
 
 ```text
-sqlText()
-normalización de texto
-validación de campos
-uso de valores permitidos
-```
-
-Sin embargo, para producción se recomienda usar consultas parametrizadas siempre que sea posible.
-
----
-
-### 4.3 Memoria no autenticada
-
-La memoria depende del `session_id`.
-
-Si el `session_id` se reutiliza de forma incorrecta, se puede mezclar información de usuarios.
-
-En un sistema real se necesitaría autenticación y control de sesiones.
-
----
-
-## 5. Riesgos de negocio
-
-### 5.1 Confirmación automática
-
-Registrar reservas automáticamente puede ser riesgoso si no existe confirmación final del huésped.
-
-El sistema ya evita registrar cuando supera presupuesto, pero a futuro podría pedir confirmación explícita antes de cualquier registro.
-
-Ejemplo futuro:
-
-```text
-Encontré esta habitación. ¿Confirmas la reserva?
+consultoria
+→ consultar memoria
+→ consultar disponibilidad
+→ aplicar reglas de recomendación
+→ opcionalmente usar IA
+→ responder recomendación
 ```
 
 ---
 
-### 5.2 Precios y disponibilidad simulados
+## 13. Riesgo: dependencia del modelo local
 
-Los precios y habitaciones son datos demo.
+### Descripción
 
-No representan inventario real de un hotel.
+El sistema usa Ollama y `llama3:latest`.
+
+El rendimiento depende de:
+
+- CPU.
+- GPU.
+- RAM.
+- Configuración de Ollama.
+- Tamaño del prompt.
+- Carga del equipo.
+
+### Mitigación
+
+Se redujo el uso de IA a módulos específicos y se optimizó el contexto documental.
 
 ---
 
-### 5.3 Expectativas del usuario
+## 14. Riesgo: respuestas variables de IA
 
-El usuario podría creer que la reserva es real.
+### Descripción
 
-Por eso las respuestas deben aclarar que es un entorno académico/demo.
+Aunque el prompt sea estricto, el modelo puede variar sus respuestas.
+
+### Mitigación
+
+- Validación posterior.
+- Limpieza de salida.
+- Prompts restrictivos.
+- Separación entre IA y acciones críticas.
+- Reglas de negocio en Code y PostgreSQL.
 
 ---
 
-## 6. Limitaciones de IA
+## 15. Limitación: sin autenticación real
 
-### 6.1 Posibles errores de interpretación
+El sistema no identifica usuarios reales.
 
-La IA puede interpretar mal frases ambiguas.
-
-Ejemplo:
+La memoria funciona por:
 
 ```text
-Quiero algo tranquilo, pero barato.
+session_id
 ```
 
-Puede haber dudas sobre si es memoria, consultoría o reserva.
+Esto es suficiente para demo, pero no para producción.
 
-Para reducir esto se usa:
-
-```text
-clasificación por reglas
-validación por código
-rutas controladas
-```
-
----
-
-### 6.2 Variabilidad del modelo
-
-Aunque se use baja temperatura, el modelo puede variar un poco sus respuestas.
-
-Por eso no se permite que la IA:
+Mejora futura:
 
 ```text
-ejecute SQL
-registre reservas
-cambie estados de habitaciones
-decida directamente operaciones críticas
-```
-
-La IA solo interpreta texto.
-
----
-
-## 7. Limitaciones del módulo de reserva
-
-### 7.1 Disponibilidad por habitación, no por calendario
-
-El sistema valida si una habitación está disponible en general, no si está disponible durante un rango de fechas.
-
-### 7.2 No hay cancelación real
-
-Existe reset de reservas demo, pero no un módulo conversacional completo para cancelar una reserva.
-
-### 7.3 No hay pagos
-
-No se integra ningún método de pago.
-
-### 7.4 No hay datos personales completos
-
-No se solicitan datos como:
-
-- Documento.
-- Correo.
-- Teléfono.
-- País.
-- Método de pago.
-
-Esto es intencional para mantener el proyecto académico.
-
----
-
-## 8. Riesgos de mantenimiento
-
-### 8.1 Workflow grande
-
-A medida que el workflow crece, puede ser más difícil de mantener visualmente.
-
-Recomendación futura:
-
-```text
-Separar subworkflows
-documentar nodos
-usar nombres consistentes
-eliminar nodos flotantes
+usuarios autenticados
+sesiones reales
+perfiles persistentes
+control de privacidad
 ```
 
 ---
 
-### 8.2 Repetición de lógica
+## 16. Limitación: sin canal externo
 
-Algunos nodos Code pueden repetir funciones de normalización.
+Actualmente el sistema se ejecuta desde n8n.
 
-A futuro se podría centralizar esa lógica en scripts o subworkflows.
-
----
-
-## 9. Mejoras futuras
-
-### 9.1 Optimización de rendimiento
-
-- Reducir prompts.
-- Usar IA solo cuando sea necesario.
-- Mantener reglas para casos simples.
-- Evitar llamadas duplicadas al modelo.
-
-### 9.2 pgvector / RAG documental
-
-Implementar búsqueda semántica con pgvector para mejorar respuestas documentales.
-
-### 9.3 Consultoría hotelera avanzada
-
-Crear un módulo que recomiende habitaciones según:
-
-- Adultos.
-- Niños.
-- Presupuesto.
-- Vista.
-- Preferencias.
-- Disponibilidad.
-- Propósito del viaje.
-
-### 9.4 Integración con Telegram
-
-Permitir interacción desde un canal más cómodo.
-
-### 9.5 Frontend web
-
-Crear una interfaz para simular un chat de recepción.
-
-### 9.6 Fechas reales
-
-Convertir expresiones como `mañana` a fechas reales.
-
-### 9.7 Disponibilidad por rango de fechas
-
-Crear una tabla de ocupación por fechas para validar disponibilidad real.
-
----
-
-## 10. Conclusión
-
-El sistema actual es suficientemente sólido para una demostración académica avanzada.
-
-Ya integra:
+No hay todavía integración con:
 
 ```text
-IA local
-memoria personalizada
-PostgreSQL
-disponibilidad
-reservas demo
-validación de presupuesto
-manejo de errores
+Telegram
+WhatsApp
+Web chat
+Aplicación móvil
+Frontend web
 ```
 
-Sus principales limitaciones están relacionadas con uso productivo real: autenticación, calendario, pagos, seguridad avanzada y escalabilidad.
+---
 
-Para la entrega, estas limitaciones pueden presentarse como oportunidades de mejora.
+## 17. Limitación: sin RAG vectorial
+
+La consulta documental usa selección de contexto por reglas y palabras clave.
+
+No se ha implementado:
+
+```text
+embeddings
+pgvector
+búsqueda semántica
+fragmentación avanzada
+ranking vectorial
+```
+
+---
+
+## 18. Limitación: dataset académico
+
+El dataset hotelero se usa para analítica demo.
+
+No representa necesariamente operaciones reales del Hotel El Claustro de San Francisco.
+
+---
+
+## 19. Limitación: documentación y evidencias en evolución
+
+La documentación se está actualizando para alinearse con el workflow real.
+
+Riesgo:
+
+```text
+Algunos documentos pueden mencionar versiones antiguas si no se actualizan.
+```
+
+Mitigación:
+
+```text
+Revisar documentos antes del commit final.
+```
+
+---
+
+## 20. Pendientes principales
+
+Pendientes técnicos:
+
+- Exportar workflow final desde n8n.
+- Revisar JSON exportado.
+- Actualizar toda la documentación.
+- Preparar evidencias visuales finales.
+- Crear módulo propio de consultoría.
+- Mejorar manejo de fechas.
+- Mejorar disponibilidad por calendario.
+- Añadir pruebas automatizadas.
+- Preparar guion de sustentación.
+
+Pendientes funcionales:
+
+- Consultoría avanzada.
+- Cancelación de reservas demo.
+- Confirmación explícita antes de reservar.
+- Borrado de memoria desde conversación.
+- Frontend o canal externo.
+- RAG vectorial.
+
+---
+
+## 21. Estado actual de riesgos
+
+| Riesgo | Estado |
+|---|---|
+| IA interpreta mal memoria | Mitigado con validación Code |
+| Exceso de tokens documental | Mitigado con contexto reducido |
+| Reserva real confundida con demo | Debe aclararse en respuestas y demo |
+| Consultoría incompleta | Pendiente controlado |
+| Disponibilidad sin calendario | Limitación aceptada |
+| Credenciales en GitHub | Requiere revisión antes de commit |
+| Memoria por session_id | Aceptable para demo |
+| Falta de frontend | Pendiente futuro |
+
+---
+
+## 22. Conclusión
+
+El sistema actual es adecuado para una demostración académica avanzada.
+
+Sus mayores fortalezas son:
+
+- Modularidad.
+- Clasificación previa.
+- IA local controlada.
+- PostgreSQL como base operacional.
+- Memoria personalizada validada.
+- Reserva demo inteligente.
+- Optimización documental.
+- Respuestas seguras.
+
+Sus mayores pendientes son:
+
+- Consultoría hotelera avanzada.
+- Disponibilidad real por fechas.
+- Canales externos.
+- Autenticación.
+- Preparación final de evidencias y demo.
